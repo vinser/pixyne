@@ -148,7 +148,7 @@ func (a *App) newListView() {
 			template = fName
 		}
 	}
-	headerRow := widget.NewTable(
+	a.headerRow = widget.NewTable(
 		func() (int, int) {
 			return 1, a.listColumnsNum
 		},
@@ -158,7 +158,7 @@ func (a *App) newListView() {
 		},
 		a.headerAction,
 	)
-	dataRows := widget.NewTable(
+	a.dataRows = widget.NewTable(
 		func() (int, int) {
 			return len(a.List), a.listColumnsNum
 		},
@@ -189,10 +189,11 @@ func (a *App) newListView() {
 			}
 			data.SetText(text)
 		})
-	a.listView = container.NewBorder(headerRow, nil, nil, nil, dataRows)
+	a.dataRows.OnSelected = a.syncHeader
+	a.listView = container.NewBorder(a.headerRow, nil, nil, nil, a.dataRows)
 }
 
-func (a *App) headerAction(i widget.TableCellID, o fyne.CanvasObject) {
+func (a *App) headerAction(cell widget.TableCellID, o fyne.CanvasObject) {
 	settings := []struct {
 		Title    string
 		SortAsc  func(i, j int) bool
@@ -207,26 +208,26 @@ func (a *App) headerAction(i widget.TableCellID, o fyne.CanvasObject) {
 	}
 
 	header := o.(*ActiveHeader)
-	a.listHeaders[i.Col] = header
+	a.listHeaders[cell.Col] = header
 	header.TextStyle.Bold = true
-	if settings[i.Col].Default && !a.inited {
+	if settings[cell.Col].Default && !a.inited {
 		header.Order = orderAsc
 	}
-	header.Label.SetText(settings[i.Col].Title + orderSymbols[header.Order])
-	if settings[i.Col].SortAsc == nil && settings[i.Col].SortDesc == nil {
+	header.Label.SetText(settings[cell.Col].Title + orderSymbols[header.Order])
+	if settings[cell.Col].SortAsc == nil && settings[cell.Col].SortDesc == nil {
 		header.TextStyle.Italic = true
 		return
 	}
 	header.OnTapped = func() {
 		for j, h := range a.listHeaders {
-			if j == i.Col {
+			if j == cell.Col {
 				switch h.Order {
 				case unordered, orderDesc:
 					h.Order = orderAsc
-					a.reorderList(settings[i.Col].SortAsc)
+					a.reorderList(settings[cell.Col].SortAsc)
 				case orderAsc:
 					h.Order = orderDesc
-					a.reorderList(settings[i.Col].SortDesc)
+					a.reorderList(settings[cell.Col].SortDesc)
 				}
 				continue
 			} else {
@@ -236,6 +237,11 @@ func (a *App) headerAction(i widget.TableCellID, o fyne.CanvasObject) {
 		}
 		a.listView.Refresh()
 	}
+}
+
+func (a *App) syncHeader(cell widget.TableCellID) {
+	cell.Row = 0
+	a.headerRow.ScrollTo(cell)
 }
 
 // List sort functions

@@ -53,6 +53,8 @@ type App struct {
 	// List view
 	listView       *fyne.Container
 	listColumnsNum int
+	headerRow      *widget.Table
+	dataRows       *widget.Table
 	// List view table column listHeaders
 	listHeaders []*ActiveHeader
 }
