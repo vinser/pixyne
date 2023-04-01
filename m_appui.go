@@ -13,7 +13,6 @@ import (
 
 // application App
 type App struct {
-	name string
 	fyne.App
 	wMain  fyne.Window
 	inited bool

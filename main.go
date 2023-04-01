@@ -2,8 +2,6 @@ package main
 
 import (
 	"os"
-	"path/filepath"
-	"strings"
 
 	_ "image/jpeg"
 
@@ -11,16 +9,10 @@ import (
 	"fyne.io/fyne/v2/app"
 )
 
-var version, buildTime, target, goversion string
-
 func main() {
-	appID := "com.github/vinser/pixyne"
-	a := &App{
-		App: app.NewWithID(appID),
-	}
+	a := &App{App: app.New()}
 	a.Settings().SetTheme(&Theme{})
-	a.name = strings.Title(filepath.Base(appID))
-	a.wMain = a.NewWindow(a.name)
+	a.wMain = a.NewWindow(a.Metadata().Custom["AppName"])
 	a.wMain.SetMaster()
 	wd, _ := os.Getwd()
 	a.newPhotoList(a.Preferences().StringWithFallback("folder", wd))

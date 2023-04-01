@@ -8,6 +8,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/data/validation"
 	"fyne.io/fyne/v2/widget"
 	"github.com/disintegration/imaging"
 )
@@ -61,14 +62,16 @@ func (p *Photo) imgButton() *fyne.Container {
 
 // single photo date fix input
 func (p *Photo) dateInput() *fyne.Container {
+	choices := []string{"EXIF", "File", "Input"}
 	d := p.Dates[p.DateChoice]
 
 	eDate := widget.NewEntry()
+	eDate.Validator = validation.NewTime(DateFormat)
 	eDate.SetText(d)
 	eDate.Disable()
 
 	rgDateChoice := widget.NewRadioGroup(
-		[]string{"EXIF", "File", "Input"},
+		choices,
 		func(s string) {
 			switch s {
 			case "EXIF":
@@ -84,20 +87,17 @@ func (p *Photo) dateInput() *fyne.Container {
 			case "Input":
 				p.DateChoice = ChoiceEnteredDate
 				if p.Dates[p.DateChoice] == "" {
-					p.Dates[p.DateChoice] = p.Dates[ChoiceExifDate]
+					if p.Dates[ChoiceExifDate] == "" {
+						p.Dates[p.DateChoice] = p.Dates[ChoiceFileDate]
+					} else {
+						p.Dates[p.DateChoice] = p.Dates[ChoiceExifDate]
+					}
 				}
 				eDate.SetText(p.Dates[p.DateChoice])
 				eDate.Enable()
 			}
 		})
-	switch p.DateChoice {
-	case ChoiceExifDate:
-		rgDateChoice.SetSelected("EXIF")
-	case ChoiceFileDate:
-		rgDateChoice.SetSelected("File")
-	case ChoiceEnteredDate:
-		rgDateChoice.SetSelected("Input")
-	}
+	rgDateChoice.SetSelected(choices[p.DateChoice])
 	rgDateChoice.Horizontal = true
 
 	gr := container.NewVBox(rgDateChoice, eDate)

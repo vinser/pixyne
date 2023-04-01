@@ -21,13 +21,11 @@ func parseURL(urlStr string) *url.URL {
 
 // show info about app
 func (a *App) aboutDialog() {
-	hlPhotofyne := parseURL("https://github.com/vinser/pixyne")
-	c := container.NewCenter(container.NewVBox(
-		widget.NewLabelWithStyle("Photofyne App", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
-		widget.NewLabel(fmt.Sprintf("Version: %s (%s)\n", version, target)),
-		widget.NewLabel(fmt.Sprintf("Build time: %s\n", buildTime)),
-		widget.NewLabel(fmt.Sprintf("Golang version: %s\n", goversion)),
-		widget.NewHyperlink("Photofyne on GitHub", hlPhotofyne),
-	))
-	dialog.ShowCustom("About", "Ok", c, a.wMain)
+	lblName := widget.NewLabelWithStyle(fmt.Sprintf("%s \n", a.Metadata().Name), fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	lblVersion := widget.NewLabel(fmt.Sprintf("Version %s \n", a.Metadata().Custom["Version"]))
+	lblBuildTime := widget.NewLabel(fmt.Sprintf("Build time %s \n", a.Metadata().Custom["BuildTime"]))
+	lblGoVersion := widget.NewLabel(fmt.Sprintf("Go version %s \n", a.Metadata().Custom["GoVersion"]))
+	lblOnGitHub := widget.NewHyperlink("On GitHub", parseURL(a.Metadata().Custom["OnGitHub"]))
+	content := container.NewCenter(container.NewVBox(lblName, lblVersion, lblBuildTime, lblGoVersion, lblOnGitHub))
+	dialog.ShowCustom("About", "Ok", content, a.wMain)
 }
