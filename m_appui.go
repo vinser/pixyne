@@ -14,8 +14,8 @@ import (
 // application App
 type App struct {
 	fyne.App
-	wMain  fyne.Window
-	inited bool
+	topWindow fyne.Window
+	inited    bool
 
 	// Current folder
 	folder string
@@ -30,9 +30,9 @@ type App struct {
 	toolBar *widget.Toolbar
 	// Toolbar actions
 	actAbout       *widget.ToolbarAction
-	actSettings    *widget.ToolbarAction
 	actOpenFolder  *widget.ToolbarAction
 	actSaveList    *widget.ToolbarAction
+	actSettings    *widget.ToolbarAction
 	actStrechFrame *widget.ToolbarAction
 	actShrinkFrame *widget.ToolbarAction
 	actToggleView  *widget.ToolbarAction
@@ -42,12 +42,7 @@ type App struct {
 	// Frame view scroll buttons
 	bottomButtons *fyne.Container
 	// Frame scroll buttons
-	prevPhotoBtn  *widget.Button
-	prevFrameBtn  *widget.Button
-	firstPhotoBtn *widget.Button
-	nextPhotoBtn  *widget.Button
-	nextFrameBtn  *widget.Button
-	lastPhotoBtn  *widget.Button
+	scrollButton []*widget.Button
 
 	// List view
 	listView       *fyne.Container
@@ -61,72 +56,71 @@ type App struct {
 // make main window newLayout
 func (a *App) newLayout() {
 	a.reorderList(a.Order)
-	a.initFrame()
 	a.newToolBar()
+	a.initFrame()
+	a.showFrameToolbar()
 	a.newFrameView()
 	a.newListView()
 	a.listView.Hide()
 	a.mainContent = container.NewBorder(a.toolBar, nil, nil, nil, container.NewMax(a.frameView, a.listView))
-	a.wMain.SetContent(a.mainContent)
+	a.topWindow.SetContent(a.mainContent)
 }
 
 func (a *App) newToolBar() {
-	a.actAbout = widget.NewToolbarAction(theme.HelpIcon(), a.aboutDialog)
-	a.actSettings = widget.NewToolbarAction(theme.SettingsIcon(), a.settingsDialog)
-	a.actOpenFolder = widget.NewToolbarAction(theme.FolderOpenIcon(), a.openFolderDialog)
-	a.actSaveList = widget.NewToolbarAction(theme.DocumentSaveIcon(), a.savePhotoList)
-	a.actStrechFrame = widget.NewToolbarAction(theme.ContentAddIcon(), func() { a.resizeFrame(AddColumn) })
-	a.actShrinkFrame = widget.NewToolbarAction(theme.ContentRemoveIcon(), func() { a.resizeFrame(RemoveColumn) })
-	a.actToggleView = widget.NewToolbarAction(theme.ListIcon(), a.toggleView)
+	a.actAbout = widget.NewToolbarAction(theme.NewThemedResource(iconAbout), a.aboutDialog)
+	a.actOpenFolder = widget.NewToolbarAction(theme.NewThemedResource(iconFolderOpen), a.openFolderDialog)
+	a.actSaveList = widget.NewToolbarAction(theme.NewThemedResource(iconFolderSave), a.savePhotoList)
+	a.actSettings = widget.NewToolbarAction(theme.NewThemedResource(iconSettings), a.settingsDialog)
+	a.actStrechFrame = widget.NewToolbarAction(theme.NewThemedResource(iconFrameStretch), func() { a.resizeFrame(AddColumn) })
+	a.actShrinkFrame = widget.NewToolbarAction(theme.NewThemedResource(iconFrameShrink), func() { a.resizeFrame(RemoveColumn) })
+	a.actToggleView = widget.NewToolbarAction(theme.NewThemedResource(iconDistpayList), a.toggleView)
 
 	a.toolBar = widget.NewToolbar()
+}
+
+func (a *App) toggleView() {
+	if a.frameView.Hidden {
+		a.showFrameToolbar()
+		a.frameView.Show()
+		a.listView.Hide()
+		a.actToggleView.SetIcon(theme.NewThemedResource(iconDistpayList))
+	} else {
+		a.showListToolbar()
+		a.frameView.Hide()
+		a.listView.Show()
+		a.actToggleView.SetIcon(theme.NewThemedResource(iconDistpayGrid))
+	}
+	a.toolBar.Refresh()
+}
+
+func (a *App) showFrameToolbar() {
+	a.toolBar.Items = []widget.ToolbarItem{}
 	a.toolBar.Append(widget.NewToolbarSpacer())
 	a.toolBar.Append(a.actToggleView)
 	a.toolBar.Append(widget.NewToolbarSeparator())
 	a.toolBar.Append(a.actSettings)
 	a.toolBar.Append(a.actAbout)
-
 	if len(a.List) > 0 {
-		a.toolBar.Prepend(a.actStrechFrame)
-		a.toolBar.Prepend(a.actShrinkFrame)
+		if a.frame.size < MaxFrameSize {
+			a.toolBar.Prepend(a.actStrechFrame)
+		}
+		if a.frame.size > MinFrameSize {
+			a.toolBar.Prepend(a.actShrinkFrame)
+		}
 	} else {
 		a.toolBar.Prepend(a.actOpenFolder)
 	}
 }
 
-func (a *App) toggleView() {
-	if a.frameView.Hidden {
-		a.toolBar.Items = []widget.ToolbarItem{}
-		a.toolBar.Append(widget.NewToolbarSpacer())
-		a.toolBar.Append(a.actToggleView)
-		a.toolBar.Append(widget.NewToolbarSeparator())
-		a.toolBar.Append(a.actSettings)
-		a.toolBar.Append(a.actAbout)
-		if len(a.List) > 0 {
-			a.toolBar.Prepend(a.actStrechFrame)
-			a.toolBar.Prepend(a.actShrinkFrame)
-		} else {
-			a.toolBar.Prepend(a.actOpenFolder)
-		}
-
-		a.frameView.Show()
-		a.listView.Hide()
-		a.actToggleView.SetIcon(theme.ListIcon())
-	} else {
-		a.toolBar.Items = []widget.ToolbarItem{}
-		a.toolBar.Append(a.actOpenFolder)
-		a.toolBar.Append(a.actSaveList)
-		a.toolBar.Append(widget.NewToolbarSpacer())
-		a.toolBar.Append(a.actToggleView)
-		a.toolBar.Append(widget.NewToolbarSeparator())
-		a.toolBar.Append(a.actSettings)
-		a.toolBar.Append(a.actAbout)
-
-		a.frameView.Hide()
-		a.listView.Show()
-		a.actToggleView.SetIcon(theme.GridIcon())
-	}
-	a.toolBar.Refresh()
+func (a *App) showListToolbar() {
+	a.toolBar.Items = []widget.ToolbarItem{}
+	a.toolBar.Append(a.actOpenFolder)
+	a.toolBar.Append(a.actSaveList)
+	a.toolBar.Append(widget.NewToolbarSpacer())
+	a.toolBar.Append(a.actToggleView)
+	a.toolBar.Append(widget.NewToolbarSeparator())
+	a.toolBar.Append(a.actSettings)
+	a.toolBar.Append(a.actAbout)
 }
 
 // open photo folder dialog
@@ -135,18 +129,18 @@ func (a *App) openFolderDialog() {
 
 	d := dialog.NewFolderOpen(func(list fyne.ListableURI, err error) {
 		if err != nil {
-			dialog.ShowError(err, a.wMain)
+			dialog.ShowError(err, a.topWindow)
 			return
 		}
 		if list == nil {
-			a.wMain.Close()
+			a.topWindow.Close()
 			return
 		}
 		folder = list.Path()
 		a.Preferences().SetString("folder", folder)
 		a.newPhotoList(folder)
 		a.newLayout()
-	}, a.wMain)
+	}, a.topWindow)
 	wd, _ := os.Getwd()
 	location := a.Preferences().StringWithFallback("folder", wd)
 	locationUri, _ := storage.ListerForURI(storage.NewFileURI(location))
@@ -158,10 +152,10 @@ func (a *App) openFolderDialog() {
 func (a *App) settingsDialog() {
 	s := NewSettings()
 	appearance := widget.NewForm(
-		widget.NewFormItem("", s.scalePreviewsRow(a.wMain.Canvas().Scale())),
+		widget.NewFormItem("", s.scalePreviewsRow(a.topWindow.Canvas().Scale())),
 		widget.NewFormItem("Scale", s.scalesRow()),
 		widget.NewFormItem("Main Color", s.colorsRow()),
 		widget.NewFormItem("Theme", s.themesRow()),
 	)
-	dialog.ShowCustom("Appearance", "Ok", appearance, a.wMain)
+	dialog.ShowCustom("Appearance", "Close", appearance, a.topWindow)
 }

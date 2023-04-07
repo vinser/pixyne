@@ -86,8 +86,8 @@ func (a *App) scrollFrame(pos int) {
 		f.Add(a.List[pos+i].FrameColumn())
 	}
 	f.Refresh()
-
 	f.pos = pos
+	a.updateFrameScrollButtons()
 }
 
 // resizeFrame frame
@@ -128,29 +128,72 @@ func (a *App) resizeFrame(zoom int) {
 	}
 	f.Layout = layout.NewGridLayoutWithColumns(len(f.Objects))
 	f.Refresh()
+	a.showFrameToolbar()
+	a.updateFrameScrollButtons()
+}
+
+// Frame scroll button names
+const (
+	firstPhotoBtn = iota
+	prevFrameBtn
+	prevPhotoBtn
+	nextPhotoBtn
+	nextFrameBtn
+	lastPhotoBtn
+)
+
+type scrollButtonOpts struct {
+	label  string
+	icon   *fyne.StaticResource
+	tapped func()
 }
 
 func (a *App) newFrameView() {
-	a.prevPhotoBtn = widget.NewButton("<", func() {
-		a.scrollFrame(a.frame.pos - 1)
-	})
-	a.prevFrameBtn = widget.NewButton("<<", func() {
-		a.scrollFrame(a.frame.pos - a.frame.size)
-	})
-	a.firstPhotoBtn = widget.NewButton("|<", func() {
-		a.scrollFrame(0)
-	})
+	sbo := map[int]scrollButtonOpts{
+		firstPhotoBtn: {label: "|<", icon: iconScrollFirst, tapped: func() { a.scrollFrame(0) }},
+		prevFrameBtn:  {label: "<<", icon: iconScrollPrevFrame, tapped: func() { a.scrollFrame(a.frame.pos - a.frame.size) }},
+		prevPhotoBtn:  {label: "<", icon: iconScrollPrev, tapped: func() { a.scrollFrame(a.frame.pos - 1) }},
+		nextPhotoBtn:  {label: ">", icon: iconScrollNext, tapped: func() { a.scrollFrame(a.frame.pos + 1) }},
+		nextFrameBtn:  {label: ">>", icon: iconScrollNextFrame, tapped: func() { a.scrollFrame(a.frame.pos + a.frame.size) }},
+		lastPhotoBtn:  {label: ">|", icon: iconScrollLast, tapped: func() { a.scrollFrame(len(a.List)) }},
+	}
+	o := make([]fyne.CanvasObject, len(sbo))
+	a.scrollButton = make([]*widget.Button, len(sbo))
+	for i, opt := range sbo {
+		// b := widget.NewButton(opt.label, opt.tapped)
+		b := widget.NewButtonWithIcon("", opt.icon, opt.tapped)
+		b.Importance = widget.HighImportance
+		o[i] = b
+		a.scrollButton[i] = b
+	}
 
-	a.nextPhotoBtn = widget.NewButton(">", func() {
-		a.scrollFrame(a.frame.pos + 1)
-	})
-	a.nextFrameBtn = widget.NewButton(">>", func() {
-		a.scrollFrame(a.frame.pos + a.frame.size)
-	})
-	a.lastPhotoBtn = widget.NewButton(">|", func() {
-		a.scrollFrame(len(a.List))
-	})
-	a.bottomButtons = container.NewGridWithColumns(6, a.firstPhotoBtn, a.prevFrameBtn, a.prevPhotoBtn, a.nextPhotoBtn, a.nextFrameBtn, a.lastPhotoBtn)
+	a.bottomButtons = container.NewGridWithColumns(len(o), o...)
+	// a.bottomButtons = container.NewGridWithColumns(6, a.scrollButton[firstPhotoBtn], a.scrollButton[prevFrameBtn], a.scrollButton[prevPhotoBtn], a.scrollButton[nextPhotoBtn], a.scrollButton[nextFrameBtn], a.scrollButton[lastPhotoBtn])
+	// a.bottomButtons = container.NewGridWithColumns(
+	// 	3,
+	// 	widget.NewSeparator(),
+	// 	container.NewGridWithColumns(6, a.scrollButton[firstPhotoBtn], a.scrollButton[prevFrameBtn], a.scrollButton[prevPhotoBtn], a.scrollButton[nextPhotoBtn], a.scrollButton[nextFrameBtn], a.scrollButton[lastPhotoBtn]),
+	// 	widget.NewSeparator())
 
 	a.frameView = container.NewBorder(nil, a.bottomButtons, nil, nil, a.frame.Container)
+	a.updateFrameScrollButtons()
+}
+
+func (a *App) updateFrameScrollButtons() {
+	a.scrollButton[prevPhotoBtn].Enable()
+	a.scrollButton[prevFrameBtn].Enable()
+	a.scrollButton[firstPhotoBtn].Enable()
+	a.scrollButton[nextPhotoBtn].Enable()
+	a.scrollButton[nextFrameBtn].Enable()
+	a.scrollButton[lastPhotoBtn].Enable()
+	if a.frame.pos == 0 {
+		a.scrollButton[prevPhotoBtn].Disable()
+		a.scrollButton[prevFrameBtn].Disable()
+		a.scrollButton[firstPhotoBtn].Disable()
+	}
+	if a.frame.pos+a.frame.size == len(a.List) {
+		a.scrollButton[nextPhotoBtn].Disable()
+		a.scrollButton[nextFrameBtn].Disable()
+		a.scrollButton[lastPhotoBtn].Disable()
+	}
 }

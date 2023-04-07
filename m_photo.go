@@ -19,7 +19,6 @@ const (
 	ChoiceFileDate
 	ChoiceEnteredDate
 )
-const DateFormat = "2006:01:02 03:04:05"
 
 // Photo
 type Photo struct {
@@ -66,7 +65,7 @@ func (p *Photo) dateInput() *fyne.Container {
 	d := p.Dates[p.DateChoice]
 
 	eDate := widget.NewEntry()
-	eDate.Validator = validation.NewTime(DateFormat)
+	eDate.Validator = validation.NewTime(DisplyDateFormat)
 	eDate.SetText(d)
 	eDate.Disable()
 
@@ -130,5 +129,5 @@ func (p *Photo) GetModifyDate() string {
 		return ""
 	}
 	fileModifyDate := fi.ModTime()
-	return fileModifyDate.Format(DateFormat)
+	return fileModifyDate.Format(DisplyDateFormat)
 }

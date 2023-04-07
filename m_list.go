@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -53,7 +54,7 @@ func (a *App) newPhotoList(folder string) {
 			}
 			p.Dates[ChoiceExifDate] = GetExifDate(p.File)
 			p.Dates[ChoiceFileDate] = p.GetModifyDate()
-			if len(p.Dates[ChoiceExifDate]) != len(DateFormat) {
+			if len(p.Dates[ChoiceExifDate]) != len(DisplyDateFormat) {
 				p.DateChoice = ChoiceFileDate
 			}
 			photos = append(photos, p)
@@ -69,7 +70,17 @@ func (a *App) newPhotoList(folder string) {
 // 1. move dropped photo to droppped folder
 // 2. update exif dates with file modify date or input date
 func (a *App) savePhotoList() {
-	dialog.ShowConfirm("Ready to save changes", "Proceed?",
+	dateFileNames := false
+	dateFileFormat := time.Now().Format("20060102_150405")
+	content := container.NewVBox(
+		widget.NewLabel("Ready to save changes?"),
+		widget.NewCheck("Rename files to date taken format "+dateFileFormat, func(b bool) { dateFileNames = b }),
+	)
+	d := dialog.NewCustomConfirm(
+		"Save changes",
+		"Proceed",
+		"Cancel",
+		content,
 		func(b bool) {
 			if b {
 				dropDirOk := false
@@ -82,7 +93,7 @@ func (a *App) savePhotoList() {
 						if !dropDirOk {
 							err := os.Mkdir(dropDirName, 0775)
 							if err != nil && !errors.Is(err, fs.ErrExist) {
-								dialog.ShowError(err, a.wMain)
+								dialog.ShowError(err, a.topWindow)
 							}
 						}
 						os.Rename(p.File, filepath.Join(dropDirName, filepath.Base(p.File)))
@@ -93,15 +104,32 @@ func (a *App) savePhotoList() {
 						if !backupDirOk {
 							err := os.Mkdir(backupDirName, 0775)
 							if err != nil && !errors.Is(err, fs.ErrExist) {
-								dialog.ShowError(err, a.wMain)
+								dialog.ShowError(err, a.topWindow)
 							}
 						}
-						UpdateExifDate(p.File, backupDirName, p.Dates[p.DateChoice])
+						if UpdateExifDate(p.File, backupDirName, p.Dates[p.DateChoice]) == nil {
+							if dateFileNames {
+								os.Rename(p.File, pathNameToDate(p.File, p.Dates[p.DateChoice]))
+							}
+							continue
+						}
+					}
+					if dateFileNames {
+						// backup original file and rename file by date format "20060102_150405"
+						if !backupDirOk {
+							err := os.Mkdir(backupDirName, 0775)
+							if err != nil && !errors.Is(err, fs.ErrExist) {
+								dialog.ShowError(err, a.topWindow)
+							}
+						}
+						fileCopy(p.File, filepath.Join(backupDirName, filepath.Base(p.File)))
+						os.Rename(p.File, pathNameToDate(p.File, p.Dates[p.DateChoice]))
 					}
 				}
 			}
 		},
-		a.wMain)
+		a.topWindow)
+	d.Show()
 }
 
 const (
@@ -112,36 +140,11 @@ const (
 
 var orderSymbols = []string{" ", " ↓", " ↑"}
 
-type ActiveHeader struct {
-	Name     string
-	Order    int
-	SortAsc  func(i, j int) bool
-	SortDesc func(i, j int) bool
-	OnTapped func()
-	widget.Label
-}
-
-func newActiveHeader(label string) *ActiveHeader {
-	h := &ActiveHeader{}
-	h.ExtendBaseWidget(h)
-	h.Label.SetText(label)
-	return h
-}
-
-func (h *ActiveHeader) Tapped(_ *fyne.PointEvent) {
-	if h.OnTapped != nil {
-		h.OnTapped()
-	}
-}
-
-func (h *ActiveHeader) TappedSecondary(_ *fyne.PointEvent) {
-}
-
 func (a *App) newListView() {
 	a.listColumnsNum = 5
 	a.listHeaders = make([]*ActiveHeader, a.listColumnsNum)
 
-	template := DateFormat
+	template := DisplyDateFormat
 	for _, ph := range a.List {
 		fName := filepath.Base(ph.File)
 		if len(fName) > len(template) {
@@ -163,34 +166,87 @@ func (a *App) newListView() {
 			return len(a.List), a.listColumnsNum
 		},
 		func() fyne.CanvasObject {
-			data := widget.NewLabel(template)
+			data := newActiveCell(template)
 			return data
 		},
-		func(i widget.TableCellID, o fyne.CanvasObject) {
-			text := ""
-			ph := a.List[i.Row]
-			data := o.(*widget.Label)
-			switch i.Col {
-			case 0:
-				text = filepath.Base(ph.File)
-				data.TextStyle.Bold = false
-			case 1, 2, 3:
-				text = ph.Dates[i.Col-1]
-				if i.Col-1 == ph.DateChoice {
-					data.TextStyle.Bold = true
-				} else {
-					data.TextStyle.Bold = false
-				}
-			case 4:
-				if ph.Droped {
-					text = "Yes"
-					data.TextStyle.Bold = true
-				}
-			}
-			data.SetText(text)
-		})
+		a.dataAction,
+	)
 	a.dataRows.OnSelected = a.syncHeader
 	a.listView = container.NewBorder(a.headerRow, nil, nil, nil, a.dataRows)
+}
+
+type ActiveCell struct {
+	widget.Label
+	OnTapped func()
+}
+
+func newActiveCell(label string) *ActiveCell {
+	c := &ActiveCell{}
+	c.ExtendBaseWidget(c)
+	c.Label.SetText(label)
+	return c
+}
+
+func (h *ActiveCell) Tapped(_ *fyne.PointEvent) {
+	if h.OnTapped != nil {
+		h.OnTapped()
+	}
+}
+
+func (h *ActiveCell) TappedSecondary(_ *fyne.PointEvent) {
+}
+
+func (a *App) dataAction(cell widget.TableCellID, o fyne.CanvasObject) {
+	text := ""
+	photo := a.List[cell.Row]
+	data := o.(*ActiveCell)
+	switch cell.Col {
+	case 0:
+		text = filepath.Base(photo.File)
+		data.TextStyle.Bold = false
+		data.OnTapped = func() {
+			a.scrollFrame(cell.Row)
+			a.toggleView()
+		}
+	case 1, 2, 3:
+		text = photo.Dates[cell.Col-1]
+		if cell.Col-1 == photo.DateChoice {
+			data.TextStyle.Bold = true
+		} else {
+			data.TextStyle.Bold = false
+		}
+	case 4:
+		if photo.Droped {
+			text = "Yes"
+			data.TextStyle.Bold = true
+		}
+	}
+	data.SetText(text)
+}
+
+type ActiveHeader struct {
+	widget.Label
+	Name     string
+	Order    int
+	SortAsc  func(i, j int) bool
+	SortDesc func(i, j int) bool
+	OnTapped func()
+}
+
+func newActiveHeader(label string) *ActiveHeader {
+	h := &ActiveHeader{}
+	h.ExtendBaseWidget(h)
+	h.Label.SetText(label)
+	return h
+}
+
+func (h *ActiveHeader) Tapped(_ *fyne.PointEvent) {
+	if h.OnTapped != nil {
+		h.OnTapped()
+	}
+}
+
+func (h *ActiveHeader) TappedSecondary(_ *fyne.PointEvent) {
 }
 
 func (a *App) headerAction(cell widget.TableCellID, o fyne.CanvasObject) {

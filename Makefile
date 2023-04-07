@@ -18,11 +18,11 @@ build_cmd = \
 fyne build \
 $(if $(1),$(1)) \
 --metadata Version=$(VERSION) \
---metadata BuildOn=$(HOSTOS)/$(HOSTARCH) \
+--metadata BuildHost=$(HOSTOS)/$(HOSTARCH) \
 --metadata BuildTime=$(BUILDTIME) \
 --metadata GoVersion=$(GOVERSION) \
---metadata OnGitHub=$(GITHUBURL) \
--o ./$(APP)$(if $(findstring windows,$(HOSTOS)),.exe) 
+--metadata OnGitHub=$(GITHUBURL)
+
 
 all: development
 

@@ -10,22 +10,33 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-func parseURL(urlStr string) *url.URL {
-	link, err := url.Parse(urlStr)
-	if err != nil {
-		fyne.LogError("Could not parse URL", err)
-	}
-
-	return link
-}
-
 // show info about app
 func (a *App) aboutDialog() {
-	lblName := widget.NewLabelWithStyle(fmt.Sprintf("%s \n", a.Metadata().Name), fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	lblVersion := widget.NewLabel(fmt.Sprintf("Version %s \n", a.Metadata().Custom["Version"]))
-	lblBuildTime := widget.NewLabel(fmt.Sprintf("Build time %s \n", a.Metadata().Custom["BuildTime"]))
-	lblGoVersion := widget.NewLabel(fmt.Sprintf("Go version %s \n", a.Metadata().Custom["GoVersion"]))
-	lblOnGitHub := widget.NewHyperlink("On GitHub", parseURL(a.Metadata().Custom["OnGitHub"]))
-	content := container.NewCenter(container.NewVBox(lblName, lblVersion, lblBuildTime, lblGoVersion, lblOnGitHub))
-	dialog.ShowCustom("About", "Ok", content, a.wMain)
+	objects := []fyne.CanvasObject{}
+
+	if name := a.Metadata().Name; name != "" {
+		objects = append(objects, widget.NewLabelWithStyle(fmt.Sprintf("%s \n", name), fyne.TextAlignCenter, fyne.TextStyle{Bold: true}))
+	}
+	if version := a.Metadata().Custom["Version"]; version != "" {
+		objects = append(objects, widget.NewLabel(fmt.Sprintf("Version: %s \n", version)))
+	} else {
+		if version := a.Metadata().Version; version != "" {
+			objects = append(objects, widget.NewLabel(fmt.Sprintf("Version: %s \n", version)))
+		}
+	}
+	if buildTime := a.Metadata().Custom["BuildTime"]; buildTime != "" {
+		objects = append(objects, widget.NewLabel(fmt.Sprintf("Build time: %s \n", buildTime)))
+	}
+	if buildHost := a.Metadata().Custom["BuildHost"]; buildHost != "" {
+		objects = append(objects, widget.NewLabel(fmt.Sprintf("Build host: %s \n", buildHost)))
+	}
+	if goVersion := a.Metadata().Custom["GoVersion"]; goVersion != "" {
+		objects = append(objects, widget.NewLabel(fmt.Sprintf("Go version: %s \n", goVersion)))
+	}
+	if url, _ := url.Parse(a.Metadata().Custom["OnGitHub"]); url != nil {
+		objects = append(objects, widget.NewHyperlink("On GitHub", url))
+	}
+
+	content := container.NewCenter(container.NewVBox(objects...))
+	dialog.ShowCustom("About", "Ok", content, a.topWindow)
 }

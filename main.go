@@ -11,15 +11,16 @@ import (
 
 func main() {
 	a := &App{App: app.New()}
+	a.SetIcon(appIcon)
 	a.Settings().SetTheme(&Theme{})
-	a.wMain = a.NewWindow(a.Metadata().Custom["AppName"])
-	a.wMain.SetMaster()
+	a.topWindow = a.NewWindow(a.Metadata().Name)
 	wd, _ := os.Getwd()
 	a.newPhotoList(a.Preferences().StringWithFallback("folder", wd))
 	a.newLayout()
-	a.wMain.Resize(fyne.NewSize(1344, 756))
-	a.wMain.CenterOnScreen()
-	a.wMain.Show()
+	a.topWindow.SetMaster()
+	a.topWindow.Resize(fyne.NewSize(1344, 756))
+	a.topWindow.CenterOnScreen()
+	a.topWindow.Show()
 	a.inited = true
 	a.Run()
 }
