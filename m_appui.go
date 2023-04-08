@@ -67,13 +67,13 @@ func (a *App) newLayout() {
 }
 
 func (a *App) newToolBar() {
-	a.actAbout = widget.NewToolbarAction(theme.NewThemedResource(iconAbout), a.aboutDialog)
-	a.actOpenFolder = widget.NewToolbarAction(theme.NewThemedResource(iconFolderOpen), a.openFolderDialog)
-	a.actSaveList = widget.NewToolbarAction(theme.NewThemedResource(iconFolderSave), a.savePhotoList)
-	a.actSettings = widget.NewToolbarAction(theme.NewThemedResource(iconSettings), a.settingsDialog)
-	a.actStrechFrame = widget.NewToolbarAction(theme.NewThemedResource(iconFrameStretch), func() { a.resizeFrame(AddColumn) })
-	a.actShrinkFrame = widget.NewToolbarAction(theme.NewThemedResource(iconFrameShrink), func() { a.resizeFrame(RemoveColumn) })
-	a.actToggleView = widget.NewToolbarAction(theme.NewThemedResource(iconDistpayList), a.toggleView)
+	a.actAbout = widget.NewToolbarAction(theme.InfoIcon(), a.aboutDialog)
+	a.actOpenFolder = widget.NewToolbarAction(theme.FolderOpenIcon(), a.openFolderDialog)
+	a.actSaveList = widget.NewToolbarAction(theme.DocumentSaveIcon(), a.savePhotoList)
+	a.actSettings = widget.NewToolbarAction(theme.SettingsIcon(), a.settingsDialog)
+	a.actStrechFrame = widget.NewToolbarAction(theme.ContentAddIcon(), func() { a.resizeFrame(AddColumn) })
+	a.actShrinkFrame = widget.NewToolbarAction(theme.ContentRemoveIcon(), func() { a.resizeFrame(RemoveColumn) })
+	a.actToggleView = widget.NewToolbarAction(theme.ListIcon(), a.toggleView)
 
 	a.toolBar = widget.NewToolbar()
 }
@@ -83,12 +83,12 @@ func (a *App) toggleView() {
 		a.showFrameToolbar()
 		a.frameView.Show()
 		a.listView.Hide()
-		a.actToggleView.SetIcon(theme.NewThemedResource(iconDistpayList))
+		a.actToggleView.SetIcon(theme.ListIcon())
 	} else {
 		a.showListToolbar()
 		a.frameView.Hide()
 		a.listView.Show()
-		a.actToggleView.SetIcon(theme.NewThemedResource(iconDistpayGrid))
+		a.actToggleView.SetIcon(theme.GridIcon())
 	}
 	a.toolBar.Refresh()
 }

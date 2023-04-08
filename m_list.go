@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"io/fs"
 	"log"
 	"os"
@@ -71,7 +72,7 @@ func (a *App) newPhotoList(folder string) {
 // 2. update exif dates with file modify date or input date
 func (a *App) savePhotoList() {
 	dateFileNames := false
-	dateFileFormat := time.Now().Format("20060102_150405")
+	dateFileFormat := time.Now().Format(FileNameDateFormat)
 	content := container.NewVBox(
 		widget.NewLabel("Ready to save changes?"),
 		widget.NewCheck("Rename files to date taken format "+dateFileFormat, func(b bool) { dateFileNames = b }),
@@ -141,14 +142,16 @@ const (
 var orderSymbols = []string{" ", " ↓", " ↑"}
 
 func (a *App) newListView() {
-	a.listColumnsNum = 5
+	a.listColumnsNum = 6
 	a.listHeaders = make([]*ActiveHeader, a.listColumnsNum)
 
-	template := DisplyDateFormat
+	dateTemplate := DisplyDateFormat
+	dateWidth := widget.NewLabel(dateTemplate).MinSize().Width
+	fileNameWidth := dateWidth
 	for _, ph := range a.List {
 		fName := filepath.Base(ph.File)
-		if len(fName) > len(template) {
-			template = fName
+		if len(fName) > len(dateTemplate) {
+			fileNameWidth = widget.NewLabel(fName).MinSize().Width
 		}
 	}
 	a.headerRow = widget.NewTable(
@@ -156,23 +159,38 @@ func (a *App) newListView() {
 			return 1, a.listColumnsNum
 		},
 		func() fyne.CanvasObject {
-			header := newActiveHeader(template)
+			header := newActiveHeader(dateTemplate)
 			return header
 		},
 		a.headerAction,
 	)
+	a.headerRow.SetColumnWidth(0, 20)
+	a.headerRow.SetColumnWidth(1, fileNameWidth)
+	a.headerRow.SetColumnWidth(2, dateWidth)
+	a.headerRow.SetColumnWidth(3, dateWidth)
+	a.headerRow.SetColumnWidth(4, dateWidth)
+	a.headerRow.SetColumnWidth(5, 80)
+
 	a.dataRows = widget.NewTable(
 		func() (int, int) {
 			return len(a.List), a.listColumnsNum
 		},
 		func() fyne.CanvasObject {
-			data := newActiveCell(template)
+			data := newActiveCell(dateTemplate)
 			return data
 		},
 		a.dataAction,
 	)
-	a.dataRows.OnSelected = a.syncHeader
-	a.listView = container.NewBorder(a.headerRow, nil, nil, nil, a.dataRows)
+	a.dataRows.SetColumnWidth(0, 20)
+	a.dataRows.SetColumnWidth(1, fileNameWidth)
+	a.dataRows.SetColumnWidth(2, dateWidth)
+	a.dataRows.SetColumnWidth(3, dateWidth)
+	a.dataRows.SetColumnWidth(4, dateWidth)
+	a.dataRows.SetColumnWidth(5, 80)
+
+	a.dataRows.OnSelected = a.syncHeader // poor attempt to synchronize table scrolling
+	bottomCount := widget.NewLabel(fmt.Sprintf("total: %d", len(a.List)))
+	a.listView = container.NewBorder(a.headerRow, bottomCount, nil, nil, a.dataRows)
 }
 
 type ActiveCell struct {
@@ -202,20 +220,22 @@ func (a *App) dataAction(cell widget.TableCellID, o fyne.CanvasObject) {
 	data := o.(*ActiveCell)
 	switch cell.Col {
 	case 0:
+		text = fmt.Sprint(cell.Row + 1)
+	case 1:
 		text = filepath.Base(photo.File)
 		data.TextStyle.Bold = false
 		data.OnTapped = func() {
 			a.scrollFrame(cell.Row)
 			a.toggleView()
 		}
-	case 1, 2, 3:
-		text = photo.Dates[cell.Col-1]
+	case 2, 3, 4:
+		text = photo.Dates[cell.Col-2]
 		if cell.Col-1 == photo.DateChoice {
 			data.TextStyle.Bold = true
 		} else {
 			data.TextStyle.Bold = false
 		}
-	case 4:
+	case 5:
 		if photo.Droped {
 			text = "Yes"
 			data.TextStyle.Bold = true
@@ -256,6 +276,7 @@ func (a *App) headerAction(cell widget.TableCellID, o fyne.CanvasObject) {
 		SortDesc func(i, j int) bool
 		Default  bool
 	}{
+		{"", nil, nil, false},
 		{"File Name", a.orderByFileNameAsc, a.orderByFileNameDesc, true},
 		{"Exif Date", nil, nil, false},
 		{"File Date", a.orderByFileDateAsc, a.orderByFileDateDesc, false},

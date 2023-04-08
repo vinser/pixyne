@@ -7,6 +7,7 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -144,23 +145,22 @@ const (
 
 type scrollButtonOpts struct {
 	label  string
-	icon   *fyne.StaticResource
+	icon   fyne.Resource
 	tapped func()
 }
 
 func (a *App) newFrameView() {
 	sbo := map[int]scrollButtonOpts{
-		firstPhotoBtn: {label: "|<", icon: iconScrollFirst, tapped: func() { a.scrollFrame(0) }},
-		prevFrameBtn:  {label: "<<", icon: iconScrollPrevFrame, tapped: func() { a.scrollFrame(a.frame.pos - a.frame.size) }},
-		prevPhotoBtn:  {label: "<", icon: iconScrollPrev, tapped: func() { a.scrollFrame(a.frame.pos - 1) }},
-		nextPhotoBtn:  {label: ">", icon: iconScrollNext, tapped: func() { a.scrollFrame(a.frame.pos + 1) }},
-		nextFrameBtn:  {label: ">>", icon: iconScrollNextFrame, tapped: func() { a.scrollFrame(a.frame.pos + a.frame.size) }},
-		lastPhotoBtn:  {label: ">|", icon: iconScrollLast, tapped: func() { a.scrollFrame(len(a.List)) }},
+		firstPhotoBtn: {label: "|<", icon: theme.MediaSkipPreviousIcon(), tapped: func() { a.scrollFrame(0) }},
+		prevFrameBtn:  {label: "<<", icon: theme.MediaFastRewindIcon(), tapped: func() { a.scrollFrame(a.frame.pos - a.frame.size) }},
+		prevPhotoBtn:  {label: "<", icon: theme.NewThemedResource(iconScrollBack), tapped: func() { a.scrollFrame(a.frame.pos - 1) }},
+		nextPhotoBtn:  {label: ">", icon: theme.MediaPlayIcon(), tapped: func() { a.scrollFrame(a.frame.pos + 1) }},
+		nextFrameBtn:  {label: ">>", icon: theme.MediaFastForwardIcon(), tapped: func() { a.scrollFrame(a.frame.pos + a.frame.size) }},
+		lastPhotoBtn:  {label: ">|", icon: theme.MediaSkipNextIcon(), tapped: func() { a.scrollFrame(len(a.List)) }},
 	}
 	o := make([]fyne.CanvasObject, len(sbo))
 	a.scrollButton = make([]*widget.Button, len(sbo))
 	for i, opt := range sbo {
-		// b := widget.NewButton(opt.label, opt.tapped)
 		b := widget.NewButtonWithIcon("", opt.icon, opt.tapped)
 		b.Importance = widget.HighImportance
 		o[i] = b
@@ -168,13 +168,6 @@ func (a *App) newFrameView() {
 	}
 
 	a.bottomButtons = container.NewGridWithColumns(len(o), o...)
-	// a.bottomButtons = container.NewGridWithColumns(6, a.scrollButton[firstPhotoBtn], a.scrollButton[prevFrameBtn], a.scrollButton[prevPhotoBtn], a.scrollButton[nextPhotoBtn], a.scrollButton[nextFrameBtn], a.scrollButton[lastPhotoBtn])
-	// a.bottomButtons = container.NewGridWithColumns(
-	// 	3,
-	// 	widget.NewSeparator(),
-	// 	container.NewGridWithColumns(6, a.scrollButton[firstPhotoBtn], a.scrollButton[prevFrameBtn], a.scrollButton[prevPhotoBtn], a.scrollButton[nextPhotoBtn], a.scrollButton[nextFrameBtn], a.scrollButton[lastPhotoBtn]),
-	// 	widget.NewSeparator())
-
 	a.frameView = container.NewBorder(nil, a.bottomButtons, nil, nil, a.frame.Container)
 	a.updateFrameScrollButtons()
 }

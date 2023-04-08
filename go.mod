@@ -1,4 +1,4 @@
-module github.com/vinser/pixine
+module github.com/vinser/pixyne
 
 go 1.20
 
