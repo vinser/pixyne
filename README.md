@@ -12,11 +12,14 @@ You may also set or correct the EXIF shooting date to the file date or to a manu
 
 When saving the changes it is possible to change all file names to the EXIF shooting date.
 
-
-
 ## Installation
 
-You can install this directly from the source code using the Fyne command as follows:
+The Pixine app doesn't require installation - just download the executable and run it.  
+*Now it is ready only for the Windows platform - [download](https://github.com/vinser/pixyne/releases/download/v1.0.0/pixine.exe).*  
+
+You can also install app directly from the source code using the Fyne command.  
+To do so you will need to have Go and C compilers installed - *see the fyne [prerequisites](https://developer.fyne.io/started/).*  
+Once set up execute the following:
 ```
 go get fyne.io/fyne/v2/cmd/fyne
 fyne get github.com/vinser/pixyne
