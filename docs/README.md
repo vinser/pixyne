@@ -8,7 +8,7 @@ The application has a simple and intuitive interface. With one click, you can mo
 You may also set or correct the EXIF shooting date to the file date or to a manually entered date.  
 
 
-![image](docs/pixyneapp.jpg)
+![image](pixyneapp.jpg)
 
 When saving the changes it is possible to change all file names to the EXIF shooting date.
 
