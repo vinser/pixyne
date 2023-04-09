@@ -15,7 +15,7 @@ When saving the changes it is possible to change all file names to the EXIF shoo
 ## Installation
 
 The Pixine app doesn't require installation - just download the executable and run it.  
-*Now it is ready only for the Windows platform - [download](https://github.com/vinser/pixyne/releases/download/v1.0.0/pixine.exe).*  
+*The executable is currently ready for the Windows platform only - [download](https://github.com/vinser/pixyne/releases/download/v1.0.0/pixine.exe).*  
 
 You can also install app directly from the source code using the Fyne command.  
 To do so you will need to have Go and C compilers installed - *see the fyne [prerequisites](https://developer.fyne.io/started/).*  
