@@ -1,14 +1,13 @@
-# Pixyne*
-
-\**Created using [Fyne](https://github.com/fyne-io/fyne) GUI library*
-
+# Pixyne
 
 Use Pixyne to quickly review your photo folder and safely delete bad and similar shots.  
 The application has a simple and intuitive interface. With one click, you can move a photo to a trash subfolder.  
 You may also set or correct the EXIF shooting date to the file date or to a manually entered date.  
 
-
+---
 ![image](pixyneapp.jpg)
+
+![image](pixyneapp2.jpg)
 
 When saving the changes it is possible to change all file names to the EXIF shooting date.
 
@@ -28,3 +27,7 @@ Or you can download the code directly from git:
 ```
 git clone https://github.com/vinser/pixyne.git
 ```
+---
+*Created using [Fyne](https://github.com/fyne-io/fyne) GUI library*  
+*App icon designed by [Icon8](https://icon8.com)*  
+
