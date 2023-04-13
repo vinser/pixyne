@@ -1,4 +1,6 @@
 Website = "https://github.com/vinser/pixyne"
+
 [Details]
+  Name = "Pixyne"
   ID = "com.github.vinser.pixyne"
-  NAME = "Pixyne - photo picker"
+  Icon = "appIcon.png"

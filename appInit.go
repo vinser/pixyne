@@ -9,7 +9,7 @@ import (
 func init() {
 	app.SetMetadata(fyne.AppMetadata{
 		ID:      "com.github.vinser.pixyne",
-		Name:    "Pixyne - photo picker",
+		Name:    "Pixyne",
 		Version: "selfcrafted",
 		Custom:  map[string]string{"OnGitHub": "https://github.com/vinser/pixyne"},
 	})

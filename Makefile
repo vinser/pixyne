@@ -6,8 +6,7 @@ endif
 
 VERSION := $(shell git describe --tags --always --dirty)
 GOVERSION := $(shell go env GOVERSION)
-BUILDTIME := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
-GITHUBURL := https://github.com/vinser/pixyne
+BUILDTIME := $(shell date -u +"%Y-%m-%d %H:%M:%S")
 
 RELEASEOPT := --release
 
@@ -17,11 +16,10 @@ HOSTARCH := $(shell go env GOHOSTARCH)
 build_cmd = \
 fyne build \
 $(if $(1),$(1)) \
---metadata Version=$(VERSION) \
---metadata BuildHost=$(HOSTOS)/$(HOSTARCH) \
---metadata BuildTime=$(BUILDTIME) \
---metadata GoVersion=$(GOVERSION) \
---metadata OnGitHub=$(GITHUBURL)
+--metadata Version="$(VERSION)" \
+--metadata BuildHost="$(HOSTOS)/$(HOSTARCH)" \
+--metadata BuildTime="$(BUILDTIME)" \
+--metadata GoVersion="$(GOVERSION)"
 
 
 all: development
