@@ -15,7 +15,6 @@ import (
 type App struct {
 	fyne.App
 	topWindow fyne.Window
-	inited    bool
 
 	// Current folder
 	folder string
@@ -45,12 +44,13 @@ type App struct {
 	scrollButton []*widget.Button
 
 	// List view
-	listView       *fyne.Container
+	listView *fyne.Container
+	// List headers settings
+	listHeaders    []*ActiveHeader
 	listColumnsNum int
-	headerRow      *widget.Table
-	dataRows       *widget.Table
-	// List view table column listHeaders
-	listHeaders []*ActiveHeader
+	// Header and data tables
+	headerRow *widget.Table
+	dataRows  *widget.Table
 }
 
 // make main window newLayout

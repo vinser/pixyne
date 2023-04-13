@@ -142,55 +142,67 @@ const (
 var orderSymbols = []string{" ", " ↓", " ↑"}
 
 func (a *App) newListView() {
-	a.listColumnsNum = 6
-	a.listHeaders = make([]*ActiveHeader, a.listColumnsNum)
-
-	dateTemplate := DisplyDateFormat
-	dateWidth := widget.NewLabel(dateTemplate).MinSize().Width
-	fileNameWidth := dateWidth
+	a.listHeaders = []*ActiveHeader{
+		{},
+		{Name: "File Name", Order: orderAsc, SortAsc: a.orderByFileNameAsc, SortDesc: a.orderByFileNameDesc},
+		{Name: "Exif Date"},
+		{Name: "File Date", SortAsc: a.orderByFileDateAsc, SortDesc: a.orderByFileDateDesc},
+		{Name: "Entered Date"},
+		{Name: "Dropped"},
+	}
+	a.listColumnsNum = len(a.listHeaders)
+	fileNameTemplate := ""
 	for _, ph := range a.List {
-		fName := filepath.Base(ph.File)
-		if len(fName) > len(dateTemplate) {
-			fileNameWidth = widget.NewLabel(fName).MinSize().Width
+		if fName := filepath.Base(ph.File); len(fName) > len(fileNameTemplate) {
+			fileNameTemplate = fName
 		}
 	}
+
+	a.listHeaders[0].Width = labelMaxWidth("000")
+	a.listHeaders[1].Width = labelMaxWidth(a.listHeaders[1].Name, DisplyDateFormat, fileNameTemplate)
+	a.listHeaders[2].Width = labelMaxWidth(a.listHeaders[2].Name, DisplyDateFormat)
+	a.listHeaders[3].Width = labelMaxWidth(a.listHeaders[3].Name, DisplyDateFormat)
+	a.listHeaders[4].Width = labelMaxWidth(a.listHeaders[4].Name, DisplyDateFormat)
+	a.listHeaders[5].Width = labelMaxWidth(a.listHeaders[5].Name)
+
 	a.headerRow = widget.NewTable(
 		func() (int, int) {
 			return 1, a.listColumnsNum
 		},
 		func() fyne.CanvasObject {
-			header := newActiveHeader(dateTemplate)
+			header := newActiveHeader(DisplyDateFormat)
 			return header
 		},
 		a.headerAction,
 	)
-	a.headerRow.SetColumnWidth(0, 20)
-	a.headerRow.SetColumnWidth(1, fileNameWidth)
-	a.headerRow.SetColumnWidth(2, dateWidth)
-	a.headerRow.SetColumnWidth(3, dateWidth)
-	a.headerRow.SetColumnWidth(4, dateWidth)
-	a.headerRow.SetColumnWidth(5, 80)
-
 	a.dataRows = widget.NewTable(
 		func() (int, int) {
 			return len(a.List), a.listColumnsNum
 		},
 		func() fyne.CanvasObject {
-			data := newActiveCell(dateTemplate)
+			data := newActiveCell(DisplyDateFormat)
 			return data
 		},
 		a.dataAction,
 	)
-	a.dataRows.SetColumnWidth(0, 20)
-	a.dataRows.SetColumnWidth(1, fileNameWidth)
-	a.dataRows.SetColumnWidth(2, dateWidth)
-	a.dataRows.SetColumnWidth(3, dateWidth)
-	a.dataRows.SetColumnWidth(4, dateWidth)
-	a.dataRows.SetColumnWidth(5, 80)
 
-	a.dataRows.OnSelected = a.syncHeader // poor attempt to synchronize table scrolling
+	for i := 0; i < len(a.listHeaders); i++ {
+		a.headerRow.SetColumnWidth(i, a.listHeaders[i].Width)
+		a.dataRows.SetColumnWidth(i, a.listHeaders[i].Width)
+	}
+	a.dataRows.OnSelected = a.syncHeader // silly attempt to synchronize table scrolling
 	bottomCount := widget.NewLabel(fmt.Sprintf("total: %d", len(a.List)))
 	a.listView = container.NewBorder(a.headerRow, bottomCount, nil, nil, a.dataRows)
+}
+
+func labelMaxWidth(labels ...string) float32 {
+	width := widget.NewLabel("").MinSize().Width
+	for _, l := range labels {
+		if w := widget.NewLabel(l).MinSize().Width; w > width {
+			width = w
+		}
+	}
+	return width
 }
 
 type ActiveCell struct {
@@ -224,13 +236,9 @@ func (a *App) dataAction(cell widget.TableCellID, o fyne.CanvasObject) {
 	case 1:
 		text = filepath.Base(photo.File)
 		data.TextStyle.Bold = false
-		data.OnTapped = func() {
-			a.scrollFrame(cell.Row)
-			a.toggleView()
-		}
 	case 2, 3, 4:
 		text = photo.Dates[cell.Col-2]
-		if cell.Col-1 == photo.DateChoice {
+		if cell.Col-2 == photo.DateChoice {
 			data.TextStyle.Bold = true
 		} else {
 			data.TextStyle.Bold = false
@@ -242,15 +250,21 @@ func (a *App) dataAction(cell widget.TableCellID, o fyne.CanvasObject) {
 		}
 	}
 	data.SetText(text)
+	data.OnTapped = func() {
+		a.scrollFrame(cell.Row)
+		a.toggleView()
+	}
+
 }
 
 type ActiveHeader struct {
-	widget.Label
 	Name     string
+	Width    float32
 	Order    int
 	SortAsc  func(i, j int) bool
 	SortDesc func(i, j int) bool
 	OnTapped func()
+	widget.Label
 }
 
 func newActiveHeader(label string) *ActiveHeader {
@@ -270,28 +284,10 @@ func (h *ActiveHeader) TappedSecondary(_ *fyne.PointEvent) {
 }
 
 func (a *App) headerAction(cell widget.TableCellID, o fyne.CanvasObject) {
-	settings := []struct {
-		Title    string
-		SortAsc  func(i, j int) bool
-		SortDesc func(i, j int) bool
-		Default  bool
-	}{
-		{"", nil, nil, false},
-		{"File Name", a.orderByFileNameAsc, a.orderByFileNameDesc, true},
-		{"Exif Date", nil, nil, false},
-		{"File Date", a.orderByFileDateAsc, a.orderByFileDateDesc, false},
-		{"Entered Date", nil, nil, false},
-		{"Dropped", nil, nil, false},
-	}
-
 	header := o.(*ActiveHeader)
-	a.listHeaders[cell.Col] = header
 	header.TextStyle.Bold = true
-	if settings[cell.Col].Default && !a.inited {
-		header.Order = orderAsc
-	}
-	header.Label.SetText(settings[cell.Col].Title + orderSymbols[header.Order])
-	if settings[cell.Col].SortAsc == nil && settings[cell.Col].SortDesc == nil {
+	header.Label.SetText(a.listHeaders[cell.Col].Name + orderSymbols[a.listHeaders[cell.Col].Order])
+	if a.listHeaders[cell.Col].SortAsc == nil && a.listHeaders[cell.Col].SortDesc == nil {
 		header.TextStyle.Italic = true
 		return
 	}
@@ -301,10 +297,10 @@ func (a *App) headerAction(cell widget.TableCellID, o fyne.CanvasObject) {
 				switch h.Order {
 				case unordered, orderDesc:
 					h.Order = orderAsc
-					a.reorderList(settings[cell.Col].SortAsc)
+					a.reorderList(a.listHeaders[cell.Col].SortAsc)
 				case orderAsc:
 					h.Order = orderDesc
-					a.reorderList(settings[cell.Col].SortDesc)
+					a.reorderList(a.listHeaders[cell.Col].SortDesc)
 				}
 				continue
 			} else {

@@ -21,6 +21,5 @@ func main() {
 	a.topWindow.Resize(fyne.NewSize(1344, 756))
 	a.topWindow.CenterOnScreen()
 	a.topWindow.Show()
-	a.inited = true
 	a.Run()
 }
