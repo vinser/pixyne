@@ -1,15 +1,25 @@
-# Pixyne
 
-Use Pixyne to quickly review your photo folder and safely delete bad and similar shots.  
-The application has a simple and intuitive interface. With one click, you can move a photo to a trash subfolder.  
-You may also set or correct the EXIF shooting date to the file date or to a manually entered date.  
+---
+### Use Pixyne to quickly review your photo folder, safely delete bad and similar shots and fix shooting date without any AI.  
 
 ---
 ![image](pixyneapp.jpg)
 
 ![image](pixyneapp2.jpg)
 
-When saving the changes it is possible to change all file names to the EXIF shooting date.
+## How to use
+
+The application has a simple and intuitive interface, but there are some non-obvious things.   
+
+With a click on photo you can mark to drop it in the trash.
+
+When you are in a list view, clicking on a list row opens the corresponding photo.  
+
+You may also set or correct the EXIF shooting date to the file date or to a manually entered date.
+
+When you save changes, you can change all file names to EXIF shooting date format.  
+
+The application stores the current state of the folder so you can undo changes at any time. But the changes will not actually be applied until you save. This is useful when working with a large number of photos and when you need to close the application in order to continue working later. If you open another folder, all unsaved changes will be lost.    
 
 ## Installation
 
