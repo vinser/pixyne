@@ -13,20 +13,20 @@ import (
 	"github.com/disintegration/imaging"
 )
 
-// File date choices
+// File date to use
 const (
-	ChoiceExifDate = iota
-	ChoiceFileDate
-	ChoiceEnteredDate
+	UseExifDate = iota
+	UseFileDate
+	UseEnteredDate
 )
 
 // Photo
 type Photo struct {
-	File       string
-	Droped     bool
-	Img        *canvas.Image
-	Dates      [3]string
-	DateChoice int
+	File     string        `json:"-"`
+	Dropped  bool          `json:"dropped"`
+	Img      *canvas.Image `json:"-"`
+	Dates    [3]string     `json:"dates"`
+	DateUsed int           `json:"date_used"`
 }
 
 // frame column that contains button with photo image as background and date fix input
@@ -41,18 +41,18 @@ func (p *Photo) imgButton() *fyne.Container {
 	btn = widget.NewButton(
 		"",
 		func() {
-			if p.Droped {
+			if p.Dropped {
 				btn.SetText("")
 				p.Img.Translucency = 0
-				p.Droped = false
+				p.Dropped = false
 			} else {
 				btn.SetText("DROPPED")
 				p.Img.Translucency = 0.5
-				p.Droped = true
+				p.Dropped = true
 			}
 		},
 	)
-	if p.Droped {
+	if p.Dropped {
 		btn.SetText("DROPPED")
 		p.Img.Translucency = 0.5
 	}
@@ -62,7 +62,7 @@ func (p *Photo) imgButton() *fyne.Container {
 // single photo date fix input
 func (p *Photo) dateInput() *fyne.Container {
 	choices := []string{"EXIF", "File", "Input"}
-	d := p.Dates[p.DateChoice]
+	d := p.Dates[p.DateUsed]
 
 	eDate := widget.NewEntry()
 	eDate.Validator = validation.NewTime(DisplyDateFormat)
@@ -74,29 +74,29 @@ func (p *Photo) dateInput() *fyne.Container {
 		func(s string) {
 			switch s {
 			case "EXIF":
-				p.Dates[ChoiceEnteredDate] = ""
-				p.DateChoice = ChoiceExifDate
-				eDate.SetText(p.Dates[p.DateChoice])
+				p.Dates[UseEnteredDate] = ""
+				p.DateUsed = UseExifDate
+				eDate.SetText(p.Dates[p.DateUsed])
 				eDate.Disable()
 			case "File":
-				p.Dates[ChoiceEnteredDate] = ""
-				p.DateChoice = ChoiceFileDate
-				eDate.SetText(p.Dates[p.DateChoice])
+				p.Dates[UseEnteredDate] = ""
+				p.DateUsed = UseFileDate
+				eDate.SetText(p.Dates[p.DateUsed])
 				eDate.Disable()
 			case "Input":
-				p.DateChoice = ChoiceEnteredDate
-				if p.Dates[p.DateChoice] == "" {
-					if p.Dates[ChoiceExifDate] == "" {
-						p.Dates[p.DateChoice] = p.Dates[ChoiceFileDate]
+				p.DateUsed = UseEnteredDate
+				if p.Dates[p.DateUsed] == "" {
+					if p.Dates[UseExifDate] == "" {
+						p.Dates[p.DateUsed] = p.Dates[UseFileDate]
 					} else {
-						p.Dates[p.DateChoice] = p.Dates[ChoiceExifDate]
+						p.Dates[p.DateUsed] = p.Dates[UseExifDate]
 					}
 				}
-				eDate.SetText(p.Dates[p.DateChoice])
+				eDate.SetText(p.Dates[p.DateUsed])
 				eDate.Enable()
 			}
 		})
-	rgDateChoice.SetSelected(choices[p.DateChoice])
+	rgDateChoice.SetSelected(choices[p.DateUsed])
 	rgDateChoice.Horizontal = true
 
 	gr := container.NewVBox(rgDateChoice, eDate)

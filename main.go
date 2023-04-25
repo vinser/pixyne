@@ -1,8 +1,6 @@
 package main
 
 import (
-	"os"
-
 	_ "image/jpeg"
 
 	"fyne.io/fyne/v2"
@@ -14,8 +12,9 @@ func main() {
 	a.SetIcon(appIcon)
 	a.Settings().SetTheme(&Theme{})
 	a.topWindow = a.NewWindow(a.Metadata().Name)
-	wd, _ := os.Getwd()
-	a.newPhotoList(a.Preferences().StringWithFallback("folder", wd))
+	a.topWindow.SetOnClosed(a.saveState)
+	a.loadState()
+	a.newPhotoList()
 	a.newLayout()
 	a.topWindow.SetMaster()
 	a.topWindow.Resize(fyne.NewSize(1344, 756))

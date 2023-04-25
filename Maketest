@@ -1,0 +1,23 @@
+ifeq ($(OS),Windows_NT)
+SHELL := powershell.exe
+.SHELLFLAGS := -NoProfile -Command
+WSLOPT := wsl
+endif
+
+HOSTOS := $(shell go env GOHOSTOS)
+
+bs_cmd = \
+
+all: host
+
+host:
+
+darwin: 
+
+linux: 
+
+windows:
+	$(if $(WSLOPT),$(WSLOPT)) chmod +x ./app2dmg_t.sh
+	$(if $(WSLOPT),$(WSLOPT)) ./app2dmg_t.sh
+
+.PHONY: host darwin linux windows

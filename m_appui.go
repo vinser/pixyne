@@ -1,8 +1,6 @@
 package main
 
 import (
-	"os"
-
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
@@ -16,8 +14,8 @@ type App struct {
 	fyne.App
 	topWindow fyne.Window
 
-	// Current folder
-	folder string
+	// Current folder state
+	state State
 	// List of photos in folder
 	*PhotoList
 	// Frame with photos
@@ -101,10 +99,10 @@ func (a *App) showFrameToolbar() {
 	a.toolBar.Append(a.actSettings)
 	a.toolBar.Append(a.actAbout)
 	if len(a.List) > 0 {
-		if a.frame.size < MaxFrameSize {
+		if a.frame.Size < MaxFrameSize && a.frame.Size < len(a.List) {
 			a.toolBar.Prepend(a.actStrechFrame)
 		}
-		if a.frame.size > MinFrameSize {
+		if a.frame.Size > MinFrameSize {
 			a.toolBar.Prepend(a.actShrinkFrame)
 		}
 	} else {
@@ -125,8 +123,6 @@ func (a *App) showListToolbar() {
 
 // open photo folder dialog
 func (a *App) openFolderDialog() {
-	folder := ""
-
 	d := dialog.NewFolderOpen(func(list fyne.ListableURI, err error) {
 		if err != nil {
 			dialog.ShowError(err, a.topWindow)
@@ -136,14 +132,12 @@ func (a *App) openFolderDialog() {
 			a.topWindow.Close()
 			return
 		}
-		folder = list.Path()
-		a.Preferences().SetString("folder", folder)
-		a.newPhotoList(folder)
+		a.clearState()
+		a.state.Folder = list.Path()
+		a.newPhotoList()
 		a.newLayout()
 	}, a.topWindow)
-	wd, _ := os.Getwd()
-	location := a.Preferences().StringWithFallback("folder", wd)
-	locationUri, _ := storage.ListerForURI(storage.NewFileURI(location))
+	locationUri, _ := storage.ListerForURI(storage.NewFileURI(a.state.Folder))
 	d.SetLocation(locationUri)
 	d.Resize(fyne.NewSize(672, 378))
 	d.Show()

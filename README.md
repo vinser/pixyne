@@ -22,6 +22,9 @@ When you save changes, you can change all file names to EXIF shooting date forma
 
 The application stores the current state of the folder so you can undo changes at any time. But the changes will not actually be applied until you save. This is useful when working with a large number of photos and when you need to close the application in order to continue working later. If you open another folder, all unsaved changes will be lost.    
 
+On save originals of modified photos will be copied to "originals" subfolder and photos marked to drop will be moved to "dropped" subfolder.  
+
+
 ## Installation
 
 The Pixine app doesn't require installation - just download the executable and run it.  

@@ -4,32 +4,44 @@ SHELL := powershell.exe
 .SHELLFLAGS := -NoProfile -Command
 endif
 
-VERSION := $(shell git describe --tags --always --dirty)
+GITTAGVERSION := $(shell git describe --tags --always --dirty)
 GOVERSION := $(shell go env GOVERSION)
 BUILDTIME := $(shell date -u +"%Y-%m-%d %H:%M:%S")
-
-RELEASEOPT := --release
 
 HOSTOS := $(shell go env GOHOSTOS)
 HOSTARCH := $(shell go env GOHOSTARCH)
 
 build_cmd = \
-fyne build \
+fyne-cross  \
 $(if $(1),$(1)) \
---metadata Version="$(VERSION)" \
+$(if $(2),$(2)) \
+--app-build 1 \
+--app-id com.github.vinser.pixyne \
+--app-version 1.0.0 \
+--icon appIcon.png \
+--name Pixyne \
+--metadata GitTagVersion="$(GITTAGVERSION)" \
 --metadata BuildHost="$(HOSTOS)/$(HOSTARCH)" \
 --metadata BuildTime="$(BUILDTIME)" \
---metadata GoVersion="$(GOVERSION)"
+--metadata GoVersion="$(GOVERSION)" \
+--metadata OnGitHub="https://github.com/vinser/pixyne"
 
+# Current host build
+all: host
+	
+host:
+	$(call build_cmd, $(HOSTOS))
 
-all: development
+darwin:
+	$(call build_cmd, darwin) -macosx-sdk-path="C:\MyDev\macOS\XC12.5\SDKs\MacOSX11.3.sdk"
 
-# Current host build development build
-development:
-	$(call build_cmd,)
+linux:
+	$(call build_cmd, linux) -arch=amd64
+	$(call build_cmd, linux) -arch=arm64
 
-# Current host build release build
-release:
-	$(call build_cmd,$(RELEASEOPT),)
+windows:
+	$(call build_cmd, windows)
 
-.PHONY: all development release
+xbuild: darwin linux windows
+
+.PHONY: all host darwin linux windows xbuild

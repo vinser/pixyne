@@ -11,6 +11,5 @@ func init() {
 		ID:      "com.github.vinser.pixyne",
 		Name:    "Pixyne",
 		Version: "selfcrafted",
-		Custom:  map[string]string{"OnGitHub": "https://github.com/vinser/pixyne"},
 	})
 }

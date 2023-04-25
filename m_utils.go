@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -78,29 +77,20 @@ func UpdateExifDate(file, backupDirName, date string) error {
 	return nil
 }
 
-// copy file from src to dst path
-func fileCopy(src, dst string) (int64, error) {
-	sourceFileStat, err := os.Stat(src)
+// copy photo from source to destination path
+func copyPhoto(source, destination string) (int64, error) {
+	src, err := os.Open(source)
 	if err != nil {
 		return 0, err
 	}
+	defer src.Close()
 
-	if !sourceFileStat.Mode().IsRegular() {
-		return 0, fmt.Errorf("%s is not a regular file", src)
-	}
-
-	source, err := os.Open(src)
+	dst, err := os.Create(destination)
 	if err != nil {
 		return 0, err
 	}
-	defer source.Close()
-
-	destination, err := os.Create(dst)
-	if err != nil {
-		return 0, err
-	}
-	defer destination.Close()
-	nBytes, err := io.Copy(destination, source)
+	defer dst.Close()
+	nBytes, err := io.Copy(dst, src)
 	return nBytes, err
 }
 
@@ -108,7 +98,7 @@ const DisplyDateFormat = "2006.01.02 15:04:05"
 const FileNameDateFormat = "20060102_150405"
 
 // replace file name with dateTime in the path
-func pathNameToDate(path, displayDate string) string {
+func fileNameToDate(path, displayDate string) string {
 	t, _ := time.Parse(DisplyDateFormat, displayDate)
 	return filepath.Join(filepath.Dir(path), t.Format(FileNameDateFormat)) + "." + filepath.Ext(path)
 }
