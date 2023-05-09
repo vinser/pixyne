@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Product Id="*" UpgradeCode="FF255D9D-351D-4309-BD90-8E0E3E57D542" 
+        Version="1.1.0" Language="1033" 
+        Name="Pixyne" Manufacturer="vinser">
+        
+        <Package InstallerVersion="300" Compressed="yes"/>
+        <Media Id="1" Cabinet="pixyne.cab" EmbedCab="yes" />
+
+        <!-- Define the directory structure -->
+        <Directory Id="TARGETDIR" Name="SourceDir">
+            <Directory Id="ProgramFilesFolder">
+                <Directory Id="APPINATALLFOLDER" Name="Pixyne"/>
+            </Directory>
+            <Directory Id="ProgramMenuFolder">
+                <Directory Id="AppMenuFolder" Name="Pixyne"/>
+            </Directory>        
+        </Directory>
+
+        <!-- Add files to installer package -->
+        <DirectoryRef Id="APPINATALLFOLDER">
+            <Component Id="AppExecutable" Guid="4FAA56E5-B5E2-4F80-BF22-1302FC58026B">
+                <File Id="Pixyneexe" Source="fyne-cross/bin/windows-386/Pixyne.exe" KeyPath="yes" />
+            </Component>
+        </DirectoryRef>
+        
+        <!-- Add the shortcut to installer package -->
+        <DirectoryRef Id="AppMenuFolder">
+            <Component Id="AppShortcut" Guid="A9F35AB5-65F7-4C86-8FA7-F41802861EC8">
+                <Shortcut Id="AppStartMenuShortcut"
+                          Name="Pixyne"
+                          Description="Pixine - photo picker"
+                          Target="[#Pixyneexe]"
+                          WorkingDirectory="APPLICATIONROOTDIRECTORY"
+                          Icon="icon.ico"/>
+                <RemoveFolder Id="AppMenuFolder" On="uninstall"/>
+                <RegistryValue Root="HKCU" Key="Software\[Manufacturer]\[ProductName]" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
+            </Component>
+        </DirectoryRef>
+        
+        <!-- Add the icon to installer package -->
+        <Icon Id="icon.ico" SourceFile="icons/msiIcon.ico"/>
+        <Property Id="ARPPRODUCTICON" Value="icon.ico" />
+
+        <!-- Install the componens -->
+        <Feature Id="MainApplication" Title="Main Application" Level="1">
+            <ComponentRef Id="AppExecutable" />
+            <ComponentRef Id="AppShortcut" />           
+        </Feature>
+    </Product>
+</Wix>
+
+

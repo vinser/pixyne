@@ -1,0 +1,48 @@
+#  
+#   Cross-builds:
+
+xbuild: xdarwin xlinux xwindows ##    - all desktop PCs and single board computers (SBC)
+
+xdarwin: xdarwin_amd64 xdarwin_arm64 ##   - Mac OS X desktops
+
+xdarwin_amd64:
+	$(call xbuild_cmd,darwin,amd64) -macosx-sdk-path=$(HOME)/SDKs/MacOSX11.3.sdk
+	./sh/app2dmg.sh amd64
+
+xdarwin_arm64:
+	$(call xbuild_cmd,darwin,arm64) -macosx-sdk-path=$(HOME)/SDKs/MacOSX11.3.sdk
+	./sh/app2dmg.sh arm64
+
+xlinux: xlinux_amd64 xlinux_arm64 xlinux_arm xlinux_386 ##    - Linux desktops and SBCs
+
+xlinux_amd64:
+	$(call xbuild_cmd,linux,amd64)
+	cp fyne-cross/dist/linux-amd64/Pixyne.tar.xz fyne-cross/pixyne-linux-amd64.tar.xz
+
+xlinux_arm64:
+	$(call xbuild_cmd,linux,arm64)
+	cp fyne-cross/dist/linux-arm64/Pixyne.tar.xz fyne-cross/pixyne-linux-arm64.tar.xz
+
+xlinux_arm:
+	$(call xbuild_cmd,linux,arm)
+	cp fyne-cross/dist/linux-arm/Pixyne.tar.xz fyne-cross/pixyne-linux-arm.tar.xz
+
+xlinux_386:
+	$(call xbuild_cmd,linux,386)
+	cp fyne-cross/dist/linux-386/Pixyne.tar.xz fyne-cross/pixyne-linux-386.tar.xz
+
+xwindows: xwindows_amd64 xwindows_386 ##  - Windows desktops
+
+xwindows_amd64:
+	$(call xbuild_cmd,windows,amd64)
+	./sh/app2img.sh amd64
+
+xwindows_386:
+	$(call xbuild_cmd,windows,386)
+	./sh/app2img.sh 386
+	
+xsdk: ##      - Extract SDK from Apple Command Line Tools for Xcode
+	sudo rm -rf $(HOME)/SDKs
+	sudo $(HOME)/go/bin/fyne-cross darwin-sdk-extract -pull -xcode-path $(HOME)/Command_Line_Tools_for_Xcode_12.5.1.dmg
+
+.PHONY: xbuild xdarwin xlinux xwindows macsdk xdarwin_amd64 xdarwin_arm64 xlinux_amd64 xlinux_arm64 xlinux_arm xlinux_386 xwindows_amd64 xwindows_386
