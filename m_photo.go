@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -105,20 +106,25 @@ func (p *Photo) dateInput() *fyne.Container {
 }
 
 // get canvas image from file
-func (p *Photo) GetImage(scale int) (img *canvas.Image) {
+func (p *Photo) GetImage(frameSize int) (img *canvas.Image) {
 	m, err := imaging.Open(p.File, imaging.AutoOrientation(true))
 	if err != nil {
 		log.Fatal(err)
 	}
-	if scale > 1 {
-		width := (m.Bounds().Max.X - m.Bounds().Min.X) / scale
-		// m = imaging.Resize(m, width, 0, imaging.Lanczos)
-		m = imaging.Resize(m, width, 0, imaging.CatmullRom)
+	filter := imaging.CatmullRom
+	// filter := imaging.Lanczos
+	if frameSize > 1 {
+		m = imaging.Resize(m, m.Bounds().Dx()/frameSize, 0, filter)
 	}
 	img = canvas.NewImageFromImage(m)
 	img.FillMode = canvas.ImageFillContain
-	// img.ScaleMode = canvas.ImageScalePixels
 	img.ScaleMode = canvas.ImageScaleFastest
+	if runtime.GOOS == "linux" { // !!! TO REMOVE fyne issue #3891 workaround
+		switch runtime.GOARCH {
+		case "arm64", "arm":
+			img.ScaleMode = canvas.ImageScaleSmooth
+		}
+	}
 	return
 }
 
