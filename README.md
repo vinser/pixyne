@@ -21,7 +21,7 @@ Pixyne application has a simple and intuitive interface, but there are some non-
 
 ## Installation
 
-The easiest way to install the application is to download and run the installation file from the [latest release](https://github.com/vinser/pixyne/releases/tag/v1.1.0) that matches your operating system and CPU type.
+The easiest way to install the application is to download and run the installation file from the [latest release](https://github.com/vinser/pixyne/releases/tag/v1.2.0) that matches your operating system and CPU type.
 
 |OS        |CPU type              |Install package            |Tested* |  
 |----------|----------------------|---------------------------|:------:|  

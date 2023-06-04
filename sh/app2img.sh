@@ -2,12 +2,12 @@
 
 dpkg --verify msitools &>/dev/null
 if [ "$?" -gt 0 ] ; then
-    sudo apt apt install msitools # not installed
+    sudo apt install msitools # not installed
 fi
 
 dpkg --verify wixl &>/dev/null
 if [ "$?" -gt 0 ] ; then
-    sudo apt apt install wixl # not installed
+    sudo apt install wixl # not installed
 fi
 
 # build windows installer msi

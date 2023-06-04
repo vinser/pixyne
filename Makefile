@@ -10,6 +10,20 @@ BUILDTIME := $(shell date -u +"%Y-%m-%d %H:%M:%S")
 HOSTOS := $(shell go env GOHOSTOS)
 HOSTARCH := $(shell go env GOHOSTARCH)
 
+ifeq ($(HOSTOS),linux)
+# semantic_ver = $(shell sh/app-semver.sh)
+$(shell sh/app-semver.sh)
+
+xbuild_cmd = \
+fyne-cross  \
+$(1) \
+-arch=$(2) \
+-pull \
+-metadata BuildForOS="$(1)/$(2)" \
+-metadata BuildTime="$(BUILDTIME)" \
+-metadata GoVersion="$(GOVERSION)"
+endif
+
 ## -----------------------------------------------------------------
 ##  
 ## Usage: make <target>
@@ -27,23 +41,6 @@ endif
 
 # Cross-build on linux OS host
 ifeq ($(HOSTOS),linux)
-
-semantic_ver = $(shell sh/app-semver.sh)
-
-xbuild_cmd = \
-fyne-cross  \
-$(1) \
--arch=$(2) \
--pull \
--app-build 1 \
--app-id com.github.vinser.pixyne \
--app-version $(semantic_ver) \
--icon appIcon.png \
--name Pixyne \
--metadata BuildForOS="$(1)/$(2)" \
--metadata BuildTime="$(BUILDTIME)" \
--metadata GoVersion="$(GOVERSION)"
-
 include MakefileX
 else
 xbuild xdarwin xlinux xwindows macsdk xdarwin_amd64 xdarwin_arm64 xlinux_amd64 xlinux_arm64 xlinux_arm xlinux_386 xwindows_amd64 xwindows_386:

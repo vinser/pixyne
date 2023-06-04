@@ -41,7 +41,9 @@ xwindows_386:
 	$(call xbuild_cmd,windows,386)
 	./sh/app2img.sh 386
 	
-xsdk: ##      - Extract SDK from Apple Command Line Tools for Xcode
+xsdk: ##      - Extract SDK from Apple Command Line Tools for Xcode 
+##              only version Xcode_12.5.1 was tested 
+##              https://developer.apple.com/download/all/?q=Command%20Line%20Tools
 	sudo rm -rf $(HOME)/SDKs
 	sudo $(HOME)/go/bin/fyne-cross darwin-sdk-extract -pull -xcode-path $(HOME)/Command_Line_Tools_for_Xcode_12.5.1.dmg
 
