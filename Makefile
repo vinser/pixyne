@@ -15,7 +15,7 @@ ifeq ($(HOSTOS),linux)
 $(shell sh/app-semver.sh)
 
 xbuild_cmd = \
-fyne-cross  \
+$(HOME)/go/bin/fyne-cross \
 $(1) \
 -arch=$(2) \
 -pull \

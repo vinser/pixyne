@@ -2,7 +2,7 @@
 
 dpkg --verify hfsprogs &>/dev/null
 if [ "$?" -gt 0 ] ; then
-    sudo apt install hfsprogs # not installed
+    sudo apt install -y hfsprogs # not installed
 fi
 
 # turn macOS .app to dmg
