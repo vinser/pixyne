@@ -3,7 +3,7 @@ module github.com/vinser/pixyne
 go 1.20
 
 require (
-	fyne.io/fyne/v2 v2.3.4
+	fyne.io/fyne/v2 v2.3.5
 	github.com/disintegration/imaging v1.6.2
 	github.com/tajtiattila/metadata v0.0.0-20221215122306-ecdbfc756113
 )
@@ -11,7 +11,7 @@ require (
 // replace fyne.io/fyne/v2 v2.3.4 => ../fyne
 
 require (
-	fyne.io/systray v1.10.1-0.20230403195833-7dc3c09283d6 // indirect
+	fyne.io/systray v1.10.1-0.20230602210930-b6a2d6ca2a7b // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fredbi/uri v0.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
