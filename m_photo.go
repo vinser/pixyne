@@ -4,7 +4,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"runtime"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -119,12 +118,6 @@ func (p *Photo) GetImage(frameSize int) (img *canvas.Image) {
 	img = canvas.NewImageFromImage(m)
 	img.FillMode = canvas.ImageFillContain
 	img.ScaleMode = canvas.ImageScaleFastest
-	if runtime.GOOS == "linux" { // !!! TO REMOVE fyne issue #3891 workaround
-		switch runtime.GOARCH {
-		case "arm64", "arm":
-			img.ScaleMode = canvas.ImageScaleSmooth
-		}
-	}
 	return
 }
 
