@@ -46,9 +46,8 @@ type App struct {
 	// List headers settings
 	listHeaders    []*ActiveHeader
 	listColumnsNum int
-	// Header and data tables
-	headerRow *widget.Table
-	dataRows  *widget.Table
+	// List table
+	listTable *widget.Table
 }
 
 // make main window newLayout
