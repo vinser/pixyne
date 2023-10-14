@@ -13,10 +13,11 @@ import (
 )
 
 const (
-	InitListPos   = 0
-	InitFrameSize = 3
-	MinFrameSize  = 1
-	MaxFrameSize  = 6
+	InitListPos    = 0
+	InitFrameSize  = 3
+	MinFrameSize   = 1
+	MaxFrameSize   = 6
+	MaxFrameColumn = 3
 )
 
 // Choice tab frame - row with photos
@@ -45,9 +46,23 @@ func (a *App) initFrame() {
 	for i := f.Pos; i < f.Pos+f.Size; i++ {
 		a.List[i].Img = a.List[i].GetImage(f.Size)
 	}
-	f.Container = container.NewGridWithColumns(f.Size)
+	f.Container = container.NewGridWithColumns(frameColumnNum(f.Size))
 	for i := 0; i < f.Size && i < len(a.List); i++ {
 		f.Add(a.List[f.Pos+i].FrameColumn())
+	}
+}
+
+// frameColumnNum calculates the number of columns for the frame.
+func frameColumnNum(frameSize int) int {
+	switch frameSize {
+	case 0:
+		return 1
+	case 4:
+		return 2
+	case 5, 6:
+		return MaxFrameColumn
+	default:
+		return frameSize
 	}
 }
 
@@ -142,7 +157,7 @@ func (a *App) resizeFrame(zoom int) {
 	for i := 0; i < f.Size; i++ {
 		f.Add(a.List[f.Pos+i].FrameColumn())
 	}
-	f.Layout = layout.NewGridLayoutWithColumns(len(f.Objects))
+	f.Layout = layout.NewGridLayoutWithColumns(frameColumnNum(len(f.Objects)))
 	f.Refresh()
 	a.showFrameToolbar()
 	a.updateFrameScrollButtons()
