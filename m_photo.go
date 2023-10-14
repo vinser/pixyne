@@ -56,7 +56,7 @@ func (p *Photo) imgButton() *fyne.Container {
 		btn.SetText("DROPPED")
 		p.Img.Translucency = 0.5
 	}
-	return container.NewMax(p.Img, btn)
+	return container.NewStack(p.Img, btn)
 }
 
 // single photo date fix input

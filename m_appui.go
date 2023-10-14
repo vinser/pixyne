@@ -60,7 +60,7 @@ func (a *App) newLayout() {
 	a.newFrameView()
 	a.newListView()
 	a.listView.Hide()
-	a.mainContent = container.NewBorder(a.toolBar, nil, nil, nil, container.NewMax(a.frameView, a.listView))
+	a.mainContent = container.NewBorder(a.toolBar, nil, nil, nil, container.NewStack(a.frameView, a.listView))
 	a.topWindow.SetContent(a.mainContent)
 }
 
