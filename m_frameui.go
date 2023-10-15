@@ -77,7 +77,7 @@ func (a *App) scrollFrame(pos int) {
 	}
 
 	switch {
-	case pos-f.Pos >= f.Size || f.Pos-pos >= f.Size:
+	case pos-f.Pos >= f.Size || f.Pos-pos >= f.Size || pos == f.Pos:
 		for i := f.Pos; i < f.Pos+f.Size; i++ {
 			a.List[i].Img = nil
 		}
