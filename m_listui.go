@@ -48,7 +48,6 @@ func (a *App) newListView() {
 	for i := 0; i < len(a.listHeaders); i++ {
 		a.listTable.SetColumnWidth(i, a.listHeaders[i].Width)
 	}
-	// a.dataRows.OnSelected = a.syncHeader // silly attempt to synchronize table scrolling
 	bottomCount := widget.NewLabel(fmt.Sprintf("total: %d", len(a.List)))
 	a.listView = container.NewBorder(nil, bottomCount, nil, nil, a.listTable)
 }
