@@ -113,7 +113,11 @@ func (p *Photo) GetImage(frameSize int) (img *canvas.Image) {
 	filter := imaging.CatmullRom
 	// filter := imaging.Lanczos
 	if frameSize > 1 {
-		m = imaging.Resize(m, m.Bounds().Dx()/frameSize, 0, filter)
+		if m.Bounds().Dx() > m.Bounds().Dy() {
+			m = imaging.Resize(m, m.Bounds().Dx()/frameSize, 0, filter)
+		} else {
+			m = imaging.Resize(m, 0, m.Bounds().Dy()/frameSize, filter)
+		}
 	}
 	img = canvas.NewImageFromImage(m)
 	img.FillMode = canvas.ImageFillContain
