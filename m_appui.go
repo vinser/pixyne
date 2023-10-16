@@ -26,13 +26,14 @@ type App struct {
 	// Toolbar
 	toolBar *widget.Toolbar
 	// Toolbar actions
-	actAbout       *widget.ToolbarAction
-	actOpenFolder  *widget.ToolbarAction
-	actSaveList    *widget.ToolbarAction
-	actSettings    *widget.ToolbarAction
-	actStrechFrame *widget.ToolbarAction
-	actShrinkFrame *widget.ToolbarAction
-	actToggleView  *widget.ToolbarAction
+	actAbout            *widget.ToolbarAction
+	actOpenFolder       *widget.ToolbarAction
+	actSaveList         *widget.ToolbarAction
+	actSettings         *widget.ToolbarAction
+	actStrechFrame      *widget.ToolbarAction
+	actShrinkFrame      *widget.ToolbarAction
+	actToggleView       *widget.ToolbarAction
+	actToggleFullScreen *widget.ToolbarAction
 
 	// Frame view
 	frameView *fyne.Container
@@ -71,6 +72,7 @@ func (a *App) newToolBar() {
 	a.actStrechFrame = widget.NewToolbarAction(theme.ContentAddIcon(), func() { a.resizeFrame(AddColumn) })
 	a.actShrinkFrame = widget.NewToolbarAction(theme.ContentRemoveIcon(), func() { a.resizeFrame(RemoveColumn) })
 	a.actToggleView = widget.NewToolbarAction(theme.ListIcon(), a.toggleView)
+	a.actToggleFullScreen = widget.NewToolbarAction(theme.ViewFullScreenIcon(), a.toggleFullScreen)
 
 	a.toolBar = widget.NewToolbar()
 }
@@ -90,10 +92,22 @@ func (a *App) toggleView() {
 	a.toolBar.Refresh()
 }
 
+func (a *App) toggleFullScreen() {
+	if a.topWindow.FullScreen() {
+		a.topWindow.SetFullScreen(false)
+		a.actToggleFullScreen.SetIcon(theme.ViewFullScreenIcon())
+	} else {
+		a.topWindow.SetFullScreen(true)
+		a.actToggleFullScreen.SetIcon(theme.ViewRestoreIcon())
+	}
+	a.toolBar.Refresh()
+}
+
 func (a *App) showFrameToolbar() {
 	a.toolBar.Items = []widget.ToolbarItem{}
 	a.toolBar.Append(widget.NewToolbarSpacer())
 	a.toolBar.Append(a.actToggleView)
+	a.toolBar.Append(a.actToggleFullScreen)
 	a.toolBar.Append(widget.NewToolbarSeparator())
 	a.toolBar.Append(a.actSettings)
 	a.toolBar.Append(a.actAbout)
@@ -115,6 +129,7 @@ func (a *App) showListToolbar() {
 	a.toolBar.Append(a.actSaveList)
 	a.toolBar.Append(widget.NewToolbarSpacer())
 	a.toolBar.Append(a.actToggleView)
+	a.toolBar.Append(a.actToggleFullScreen)
 	a.toolBar.Append(widget.NewToolbarSeparator())
 	a.toolBar.Append(a.actSettings)
 	a.toolBar.Append(a.actAbout)
