@@ -29,12 +29,6 @@ func (a *App) newListView() {
 		{Name: "Dropped"},
 	}
 	a.listColumnsNum = len(a.listHeaders)
-	// fileNameTemplate := ""
-	// for _, ph := range a.List {
-	// 	if fName := filepath.Base(ph.File); len(fName) > len(fileNameTemplate) {
-	// 		fileNameTemplate = fName
-	// 	}
-	// }
 
 	a.listHeaders[0].Width = labelMaxWidth(a.listHeaders[0].Name, DisplyDateFormat, FileNameDateFormat+".000")
 	a.listHeaders[1].Width = labelMaxWidth(a.listHeaders[1].Name, DisplyDateFormat)
