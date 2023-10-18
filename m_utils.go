@@ -94,7 +94,7 @@ func copyPhoto(source, destination string) (int64, error) {
 	return nBytes, err
 }
 
-const DisplyDateFormat = "2006.01.02 15:04:05"
+const DisplyDateFormat = "01.02.2006 15:04:05"
 const FileNameDateFormat = "20060102_150405"
 
 // replace file name with dateTime in the path
