@@ -32,6 +32,7 @@ type Photo struct {
 // frame column that contains button with photo image as background and date fix input
 func (p *Photo) FrameColumn() *fyne.Container {
 	fileLabel := widget.NewLabelWithStyle(filepath.Base(p.File), fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	fileLabel.Truncation = fyne.TextTruncateEllipsis
 	return container.NewBorder(fileLabel, p.dateInput(), nil, nil, p.imgButton())
 }
 

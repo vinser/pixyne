@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strconv"
 
@@ -28,14 +29,14 @@ func (a *App) newListView() {
 		{Name: "Dropped"},
 	}
 	a.listColumnsNum = len(a.listHeaders)
-	fileNameTemplate := ""
-	for _, ph := range a.List {
-		if fName := filepath.Base(ph.File); len(fName) > len(fileNameTemplate) {
-			fileNameTemplate = fName
-		}
-	}
+	// fileNameTemplate := ""
+	// for _, ph := range a.List {
+	// 	if fName := filepath.Base(ph.File); len(fName) > len(fileNameTemplate) {
+	// 		fileNameTemplate = fName
+	// 	}
+	// }
 
-	a.listHeaders[0].Width = labelMaxWidth(a.listHeaders[0].Name, DisplyDateFormat, fileNameTemplate)
+	a.listHeaders[0].Width = labelMaxWidth(a.listHeaders[0].Name, DisplyDateFormat, FileNameDateFormat+".000")
 	a.listHeaders[1].Width = labelMaxWidth(a.listHeaders[1].Name, DisplyDateFormat)
 	a.listHeaders[2].Width = labelMaxWidth(a.listHeaders[2].Name, DisplyDateFormat)
 	a.listHeaders[3].Width = labelMaxWidth(a.listHeaders[3].Name, DisplyDateFormat)
@@ -54,8 +55,10 @@ func (a *App) newListView() {
 
 func labelMaxWidth(labels ...string) float32 {
 	width := widget.NewLabel("").MinSize().Width
+	re := regexp.MustCompile(`\w`)
 	for _, l := range labels {
-		if w := widget.NewLabel(l).MinSize().Width; w > width {
+		l := re.ReplaceAllString(l, "0")
+		if w := widget.NewLabelWithStyle(l, fyne.TextAlignLeading, fyne.TextStyle{Bold: true}).MinSize().Width; w > width {
 			width = w
 		}
 	}
@@ -71,6 +74,7 @@ func newActiveCell(label string) *ActiveCell {
 	c := &ActiveCell{}
 	c.ExtendBaseWidget(c)
 	c.Label.SetText(label)
+	c.Truncation = fyne.TextTruncateEllipsis
 	return c
 }
 
@@ -124,13 +128,13 @@ func (a *App) dataUpdate(id widget.TableCellID, o fyne.CanvasObject) {
 }
 
 type ActiveHeader struct {
+	widget.Label
 	Name     string
 	Width    float32
 	Order    int
+	OnTapped func()
 	SortAsc  func(i, j int) bool
 	SortDesc func(i, j int) bool
-	OnTapped func()
-	widget.Label
 }
 
 func newActiveHeader(label string) *ActiveHeader {
