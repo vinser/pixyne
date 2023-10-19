@@ -19,7 +19,7 @@ type App struct {
 	// List of photos in folder
 	*PhotoList
 	// Frame with photos
-	frame *Frame
+	*Frame
 
 	mainContent *fyne.Container
 
@@ -44,9 +44,8 @@ type App struct {
 
 	// List view
 	listView *fyne.Container
-	// List headers settings
-	listHeaders    []*ActiveHeader
-	listColumnsNum int
+	// List columns settings
+	listColumns []*ListCell
 	// List table
 	listTable *widget.Table
 }
@@ -112,10 +111,10 @@ func (a *App) showFrameToolbar() {
 	a.toolBar.Append(a.actSettings)
 	a.toolBar.Append(a.actAbout)
 	if len(a.List) > 0 {
-		if a.frame.Size < MaxFrameSize && a.frame.Size < len(a.List) {
+		if a.Size < MaxFrameSize && a.Size < len(a.List) {
 			a.toolBar.Prepend(a.actStrechFrame)
 		}
-		if a.frame.Size > MinFrameSize {
+		if a.Size > MinFrameSize {
 			a.toolBar.Prepend(a.actShrinkFrame)
 		}
 	} else {
@@ -159,11 +158,12 @@ func (a *App) openFolderDialog() {
 
 func (a *App) settingsDialog() {
 	s := NewSettings()
-	appearance := widget.NewForm(
+	settingsForm := widget.NewForm(
 		widget.NewFormItem("", s.scalePreviewsRow(a.topWindow.Canvas().Scale())),
 		widget.NewFormItem("Scale", s.scalesRow()),
 		widget.NewFormItem("Main Color", s.colorsRow()),
 		widget.NewFormItem("Theme", s.themesRow()),
+		widget.NewFormItem("Date Format", s.datesRow(a)),
 	)
-	dialog.ShowCustom("Appearance", "Close", appearance, a.topWindow)
+	dialog.ShowCustom("Settings", "Close", settingsForm, a.topWindow)
 }

@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -75,7 +76,7 @@ func NewSettings() *Settings {
 
 func (s *Settings) applySettings() {
 	if s.fyneSettings.Scale == 0.0 {
-		s.chooseScale(1.0)
+		s.choosedScale(1.0)
 	}
 	err := s.save()
 	if err != nil {
@@ -97,8 +98,9 @@ var scales = []*scaleItems{
 	{scale: 0.5, name: "Tiny"},
 	{scale: 0.8, name: "Small"},
 	{scale: 1, name: "Normal"},
-	{scale: 1.3, name: "Large"},
-	{scale: 1.8, name: "Huge"}}
+	{scale: 1.3, name: "Big"},
+	{scale: 1.8, name: "Large"},
+	{scale: 2.2, name: "Huge"}}
 
 func (s *Settings) appliedScale(value float32) {
 	for _, scale := range scales {
@@ -106,17 +108,17 @@ func (s *Settings) appliedScale(value float32) {
 	}
 }
 
-func (s *Settings) chooseScale(value float32) {
+func (s *Settings) choosedScale(value float32) {
 	s.fyneSettings.Scale = value
 
 	for _, scale := range scales {
 		if scale.scale == value {
 			scale.button.Importance = widget.HighImportance
+			scale.button.Refresh()
 		} else {
 			scale.button.Importance = widget.MediumImportance
+			scale.button.Refresh()
 		}
-
-		scale.button.Refresh()
 	}
 	s.applySettings()
 }
@@ -126,7 +128,7 @@ func (s *Settings) scalesRow() *fyne.Container {
 	for i, scale := range scales {
 		value := scale.scale
 		button := widget.NewButton(scale.name, func() {
-			s.chooseScale(value)
+			s.choosedScale(value)
 		})
 		if s.fyneSettings.Scale == scale.scale {
 			button.Importance = widget.HighImportance
@@ -239,16 +241,48 @@ func (s *Settings) themesRow() *widget.RadioGroup {
 			def = systemThemeName
 		}
 	}
-	themes := widget.NewRadioGroup(themeNames, s.chooseTheme)
+	themes := widget.NewRadioGroup(themeNames, s.themeChoosed)
 	themes.SetSelected(def)
 	themes.Horizontal = true
 	return themes
 }
 
-func (s *Settings) chooseTheme(name string) {
+func (s *Settings) themeChoosed(name string) {
 	if name == systemThemeName {
 		name = ""
 	}
 	s.fyneSettings.ThemeName = name
 	s.applySettings()
+}
+
+// date format
+func (s *Settings) datesRow(a *App) *fyne.Container {
+	toFormat := map[string]string{
+		"DD.MM.YYYY": "02.01.2006 15:04:05",
+		"MM.DD.YYYY": "01.02.2006 15:04:05",
+		"YYYY.MM.DD": "2006.01.02 15:04:05",
+	}
+	byFormat := make(map[string]string, len(toFormat))
+	for k, v := range toFormat {
+		byFormat[v] = k
+	}
+	display := widget.NewLabel(time.Now().Format(DisplayDateFormat))
+	label := widget.NewLabel("Sample:")
+	label.Alignment = fyne.TextAlignTrailing
+	options := []string{}
+	for k := range toFormat {
+		options = append(options, k)
+	}
+	choice := widget.NewSelectEntry(options)
+	choice.SetText(byFormat[DisplayDateFormat])
+	choice.OnChanged = func(s string) {
+		DisplayDateFormat = toFormat[s]
+		if a.frameView.Hidden {
+			a.listTable.Refresh()
+		} else {
+			a.scrollFrame(a.Pos)
+		}
+		display.SetText(time.Now().Format(DisplayDateFormat))
+	}
+	return container.NewGridWithColumns(3, choice, label, display)
 }

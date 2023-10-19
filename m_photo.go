@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"os"
 	"path/filepath"
 
 	"fyne.io/fyne/v2"
@@ -63,12 +62,14 @@ func (p *Photo) imgButton() *fyne.Container {
 // single photo date fix input
 func (p *Photo) dateInput() *fyne.Container {
 	choices := []string{"EXIF", "File", "Input"}
-	d := p.Dates[p.DateUsed]
+	d := listDateToDisplayDate(p.Dates[p.DateUsed])
 
 	eDate := widget.NewEntry()
-	eDate.Validator = validation.NewTime(DisplyDateFormat)
+	eDate.Validator = validation.NewTime(DisplayDateFormat)
 	eDate.SetText(d)
-	eDate.Disable()
+	eDate.OnChanged = func(e string) {
+		p.Dates[p.DateUsed] = displayDateToListDate(e)
+	}
 
 	rgDateChoice := widget.NewRadioGroup(
 		choices,
@@ -77,12 +78,12 @@ func (p *Photo) dateInput() *fyne.Container {
 			case "EXIF":
 				p.Dates[UseEnteredDate] = ""
 				p.DateUsed = UseExifDate
-				eDate.SetText(p.Dates[p.DateUsed])
+				eDate.SetText(listDateToDisplayDate(p.Dates[p.DateUsed]))
 				eDate.Disable()
 			case "File":
 				p.Dates[UseEnteredDate] = ""
 				p.DateUsed = UseFileDate
-				eDate.SetText(p.Dates[p.DateUsed])
+				eDate.SetText(listDateToDisplayDate(p.Dates[p.DateUsed]))
 				eDate.Disable()
 			case "Input":
 				p.DateUsed = UseEnteredDate
@@ -93,7 +94,7 @@ func (p *Photo) dateInput() *fyne.Container {
 						p.Dates[p.DateUsed] = p.Dates[UseExifDate]
 					}
 				}
-				eDate.SetText(p.Dates[p.DateUsed])
+				eDate.SetText(listDateToDisplayDate(p.Dates[p.DateUsed]))
 				eDate.Enable()
 			}
 		})
@@ -124,14 +125,4 @@ func (p *Photo) GetImage(frameSize int) (img *canvas.Image) {
 	img.FillMode = canvas.ImageFillContain
 	img.ScaleMode = canvas.ImageScaleFastest
 	return
-}
-
-// get file modify date string
-func (p *Photo) GetModifyDate() string {
-	fi, err := os.Stat(p.File)
-	if err != nil {
-		return ""
-	}
-	fileModifyDate := fi.ModTime()
-	return fileModifyDate.Format(DisplyDateFormat)
 }

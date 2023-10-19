@@ -10,6 +10,12 @@ import (
 	"github.com/tajtiattila/metadata/exif"
 )
 
+const InitDisplayDateFormat = "02.01.2006 15:04:05"
+const ListDateFormat = "2006.01.02 15:04:05"
+const FileNameDateFormat = "20060102_150405"
+
+var DisplayDateFormat string = InitDisplayDateFormat
+
 // get EXIF metadata from file
 func getJpegExif(fileName string) (*exif.Exif, error) {
 	f, err := os.Open(fileName)
@@ -35,12 +41,12 @@ func GetExifDate(file string) string {
 	if !ok {
 		return ""
 	}
-	return exifTime.Format(DisplyDateFormat)
+	return exifTime.Format(ListDateFormat)
 }
 
 // update EXIF dates in file
 func UpdateExifDate(file, backupDirName, date string) error {
-	newDate, err := time.Parse(DisplyDateFormat, date)
+	newDate, err := time.Parse(ListDateFormat, date)
 	if err != nil {
 		return err
 	}
@@ -77,6 +83,16 @@ func UpdateExifDate(file, backupDirName, date string) error {
 	return nil
 }
 
+// get file modify date string
+func GetModifyDate(file string) string {
+	fi, err := os.Stat(file)
+	if err != nil {
+		return ""
+	}
+	fileModifyDate := fi.ModTime()
+	return fileModifyDate.Format(ListDateFormat)
+}
+
 // copy photo from source to destination path
 func copyPhoto(source, destination string) (int64, error) {
 	src, err := os.Open(source)
@@ -94,11 +110,26 @@ func copyPhoto(source, destination string) (int64, error) {
 	return nBytes, err
 }
 
-const DisplyDateFormat = "01.02.2006 15:04:05"
-const FileNameDateFormat = "20060102_150405"
-
 // replace file name with dateTime in the path
-func fileNameToDate(path, displayDate string) string {
-	t, _ := time.Parse(DisplyDateFormat, displayDate)
+func fileNameToDate(path, listDate string) string {
+	t, _ := time.Parse(ListDateFormat, listDate)
 	return filepath.Join(filepath.Dir(path), t.Format(FileNameDateFormat)) + "." + filepath.Ext(path)
+}
+
+// Convert list date format to display date
+func listDateToDisplayDate(listDate string) string {
+	t, err := time.Parse(ListDateFormat, listDate)
+	if err != nil {
+		return ""
+	}
+	return t.Format(DisplayDateFormat)
+}
+
+// Convert display date to list date format
+func displayDateToListDate(displayDate string) string {
+	t, err := time.Parse(DisplayDateFormat, displayDate)
+	if err != nil {
+		return ""
+	}
+	return t.Format(ListDateFormat)
 }

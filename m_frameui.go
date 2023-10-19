@@ -29,8 +29,8 @@ type Frame struct {
 
 // fill frame with photo images starting from pos = 0.
 func (a *App) initFrame() {
-	a.frame = &Frame{}
-	f := a.frame
+	a.Frame = &Frame{}
+	f := a.Frame
 	if len(a.List) == 0 {
 		dialog.ShowInformation("No photos", "There are no JPEG photos in the current folder,\nplease choose another one", a.topWindow)
 		f.Container = container.NewGridWithColumns(1, canvas.NewText("", color.Black))
@@ -68,7 +68,7 @@ func frameColumnNum(frameSize int) int {
 
 // scrollFrame frame at position pos
 func (a *App) scrollFrame(pos int) {
-	f := a.frame
+	f := a.Frame
 	switch {
 	case pos < 0:
 		pos = 0
@@ -123,7 +123,7 @@ const (
 
 // resizeFrame frame
 func (a *App) resizeFrame(zoom int) {
-	f := a.frame
+	f := a.Frame
 	switch zoom {
 	case RemoveColumn:
 		if f.Size-1 < MinFrameSize {
@@ -182,10 +182,10 @@ type scrollButtonOpts struct {
 func (a *App) newFrameView() {
 	sbo := map[int]scrollButtonOpts{
 		firstPhotoBtn: {label: "|<", icon: theme.MediaSkipPreviousIcon(), tapped: func() { a.scrollFrame(0) }},
-		prevFrameBtn:  {label: "<<", icon: theme.MediaFastRewindIcon(), tapped: func() { a.scrollFrame(a.frame.Pos - a.frame.Size) }},
-		prevPhotoBtn:  {label: "<", icon: theme.NewThemedResource(iconScrollBack), tapped: func() { a.scrollFrame(a.frame.Pos - 1) }},
-		nextPhotoBtn:  {label: ">", icon: theme.MediaPlayIcon(), tapped: func() { a.scrollFrame(a.frame.Pos + 1) }},
-		nextFrameBtn:  {label: ">>", icon: theme.MediaFastForwardIcon(), tapped: func() { a.scrollFrame(a.frame.Pos + a.frame.Size) }},
+		prevFrameBtn:  {label: "<<", icon: theme.MediaFastRewindIcon(), tapped: func() { a.scrollFrame(a.Pos - a.Size) }},
+		prevPhotoBtn:  {label: "<", icon: theme.NewThemedResource(iconScrollBack), tapped: func() { a.scrollFrame(a.Pos - 1) }},
+		nextPhotoBtn:  {label: ">", icon: theme.MediaPlayIcon(), tapped: func() { a.scrollFrame(a.Pos + 1) }},
+		nextFrameBtn:  {label: ">>", icon: theme.MediaFastForwardIcon(), tapped: func() { a.scrollFrame(a.Pos + a.Size) }},
 		lastPhotoBtn:  {label: ">|", icon: theme.MediaSkipNextIcon(), tapped: func() { a.scrollFrame(len(a.List)) }},
 	}
 	o := make([]fyne.CanvasObject, len(sbo))
@@ -198,7 +198,7 @@ func (a *App) newFrameView() {
 	}
 
 	a.bottomButtons = container.NewGridWithColumns(len(o), o...)
-	a.frameView = container.NewBorder(nil, a.bottomButtons, nil, nil, a.frame.Container)
+	a.frameView = container.NewBorder(nil, a.bottomButtons, nil, nil, a.Container)
 	a.updateFrameScrollButtons()
 }
 
@@ -209,12 +209,12 @@ func (a *App) updateFrameScrollButtons() {
 	a.scrollButton[nextPhotoBtn].Enable()
 	a.scrollButton[nextFrameBtn].Enable()
 	a.scrollButton[lastPhotoBtn].Enable()
-	if a.frame.Pos == 0 {
+	if a.Pos == 0 {
 		a.scrollButton[prevPhotoBtn].Disable()
 		a.scrollButton[prevFrameBtn].Disable()
 		a.scrollButton[firstPhotoBtn].Disable()
 	}
-	if a.frame.Pos+a.frame.Size == len(a.List) {
+	if a.Pos+a.Size == len(a.List) {
 		a.scrollButton[nextPhotoBtn].Disable()
 		a.scrollButton[nextFrameBtn].Disable()
 		a.scrollButton[lastPhotoBtn].Disable()

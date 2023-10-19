@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"io/fs"
 	"log"
@@ -39,8 +38,8 @@ func (a *App) newPhotoList() {
 				Dates:    [3]string{},
 			}
 			p.Dates[UseExifDate] = GetExifDate(p.File)
-			p.Dates[UseFileDate] = p.GetModifyDate()
-			if len(p.Dates[UseExifDate]) != len(DisplyDateFormat) {
+			p.Dates[UseFileDate] = GetModifyDate(p.File)
+			if len(p.Dates[UseExifDate]) != len(ListDateFormat) {
 				p.DateUsed = UseFileDate
 			}
 			if s, ok := a.state.List[fName]; ok {
@@ -122,41 +121,4 @@ func (a *App) savePhotoList() {
 		},
 		a.topWindow)
 	d.Show()
-}
-
-type State struct {
-	Folder string `json:"folder"`
-	Frame  `json:"frame"`
-	List   map[string]*Photo `json:"list"`
-}
-
-func (a *App) saveState() {
-	list := map[string]*Photo{}
-	for _, p := range a.List {
-		if p.Dropped || p.DateUsed != UseExifDate {
-			list[filepath.Base(p.File)] = p
-		}
-	}
-	a.state.List = list
-	a.state.Pos = a.frame.Pos
-	a.state.Size = a.frame.Size
-	bytes, _ := json.Marshal(a.state)
-	a.Preferences().SetString("state", string(bytes))
-}
-
-func (a *App) loadState() {
-	if state := a.Preferences().String("state"); state != "" {
-		if err := json.Unmarshal([]byte(state), &a.state); err == nil {
-			return
-		}
-	}
-	wd, _ := os.Getwd()
-	a.state.Folder = wd
-}
-
-func (a *App) clearState() {
-	a.state.List = map[string]*Photo{}
-	a.state.Pos = InitListPos
-	a.state.Size = InitFrameSize
-	// a.Preferences().RemoveValue("state")
 }
