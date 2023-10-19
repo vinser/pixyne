@@ -23,9 +23,9 @@ var orderSymbols = []string{" ", " ↓", " ↑"}
 func (a *App) newListView() {
 	a.listColumns = []*ListCell{
 		{Name: "File Name", Order: orderAsc, SortAsc: a.orderByFileNameAsc, SortDesc: a.orderByFileNameDesc},
-		{Name: "Exif Date"},
+		{Name: "Exif Date", SortAsc: a.orderByExifDateAsc, SortDesc: a.orderByExifDateDesc},
 		{Name: "File Date", SortAsc: a.orderByFileDateAsc, SortDesc: a.orderByFileDateDesc},
-		{Name: "Entered Date"},
+		{Name: "Entered Date", SortAsc: a.orderByEnteredDateAsc, SortDesc: a.orderByEnteredDateDesc},
 		{Name: "Dropped"},
 	}
 
@@ -43,7 +43,7 @@ func (a *App) newListView() {
 		a.listTable.SetColumnWidth(i, a.listColumns[i].Width)
 	}
 	bottomCount := widget.NewLabel(fmt.Sprintf("total: %d", len(a.List)))
-	a.listView = container.NewBorder(nil, bottomCount, nil, nil, a.listTable)
+	a.listView = container.NewBorder(nil, nil, nil, nil, container.NewBorder(nil, bottomCount, nil, nil, a.listTable))
 }
 
 func columnWidth(labels ...string) float32 {
@@ -178,10 +178,26 @@ func (a *App) orderByFileNameDesc(i, j int) bool {
 	return a.List[j].File < a.List[i].File
 }
 
+func (a *App) orderByExifDateAsc(i, j int) bool {
+	return a.List[i].Dates[UseExifDate] < a.List[j].Dates[UseExifDate]
+}
+
+func (a *App) orderByExifDateDesc(i, j int) bool {
+	return a.List[j].Dates[UseExifDate] < a.List[i].Dates[UseExifDate]
+}
+
 func (a *App) orderByFileDateAsc(i, j int) bool {
 	return a.List[i].Dates[UseFileDate] < a.List[j].Dates[UseFileDate]
 }
 
 func (a *App) orderByFileDateDesc(i, j int) bool {
 	return a.List[j].Dates[UseFileDate] < a.List[i].Dates[UseFileDate]
+}
+
+func (a *App) orderByEnteredDateAsc(i, j int) bool {
+	return a.List[i].Dates[UseEnteredDate] < a.List[j].Dates[UseEnteredDate]
+}
+
+func (a *App) orderByEnteredDateDesc(i, j int) bool {
+	return a.List[j].Dates[UseEnteredDate] < a.List[i].Dates[UseEnteredDate]
 }
