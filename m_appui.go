@@ -9,6 +9,12 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+// List of photos
+var list []*Photo
+
+// Frame with photos
+var frame *Frame
+
 // application App
 type App struct {
 	fyne.App
@@ -16,10 +22,6 @@ type App struct {
 
 	// Current folder state
 	state State
-	// List of photos in folder
-	*PhotoList
-	// Frame with photos
-	*Frame
 
 	mainContent *fyne.Container
 
@@ -52,7 +54,7 @@ type App struct {
 
 // make main window newLayout
 func (a *App) newLayout() {
-	a.reorderList(a.Order)
+	a.reorderList(a.orderByFileNameAsc)
 	a.newToolBar()
 	a.initFrame()
 	a.showFrameToolbar()
@@ -110,11 +112,11 @@ func (a *App) showFrameToolbar() {
 	a.toolBar.Append(widget.NewToolbarSeparator())
 	a.toolBar.Append(a.actSettings)
 	a.toolBar.Append(a.actAbout)
-	if len(a.List) > 0 {
-		if a.Size < MaxFrameSize && a.Size < len(a.List) {
+	if len(list) > 0 {
+		if frame.Size < MaxFrameSize && frame.Size < len(list) {
 			a.toolBar.Prepend(a.actStrechFrame)
 		}
-		if a.Size > MinFrameSize {
+		if frame.Size > MinFrameSize {
 			a.toolBar.Prepend(a.actShrinkFrame)
 		}
 	} else {

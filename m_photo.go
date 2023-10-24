@@ -28,15 +28,15 @@ type Photo struct {
 	DateUsed int           `json:"date_used"`
 }
 
-// frame column that contains button with photo image as background and date fix input
-func (p *Photo) FrameColumn() *fyne.Container {
+// New frame column that contains button with photo image as background and date fix input
+func (p *Photo) NewFrameColumn() *fyne.Container {
 	fileLabel := widget.NewLabelWithStyle(filepath.Base(p.File), fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	fileLabel.Truncation = fyne.TextTruncateEllipsis
-	return container.NewBorder(fileLabel, p.dateInput(), nil, nil, p.imgButton())
+	return container.NewBorder(fileLabel, p.NewDateInput(), nil, nil, p.NewImgButton())
 }
 
 // button with photo image as background
-func (p *Photo) imgButton() *fyne.Container {
+func (p *Photo) NewImgButton() *fyne.Container {
 	var btn *widget.Button
 	btn = widget.NewButton(
 		"",
@@ -52,6 +52,7 @@ func (p *Photo) imgButton() *fyne.Container {
 			}
 		},
 	)
+	// p.Img = p.GetImage(frame.Size)
 	if p.Dropped {
 		btn.SetText("DROPPED")
 		p.Img.Translucency = 0.5
@@ -60,7 +61,7 @@ func (p *Photo) imgButton() *fyne.Container {
 }
 
 // single photo date fix input
-func (p *Photo) dateInput() *fyne.Container {
+func (p *Photo) NewDateInput() *fyne.Container {
 	choices := []string{"EXIF", "File", "Input"}
 	d := listDateToDisplayDate(p.Dates[p.DateUsed])
 
@@ -107,7 +108,7 @@ func (p *Photo) dateInput() *fyne.Container {
 }
 
 // get canvas image from file
-func (p *Photo) GetImage(frameSize int) (img *canvas.Image) {
+func (p *Photo) GetImage(frameSize int) *canvas.Image {
 	m, err := imaging.Open(p.File, imaging.AutoOrientation(true))
 	if err != nil {
 		log.Fatal(err)
@@ -121,8 +122,8 @@ func (p *Photo) GetImage(frameSize int) (img *canvas.Image) {
 			m = imaging.Resize(m, 0, m.Bounds().Dy()/frameSize, filter)
 		}
 	}
-	img = canvas.NewImageFromImage(m)
+	img := canvas.NewImageFromImage(m)
 	img.FillMode = canvas.ImageFillContain
 	img.ScaleMode = canvas.ImageScaleFastest
-	return
+	return img
 }

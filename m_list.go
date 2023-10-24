@@ -14,13 +14,6 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-// Photolist
-type PhotoList struct {
-	Folder string
-	List   []*Photo
-	Order  func(i, j int) bool
-}
-
 // create new PhotoList object for the folder
 func (a *App) newPhotoList() {
 	files, err := os.ReadDir(a.state.Folder)
@@ -50,10 +43,7 @@ func (a *App) newPhotoList() {
 			photos = append(photos, p)
 		}
 	}
-	a.PhotoList = &PhotoList{
-		List:  photos,
-		Order: a.orderByFileNameAsc,
-	}
+	list = photos
 }
 
 // Save choosed photos:
@@ -77,7 +67,7 @@ func (a *App) savePhotoList() {
 				dropDirName := filepath.Join(a.state.Folder, "dropped")
 				backupDirOk := false
 				backupDirName := filepath.Join(a.state.Folder, "original")
-				for _, p := range a.List {
+				for _, p := range list {
 					if p.Dropped {
 						// move file to drop dir
 						if !dropDirOk {

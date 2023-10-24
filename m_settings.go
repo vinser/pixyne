@@ -280,7 +280,7 @@ func (s *Settings) datesRow(a *App) *fyne.Container {
 		if a.frameView.Hidden {
 			a.listTable.Refresh()
 		} else {
-			a.scrollFrame(a.Pos)
+			a.scrollFrame(frame.Pos)
 		}
 		display.SetText(time.Now().Format(DisplayDateFormat))
 	}

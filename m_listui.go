@@ -42,7 +42,7 @@ func (a *App) newListView() {
 	for i := 0; i < len(a.listColumns); i++ {
 		a.listTable.SetColumnWidth(i, a.listColumns[i].Width)
 	}
-	bottomCount := widget.NewLabel(fmt.Sprintf("total: %d", len(a.List)))
+	bottomCount := widget.NewLabel(fmt.Sprintf("total: %d", len(list)))
 	a.listView = container.NewBorder(nil, nil, nil, nil, container.NewBorder(nil, bottomCount, nil, nil, a.listTable))
 }
 
@@ -85,7 +85,7 @@ func (c *ListCell) TappedSecondary(_ *fyne.PointEvent) {
 }
 
 func (a *App) dataLength() (rows int, cols int) {
-	return len(a.List), len(a.listColumns)
+	return len(list), len(a.listColumns)
 }
 
 func (a *App) dataCreate() fyne.CanvasObject {
@@ -99,7 +99,7 @@ func (a *App) dataUpdate(id widget.TableCellID, o fyne.CanvasObject) {
 		return
 	}
 	text := ""
-	photo := a.List[id.Row]
+	photo := list[id.Row]
 	data := o.(*ListCell)
 	switch id.Col {
 	case 0:
@@ -167,37 +167,37 @@ func (a *App) headerUpdate(id widget.TableCellID, o fyne.CanvasObject) {
 // List sort functions
 
 func (a *App) reorderList(less func(i int, j int) bool) {
-	sort.Slice(a.List, less)
+	sort.Slice(list, less)
 }
 
 func (a *App) orderByFileNameAsc(i, j int) bool {
-	return a.List[i].File < a.List[j].File
+	return list[i].File < list[j].File
 }
 
 func (a *App) orderByFileNameDesc(i, j int) bool {
-	return a.List[j].File < a.List[i].File
+	return list[j].File < list[i].File
 }
 
 func (a *App) orderByExifDateAsc(i, j int) bool {
-	return a.List[i].Dates[UseExifDate] < a.List[j].Dates[UseExifDate]
+	return list[i].Dates[UseExifDate] < list[j].Dates[UseExifDate]
 }
 
 func (a *App) orderByExifDateDesc(i, j int) bool {
-	return a.List[j].Dates[UseExifDate] < a.List[i].Dates[UseExifDate]
+	return list[j].Dates[UseExifDate] < list[i].Dates[UseExifDate]
 }
 
 func (a *App) orderByFileDateAsc(i, j int) bool {
-	return a.List[i].Dates[UseFileDate] < a.List[j].Dates[UseFileDate]
+	return list[i].Dates[UseFileDate] < list[j].Dates[UseFileDate]
 }
 
 func (a *App) orderByFileDateDesc(i, j int) bool {
-	return a.List[j].Dates[UseFileDate] < a.List[i].Dates[UseFileDate]
+	return list[j].Dates[UseFileDate] < list[i].Dates[UseFileDate]
 }
 
 func (a *App) orderByEnteredDateAsc(i, j int) bool {
-	return a.List[i].Dates[UseEnteredDate] < a.List[j].Dates[UseEnteredDate]
+	return list[i].Dates[UseEnteredDate] < list[j].Dates[UseEnteredDate]
 }
 
 func (a *App) orderByEnteredDateDesc(i, j int) bool {
-	return a.List[j].Dates[UseEnteredDate] < a.List[i].Dates[UseEnteredDate]
+	return list[j].Dates[UseEnteredDate] < list[i].Dates[UseEnteredDate]
 }

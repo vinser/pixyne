@@ -15,14 +15,14 @@ type State struct {
 
 func (a *App) saveState() {
 	list := map[string]*Photo{}
-	for _, p := range a.List {
+	for _, p := range list {
 		if p.Dropped || p.DateUsed != UseExifDate {
 			list[filepath.Base(p.File)] = p
 		}
 	}
 	a.state.List = list
-	a.state.Pos = a.Pos
-	a.state.Size = a.Size
+	a.state.Pos = frame.Pos
+	a.state.Size = frame.Size
 	a.state.DisplyDateFormat = DisplayDateFormat
 	bytes, _ := json.Marshal(a.state)
 	a.Preferences().SetString("state", string(bytes))
