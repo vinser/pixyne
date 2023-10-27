@@ -52,7 +52,6 @@ func (p *Photo) NewImgButton() *fyne.Container {
 			}
 		},
 	)
-	// p.Img = p.GetImage(frame.Size)
 	if p.Dropped {
 		btn.SetText("DROPPED")
 		p.Img.Translucency = 0.5
@@ -108,13 +107,13 @@ func (p *Photo) NewDateInput() *fyne.Container {
 }
 
 // get canvas image from file
-func (p *Photo) GetImage(frameSize int) *canvas.Image {
+func (p *Photo) SetImage(frameSize int) {
 	m, err := imaging.Open(p.File, imaging.AutoOrientation(true))
 	if err != nil {
 		log.Fatal(err)
 	}
-	filter := imaging.CatmullRom
-	// filter := imaging.Lanczos
+	// filter := imaging.CatmullRom
+	filter := imaging.Box
 	if frameSize > 1 {
 		if m.Bounds().Dx() > m.Bounds().Dy() {
 			m = imaging.Resize(m, m.Bounds().Dx()/frameSize, 0, filter)
@@ -122,8 +121,7 @@ func (p *Photo) GetImage(frameSize int) *canvas.Image {
 			m = imaging.Resize(m, 0, m.Bounds().Dy()/frameSize, filter)
 		}
 	}
-	img := canvas.NewImageFromImage(m)
-	img.FillMode = canvas.ImageFillContain
-	img.ScaleMode = canvas.ImageScaleFastest
-	return img
+	p.Img = canvas.NewImageFromImage(m)
+	p.Img.FillMode = canvas.ImageFillContain
+	p.Img.ScaleMode = canvas.ImageScaleFastest
 }

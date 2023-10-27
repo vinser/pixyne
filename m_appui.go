@@ -32,8 +32,8 @@ type App struct {
 	actOpenFolder       *widget.ToolbarAction
 	actSaveList         *widget.ToolbarAction
 	actSettings         *widget.ToolbarAction
-	actStrechFrame      *widget.ToolbarAction
-	actShrinkFrame      *widget.ToolbarAction
+	actAddPhoto         *widget.ToolbarAction
+	actRemovePhoto      *widget.ToolbarAction
 	actToggleView       *widget.ToolbarAction
 	actToggleFullScreen *widget.ToolbarAction
 
@@ -70,8 +70,8 @@ func (a *App) newToolBar() {
 	a.actOpenFolder = widget.NewToolbarAction(theme.FolderOpenIcon(), a.openFolderDialog)
 	a.actSaveList = widget.NewToolbarAction(theme.DocumentSaveIcon(), a.savePhotoList)
 	a.actSettings = widget.NewToolbarAction(theme.SettingsIcon(), a.settingsDialog)
-	a.actStrechFrame = widget.NewToolbarAction(theme.ContentAddIcon(), func() { a.resizeFrame(AddColumn) })
-	a.actShrinkFrame = widget.NewToolbarAction(theme.ContentRemoveIcon(), func() { a.resizeFrame(RemoveColumn) })
+	a.actAddPhoto = widget.NewToolbarAction(theme.ContentAddIcon(), func() { a.resizeFrame(AddPhoto) })
+	a.actRemovePhoto = widget.NewToolbarAction(theme.ContentRemoveIcon(), func() { a.resizeFrame(RemovePhoto) })
 	a.actToggleView = widget.NewToolbarAction(theme.ListIcon(), a.toggleView)
 	a.actToggleFullScreen = widget.NewToolbarAction(theme.ViewFullScreenIcon(), a.toggleFullScreen)
 
@@ -114,10 +114,10 @@ func (a *App) showFrameToolbar() {
 	a.toolBar.Append(a.actAbout)
 	if len(list) > 0 {
 		if frame.Size < MaxFrameSize && frame.Size < len(list) {
-			a.toolBar.Prepend(a.actStrechFrame)
+			a.toolBar.Prepend(a.actAddPhoto)
 		}
 		if frame.Size > MinFrameSize {
-			a.toolBar.Prepend(a.actShrinkFrame)
+			a.toolBar.Prepend(a.actRemovePhoto)
 		}
 	} else {
 		a.toolBar.Prepend(a.actOpenFolder)
