@@ -26,6 +26,9 @@ type Photo struct {
 	Img      *canvas.Image `json:"-"`
 	Dates    [3]string     `json:"dates"`
 	DateUsed int           `json:"date_used"`
+	Width    int           `json:"-"`
+	Height   int           `json:"-"`
+	ByteSize int64         `json:"-"`
 }
 
 // New frame column that contains button with photo image as background and date fix input
@@ -106,21 +109,23 @@ func (p *Photo) NewDateInput() *fyne.Container {
 	return container.NewCenter(gr)
 }
 
+// var Max4K = 3840
+
 // get canvas image from file
 func (p *Photo) SetImage(frameSize int) {
 	m, err := imaging.Open(p.File, imaging.AutoOrientation(true))
 	if err != nil {
 		log.Fatal(err)
 	}
-	// filter := imaging.CatmullRom
-	filter := imaging.Box
-	if frameSize > 1 {
-		if m.Bounds().Dx() > m.Bounds().Dy() {
-			m = imaging.Resize(m, m.Bounds().Dx()/frameSize, 0, filter)
-		} else {
-			m = imaging.Resize(m, 0, m.Bounds().Dy()/frameSize, filter)
-		}
-	}
+	// if frameSize < 1 {
+	// 	scale := math.Max(float64(m.Bounds().Dx()), float64(m.Bounds().Dy())) / float64(Max4K) / float64(frameSize)
+	// 	filter := imaging.Box
+	// 	if m.Bounds().Dx() > m.Bounds().Dy() {
+	// 		m = imaging.Resize(m, int(float64(m.Bounds().Dx())*scale), 0, filter)
+	// 	} else {
+	// 		m = imaging.Resize(m, 0, int(float64(m.Bounds().Dy())*scale), filter)
+	// 	}
+	// }
 	p.Img = canvas.NewImageFromImage(m)
 	p.Img.FillMode = canvas.ImageFillContain
 	p.Img.ScaleMode = canvas.ImageScaleFastest
