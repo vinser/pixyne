@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"image"
 	"io"
 	"os"
 	"path/filepath"
@@ -23,25 +24,42 @@ func getJpegExif(fileName string) (*exif.Exif, error) {
 		return nil, err
 	}
 	defer f.Close()
-	exifReader := bufio.NewReader(f)
-	fileExif, err := exif.Decode(exifReader)
+	r := bufio.NewReader(f)
+	fileExif, err := exif.Decode(r)
 	if err != nil {
 		return nil, err
 	}
 	return fileExif, nil
 }
 
-// get EXIF date from file
-func GetExifDate(file string) string {
-	fileExif, err := getJpegExif(file)
+// get photo properties (width, height, file size and date, exif date) from file
+func (p *Photo) GetPhotoProperties(fileName string) error {
+	f, err := os.Open(fileName)
 	if err != nil {
-		return ""
+		return err
 	}
-	exifTime, ok := fileExif.DateTime()
-	if !ok {
-		return ""
+	defer f.Close()
+	imgConfig, _, err := image.DecodeConfig(f)
+	if err == nil {
+		p.Width = imgConfig.Width
+		p.Height = imgConfig.Height
 	}
-	return exifTime.Format(ListDateFormat)
+	fi, err := f.Stat()
+	if err == nil {
+		p.Dates[UseFileDate] = fi.ModTime().Format(ListDateFormat)
+		p.ByteSize = fi.Size()
+
+	}
+	f.Seek(0, io.SeekStart)
+	r := bufio.NewReader(f)
+	fileExif, err := exif.Decode(r)
+	if err == nil {
+		exifTime, ok := fileExif.DateTime()
+		if ok {
+			p.Dates[UseExifDate] = exifTime.Format(ListDateFormat)
+		}
+	}
+	return nil
 }
 
 // update EXIF dates in file
@@ -81,16 +99,6 @@ func UpdateExifDate(file, backupDirName, date string) error {
 	}
 	writer.Flush()
 	return nil
-}
-
-// get file modify date string
-func GetModifyDate(file string) string {
-	fi, err := os.Stat(file)
-	if err != nil {
-		return ""
-	}
-	fileModifyDate := fi.ModTime()
-	return fileModifyDate.Format(ListDateFormat)
 }
 
 // copy photo from source to destination path

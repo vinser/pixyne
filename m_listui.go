@@ -22,11 +22,14 @@ var orderSymbols = []string{" ", " ↓", " ↑"}
 
 func (a *App) newListView() {
 	a.listColumns = []*ListCell{
-		{Name: "File Name", Order: orderAsc, SortAsc: a.orderByFileNameAsc, SortDesc: a.orderByFileNameDesc},
-		{Name: "Exif Date", SortAsc: a.orderByExifDateAsc, SortDesc: a.orderByExifDateDesc},
-		{Name: "File Date", SortAsc: a.orderByFileDateAsc, SortDesc: a.orderByFileDateDesc},
-		{Name: "Entered Date", SortAsc: a.orderByEnteredDateAsc, SortDesc: a.orderByEnteredDateDesc},
+		{Name: "File name", Order: orderAsc, SortAsc: a.orderByFileNameAsc, SortDesc: a.orderByFileNameDesc},
+		{Name: "Exif date", SortAsc: a.orderByExifDateAsc, SortDesc: a.orderByExifDateDesc},
+		{Name: "File date", SortAsc: a.orderByFileDateAsc, SortDesc: a.orderByFileDateDesc},
+		{Name: "Entered date", SortAsc: a.orderByEnteredDateAsc, SortDesc: a.orderByEnteredDateDesc},
 		{Name: "Dropped"},
+		{Name: "Width x Height"},
+		{Name: "Size MiB", SortAsc: a.orderBySizeAsc, SortDesc: a.orderBySizeDesc},
+		{Name: " "},
 	}
 
 	a.listColumns[0].Width = columnWidth(a.listColumns[0].Name, DisplayDateFormat, FileNameDateFormat+".000")
@@ -34,6 +37,9 @@ func (a *App) newListView() {
 	a.listColumns[2].Width = columnWidth(a.listColumns[2].Name, DisplayDateFormat)
 	a.listColumns[3].Width = columnWidth(a.listColumns[3].Name, DisplayDateFormat)
 	a.listColumns[4].Width = columnWidth(a.listColumns[4].Name)
+	a.listColumns[5].Width = columnWidth(a.listColumns[5].Name, "0000x0000")
+	a.listColumns[6].Width = columnWidth(a.listColumns[6].Name, "999.9 MiB")
+	a.listColumns[7].Width = columnWidth(a.listColumns[7].Name)
 
 	a.listTable = widget.NewTableWithHeaders(a.dataLength, a.dataCreate, a.dataUpdate)
 	a.listTable.CreateHeader = a.headerCreate
@@ -105,6 +111,7 @@ func (a *App) dataUpdate(id widget.TableCellID, o fyne.CanvasObject) {
 	case 0:
 		text = filepath.Base(photo.File)
 		data.TextStyle.Bold = false
+		data.Alignment = fyne.TextAlignLeading
 	case 1, 2, 3:
 		text = listDateToDisplayDate(photo.Dates[id.Col-1])
 		if id.Col-1 == photo.DateUsed {
@@ -112,16 +119,33 @@ func (a *App) dataUpdate(id widget.TableCellID, o fyne.CanvasObject) {
 		} else {
 			data.TextStyle.Bold = false
 		}
+		data.Alignment = fyne.TextAlignLeading
 	case 4:
 		if photo.Dropped {
 			text = "Yes"
 			data.TextStyle.Bold = true
+		} else {
+			data.TextStyle.Bold = false
 		}
+		data.Alignment = fyne.TextAlignLeading
+	case 5:
+		text = fmt.Sprintf("%dx%d", photo.Width, photo.Height)
+		data.TextStyle.Bold = false
+		data.Alignment = fyne.TextAlignLeading
+	case 6:
+		// text = HumanBytes(photo.ByteSize, false)
+		text = fmt.Sprintf("%.1f", float64(photo.ByteSize)/1024.0/1024.0)
+		data.TextStyle.Bold = false
+		data.Alignment = fyne.TextAlignTrailing
+	case 7:
+		text = " "
+		data.TextStyle.Bold = false
+		data.Alignment = fyne.TextAlignLeading
 	}
 	data.SetText(text)
 	data.OnTapped = func() {
-		a.scrollFrame(id.Row)
 		a.toggleView()
+		a.scrollFrame(id.Row)
 	}
 }
 
@@ -200,4 +224,12 @@ func (a *App) orderByEnteredDateAsc(i, j int) bool {
 
 func (a *App) orderByEnteredDateDesc(i, j int) bool {
 	return list[j].Dates[UseEnteredDate] < list[i].Dates[UseEnteredDate]
+}
+
+func (a *App) orderBySizeAsc(i, j int) bool {
+	return list[i].ByteSize < list[j].ByteSize
+}
+
+func (a *App) orderBySizeDesc(i, j int) bool {
+	return list[j].ByteSize < list[i].ByteSize
 }

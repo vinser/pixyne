@@ -30,8 +30,7 @@ func (a *App) newPhotoList() {
 				DateUsed: UseExifDate,
 				Dates:    [3]string{},
 			}
-			p.Dates[UseExifDate] = GetExifDate(p.File)
-			p.Dates[UseFileDate] = GetModifyDate(p.File)
+			p.GetPhotoProperties(p.File)
 			if len(p.Dates[UseExifDate]) != len(ListDateFormat) {
 				p.DateUsed = UseFileDate
 			}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"math"
 	"path/filepath"
 
 	"fyne.io/fyne/v2"
@@ -109,7 +110,7 @@ func (p *Photo) NewDateInput() *fyne.Container {
 	return container.NewCenter(gr)
 }
 
-// var Max4K = 3840
+var Max4K = 3840
 
 // get canvas image from file
 func (p *Photo) SetImage(frameSize int) {
@@ -117,15 +118,13 @@ func (p *Photo) SetImage(frameSize int) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// if frameSize < 1 {
-	// 	scale := math.Max(float64(m.Bounds().Dx()), float64(m.Bounds().Dy())) / float64(Max4K) / float64(frameSize)
-	// 	filter := imaging.Box
-	// 	if m.Bounds().Dx() > m.Bounds().Dy() {
-	// 		m = imaging.Resize(m, int(float64(m.Bounds().Dx())*scale), 0, filter)
-	// 	} else {
-	// 		m = imaging.Resize(m, 0, int(float64(m.Bounds().Dy())*scale), filter)
-	// 	}
-	// }
+	scale := math.Max(float64(m.Bounds().Dx()), float64(m.Bounds().Dy())) / float64(Max4K) / float64(frameSize)
+	filter := imaging.Box
+	if m.Bounds().Dx() > m.Bounds().Dy() {
+		m = imaging.Resize(m, int(float64(m.Bounds().Dx())*scale), 0, filter)
+	} else {
+		m = imaging.Resize(m, 0, int(float64(m.Bounds().Dy())*scale), filter)
+	}
 	p.Img = canvas.NewImageFromImage(m)
 	p.Img.FillMode = canvas.ImageFillContain
 	p.Img.ScaleMode = canvas.ImageScaleFastest
