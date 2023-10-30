@@ -36,6 +36,7 @@ type App struct {
 	actRemovePhoto      *widget.ToolbarAction
 	actToggleView       *widget.ToolbarAction
 	actToggleFullScreen *widget.ToolbarAction
+	actNoAction         *widget.ToolbarAction
 
 	// Frame view
 	frameView *fyne.Container
@@ -74,6 +75,7 @@ func (a *App) newToolBar() {
 	a.actRemovePhoto = widget.NewToolbarAction(theme.ContentRemoveIcon(), func() { a.resizeFrame(RemovePhoto) })
 	a.actToggleView = widget.NewToolbarAction(theme.ListIcon(), a.toggleView)
 	a.actToggleFullScreen = widget.NewToolbarAction(theme.ViewFullScreenIcon(), a.toggleFullScreen)
+	a.actNoAction = widget.NewToolbarAction(theme.NewThemedResource(iconBlank), func() {})
 
 	a.toolBar = widget.NewToolbar()
 }
@@ -115,10 +117,15 @@ func (a *App) showFrameToolbar() {
 	if len(list) > 0 {
 		if frame.Size < MaxFrameSize && frame.Size < len(list) {
 			a.toolBar.Prepend(a.actAddPhoto)
+		} else {
+			a.toolBar.Prepend(a.actNoAction)
 		}
 		if frame.Size > MinFrameSize {
 			a.toolBar.Prepend(a.actRemovePhoto)
+		} else {
+			a.toolBar.Prepend(a.actNoAction)
 		}
+
 	} else {
 		a.toolBar.Prepend(a.actOpenFolder)
 	}

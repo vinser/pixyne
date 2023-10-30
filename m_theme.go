@@ -5,6 +5,7 @@
 //go:generate fyne bundle --name fontBoldItalic --output m_bundled.go --append fonts/Inter-BoldItalic.ttf
 
 //go:generate fyne bundle --name iconScrollBack --output m_bundled.go --append icons/scroll-back.svg
+//go:generate fyne bundle --name iconBlank --output m_bundled.go --append icons/blank.svg
 
 package main
 
