@@ -20,7 +20,7 @@ const (
 	MaxFrameColumn = 3
 )
 
-// Choice tab frame - row with photos
+// Choice tab frame - rows with photos
 type Frame struct {
 	Container *fyne.Container `json:"-"`
 	Pos       int             `json:"pos"`
@@ -94,7 +94,6 @@ func (a *App) scrollFrame(newPos int) {
 	for i := 0; i < frame.Size; i++ {
 		frame.Container.Add(list[newPos+i].NewFrameColumn())
 	}
-	frame.Container.Refresh()
 	frame.Pos = newPos
 	a.updateFrameScrollButtons()
 }
@@ -133,17 +132,11 @@ func (a *App) resizeFrame(zoom int) {
 		}
 		frame.Size += zoom
 	}
-	//      0-1-2-3-4-5-6-7-8
-	//          2-3-4			p=2, s=3
-	// 		0-1-2				p=0, s=3
-	// 					6-7-8	p=6, s=3
-	//
 	frame.Container.RemoveAll()
 	for i := 0; i < frame.Size; i++ {
 		frame.Container.Add(list[frame.Pos+i].NewFrameColumn())
 	}
 	frame.Container.Layout = layout.NewGridLayoutWithColumns(getFrameColumnNum(len(frame.Container.Objects)))
-	frame.Container.Refresh()
 	a.showFrameToolbar()
 	a.updateFrameScrollButtons()
 }
