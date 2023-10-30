@@ -74,7 +74,9 @@ func (a *App) scrollFrame(newPos int) {
 	}
 
 	switch {
-	case newPos-frame.Pos >= frame.Size || frame.Pos-newPos >= frame.Size || newPos == frame.Pos:
+	case newPos == frame.Pos:
+		return
+	case newPos-frame.Pos >= frame.Size || frame.Pos-newPos >= frame.Size:
 		for i := 0; i < frame.Size; i++ {
 			list[i+frame.Pos].Img = nil
 			list[i+newPos].SetImage(frame.Size)
@@ -94,6 +96,7 @@ func (a *App) scrollFrame(newPos int) {
 	for i := 0; i < frame.Size; i++ {
 		frame.Container.Add(list[newPos+i].NewFrameColumn())
 	}
+	frame.Container.Refresh()
 	frame.Pos = newPos
 	a.updateFrameScrollButtons()
 }
@@ -110,7 +113,7 @@ func (a *App) resizeFrame(zoom int) {
 		switch {
 		case frame.Size-1 < MinFrameSize:
 			return
-		case frame.Size == 6: // skip 5 photos in the frame
+		case frame.Size == 6: // skip 5 photos frame layout
 			zoom--
 		}
 		for i := zoom; i < 0; i++ {
@@ -121,14 +124,18 @@ func (a *App) resizeFrame(zoom int) {
 		switch {
 		case frame.Size == MaxFrameSize || frame.Size == len(list):
 			return
-		case frame.Size == 4: // skip 5 photos in the frame
+		case frame.Size == 4 && len(list) > 5: // skip 5 photos frame layout
 			zoom++
 		}
-		if frame.Pos+frame.Size+zoom-1 > len(list) {
-			frame.Pos = len(list) - frame.Size - zoom + 1
-		}
-		for i := 0; i < zoom; i++ {
-			list[frame.Pos+frame.Size+i].SetImage(frame.Size)
+		if frame.Pos+frame.Size+zoom > len(list) {
+			frame.Pos = frame.Pos - zoom
+			for i := 0; i < zoom; i++ {
+				list[frame.Pos+i].SetImage(frame.Size)
+			}
+		} else {
+			for i := 0; i < zoom; i++ {
+				list[frame.Pos+frame.Size+i].SetImage(frame.Size)
+			}
 		}
 		frame.Size += zoom
 	}
@@ -137,6 +144,7 @@ func (a *App) resizeFrame(zoom int) {
 		frame.Container.Add(list[frame.Pos+i].NewFrameColumn())
 	}
 	frame.Container.Layout = layout.NewGridLayoutWithColumns(getFrameColumnNum(len(frame.Container.Objects)))
+	frame.Container.Refresh()
 	a.showFrameToolbar()
 	a.updateFrameScrollButtons()
 }
