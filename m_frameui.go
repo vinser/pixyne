@@ -35,8 +35,8 @@ func (a *App) initFrame() {
 		frame.Container = container.NewGridWithColumns(1, canvas.NewText("", color.Black))
 		return
 	}
-	frame.Pos = a.state.Pos
-	if frame.Size = a.state.Size; frame.Size == 0 {
+	frame.Pos = a.state.FramePos
+	if frame.Size = a.state.FrameSize; frame.Size == 0 {
 		frame.Size = InitFrameSize
 	}
 	if frame.Size > len(list) {

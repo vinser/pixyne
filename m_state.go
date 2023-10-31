@@ -7,33 +7,37 @@ import (
 )
 
 type State struct {
-	Folder           string `json:"folder"`
-	Frame            `json:"frame"`
-	List             map[string]*Photo `json:"list"`
-	DisplyDateFormat string            `json:"disply_date_format"`
+	Folder    string            `json:"folder"`
+	FramePos  int               `json:"frame_pos"`
+	FrameSize int               `json:"frame_size"`
+	List      map[string]*Photo `json:"list"`
 }
 
 func (a *App) saveState() {
-	list := map[string]*Photo{}
+	sl := map[string]*Photo{}
 	for _, p := range list {
 		if p.Dropped || p.DateUsed != UseExifDate {
-			list[filepath.Base(p.File)] = p
+			sl[filepath.Base(p.File)] = p
 		}
 	}
-	a.state.List = list
-	a.state.Pos = frame.Pos
-	a.state.Size = frame.Size
-	a.state.DisplyDateFormat = DisplayDateFormat
+	a.state.List = sl
+	a.state.FramePos = frame.Pos
+	a.state.FrameSize = frame.Size
 	bytes, _ := json.Marshal(a.state)
+	a.Preferences().SetString("display_date_format", DisplayDateFormat)
 	a.Preferences().SetString("state", string(bytes))
 }
 
 func (a *App) loadState() {
 	if state := a.Preferences().String("state"); state != "" {
 		if err := json.Unmarshal([]byte(state), &a.state); err == nil {
-			DisplayDateFormat = a.state.DisplyDateFormat
-			return
+			if _, err = os.Stat(a.state.Folder); err == nil {
+				return
+			}
 		}
+	}
+	if dateFormat := a.Preferences().String("display_date_format"); dateFormat != "" {
+		DisplayDateFormat = dateFormat
 	}
 	wd, _ := os.Getwd()
 	a.state.Folder = wd
@@ -41,8 +45,8 @@ func (a *App) loadState() {
 
 func (a *App) clearState() {
 	a.state.List = map[string]*Photo{}
-	a.state.Pos = InitListPos
-	a.state.Size = InitFrameSize
+	a.state.FramePos = InitListPos
+	a.state.FrameSize = InitFrameSize
 	// a.state.DisplyDateFormat = InitDisplayDateFormat
 	// a.Preferences().RemoveValue("state")
 }
