@@ -83,12 +83,14 @@ func (a *App) newToolBar() {
 func (a *App) toggleView() {
 	if a.frameView.Hidden {
 		a.showFrameToolbar()
+		a.frameView.Refresh()
 		a.frameView.Show()
 		a.listView.Hide()
 		a.actToggleView.SetIcon(theme.ListIcon())
 	} else {
 		a.showListToolbar()
 		a.frameView.Hide()
+		a.listView.Refresh()
 		a.listView.Show()
 		a.actToggleView.SetIcon(theme.GridIcon())
 	}
@@ -151,7 +153,7 @@ func (a *App) openFolderDialog() {
 			return
 		}
 		if list == nil {
-			a.topWindow.Close()
+			// a.topWindow.Close()
 			return
 		}
 		a.clearState()

@@ -14,6 +14,7 @@ type State struct {
 }
 
 func (a *App) saveState() {
+	a.Preferences().SetString("display_date_format", DisplayDateFormat)
 	sl := map[string]*Photo{}
 	for _, p := range list {
 		if p.Dropped || p.DateUsed != UseExifDate {
@@ -24,20 +25,19 @@ func (a *App) saveState() {
 	a.state.FramePos = frame.Pos
 	a.state.FrameSize = frame.Size
 	bytes, _ := json.Marshal(a.state)
-	a.Preferences().SetString("display_date_format", DisplayDateFormat)
 	a.Preferences().SetString("state", string(bytes))
 }
 
 func (a *App) loadState() {
+	if dateFormat := a.Preferences().String("display_date_format"); dateFormat != "" {
+		DisplayDateFormat = dateFormat
+	}
 	if state := a.Preferences().String("state"); state != "" {
 		if err := json.Unmarshal([]byte(state), &a.state); err == nil {
 			if _, err = os.Stat(a.state.Folder); err == nil {
 				return
 			}
 		}
-	}
-	if dateFormat := a.Preferences().String("display_date_format"); dateFormat != "" {
-		DisplayDateFormat = dateFormat
 	}
 	wd, _ := os.Getwd()
 	a.state.Folder = wd
