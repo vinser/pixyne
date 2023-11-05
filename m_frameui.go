@@ -78,18 +78,18 @@ func (a *App) scrollFrame(newPos int) {
 		return
 	case newPos-frame.Pos >= frame.Size || frame.Pos-newPos >= frame.Size:
 		for i := 0; i < frame.Size; i++ {
-			list[i+frame.Pos].Img = nil
-			list[i+newPos].SetImage(frame.Size)
+			list[frame.Pos+i].Img = nil
+			list[newPos+i].SetImage(frame.Size)
 		}
 	case newPos > frame.Pos:
-		for i := frame.Pos; i < newPos; i++ {
-			list[i].Img = nil
-			list[i+frame.Size].SetImage(frame.Size)
+		for i := 0; i < newPos-frame.Pos; i++ {
+			list[frame.Pos+i].Img = nil
+			list[frame.Pos+frame.Size+i].SetImage(frame.Size)
 		}
-	case frame.Pos > newPos:
-		for i := newPos; i < frame.Pos; i++ {
-			list[i+frame.Size].Img = nil
-			list[i].SetImage(frame.Size)
+	case newPos < frame.Pos:
+		for i := 0; i < frame.Pos-newPos; i++ {
+			list[newPos+frame.Size+i].Img = nil
+			list[newPos+i].SetImage(frame.Size)
 		}
 	}
 	frame.Container.RemoveAll()
