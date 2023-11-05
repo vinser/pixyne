@@ -47,15 +47,14 @@ type App struct {
 
 	// List view
 	listView *fyne.Container
-	// List columns settings
-	listColumns []*ListCell
 	// List table
 	listTable *widget.Table
+	// List columns settings
+	listColumns []*ListColumn
 }
 
 // make main window newLayout
 func (a *App) newLayout() {
-	a.reorderList(a.orderByFileNameAsc)
 	a.newToolBar()
 	a.initFrame()
 	a.showFrameToolbar()

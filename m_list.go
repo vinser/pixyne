@@ -21,10 +21,11 @@ func (a *App) newPhotoList() {
 		log.Fatalf("Can't list photo files from folder \"%s\". Error: %v\n", a.state.Folder, err)
 	}
 	photos := []*Photo(nil)
-	for _, f := range files {
+	for i, f := range files {
 		fName := strings.ToLower(f.Name())
 		if strings.HasSuffix(fName, ".jpg") || strings.HasSuffix(fName, ".jpeg") {
 			p := &Photo{
+				id:       i,
 				File:     filepath.Join(a.state.Folder, f.Name()),
 				Dropped:  false,
 				DateUsed: UseExifDate,

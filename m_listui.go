@@ -9,51 +9,59 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
+type order int
+
 const (
-	unordered = iota
-	orderAsc
-	orderDesc
+	natOrder order = iota
+	ascOrder
+	descOrder
 )
 
-var orderSymbols = []string{" ", " ↓", " ↑"}
+type ListColumn struct {
+	Name     string
+	Sortable bool
+	Order    order
+	Width    float32
+}
 
 func (a *App) newListView() {
-	a.listColumns = []*ListCell{
-		{Name: "File name", Order: orderAsc, SortAsc: a.orderByFileNameAsc, SortDesc: a.orderByFileNameDesc},
-		{Name: "Exif date", SortAsc: a.orderByExifDateAsc, SortDesc: a.orderByExifDateDesc},
-		{Name: "File date", SortAsc: a.orderByFileDateAsc, SortDesc: a.orderByFileDateDesc},
-		{Name: "Entered date", SortAsc: a.orderByEnteredDateAsc, SortDesc: a.orderByEnteredDateDesc},
+	a.listColumns = []*ListColumn{
+		{Name: "File name", Sortable: true, Order: ascOrder},
 		{Name: "Dropped"},
+		{Name: "Exif date", Sortable: true},
+		{Name: "File date", Sortable: true},
+		{Name: "Entered date", Sortable: true},
 		{Name: "Width x Height"},
-		{Name: "Size MiB", SortAsc: a.orderBySizeAsc, SortDesc: a.orderBySizeDesc},
-		{Name: " "},
+		{Name: "Size MB", Sortable: true},
 	}
 
 	a.listColumns[0].Width = columnWidth(a.listColumns[0].Name, DisplayDateFormat, FileNameDateFormat+".000")
-	a.listColumns[1].Width = columnWidth(a.listColumns[1].Name, DisplayDateFormat)
+	a.listColumns[1].Width = columnWidth(a.listColumns[1].Name)
 	a.listColumns[2].Width = columnWidth(a.listColumns[2].Name, DisplayDateFormat)
 	a.listColumns[3].Width = columnWidth(a.listColumns[3].Name, DisplayDateFormat)
-	a.listColumns[4].Width = columnWidth(a.listColumns[4].Name)
+	a.listColumns[4].Width = columnWidth(a.listColumns[4].Name, DisplayDateFormat)
 	a.listColumns[5].Width = columnWidth(a.listColumns[5].Name, "0000x0000")
-	a.listColumns[6].Width = columnWidth(a.listColumns[6].Name, "999.9 MiB")
-	a.listColumns[7].Width = columnWidth(a.listColumns[7].Name)
+	a.listColumns[6].Width = columnWidth(a.listColumns[6].Name, "999.9")
 
 	a.listTable = widget.NewTableWithHeaders(a.dataLength, a.dataCreate, a.dataUpdate)
 	a.listTable.CreateHeader = a.headerCreate
 	a.listTable.UpdateHeader = a.headerUpdate
-
 	for i := 0; i < len(a.listColumns); i++ {
 		a.listTable.SetColumnWidth(i, a.listColumns[i].Width)
 	}
+
 	bottomCount := widget.NewLabel(fmt.Sprintf("total: %d", len(list)))
+	bottomCount.TextStyle.Bold = true
+
 	a.listView = container.NewBorder(nil, nil, nil, nil, container.NewBorder(nil, bottomCount, nil, nil, a.listTable))
 }
 
 func columnWidth(labels ...string) float32 {
-	width := widget.NewLabel("").MinSize().Width
+	width := float32(0)
 	re := regexp.MustCompile(`\w`)
 	for _, l := range labels {
 		l := re.ReplaceAllString(l, "0")
@@ -64,38 +72,12 @@ func columnWidth(labels ...string) float32 {
 	return width
 }
 
-type ListCell struct {
-	widget.Label
-	Name     string
-	Width    float32
-	Order    int
-	OnTapped func()
-	SortAsc  func(i, j int) bool
-	SortDesc func(i, j int) bool
-}
-
-func newListCell(label string) *ListCell {
-	h := &ListCell{}
-	h.ExtendBaseWidget(h)
-	h.Label.SetText(label)
-	return h
-}
-
-func (c *ListCell) Tapped(_ *fyne.PointEvent) {
-	if c.OnTapped != nil {
-		c.OnTapped()
-	}
-}
-
-func (c *ListCell) TappedSecondary(_ *fyne.PointEvent) {
-}
-
 func (a *App) dataLength() (rows int, cols int) {
 	return len(list), len(a.listColumns)
 }
 
 func (a *App) dataCreate() fyne.CanvasObject {
-	data := newListCell(DisplayDateFormat)
+	data := widget.NewLabel(DisplayDateFormat)
 	data.Truncation = fyne.TextTruncateEllipsis
 	return data
 }
@@ -106,23 +88,23 @@ func (a *App) dataUpdate(id widget.TableCellID, o fyne.CanvasObject) {
 	}
 	text := ""
 	photo := list[id.Row]
-	data := o.(*ListCell)
+	data := o.(*widget.Label)
 	switch id.Col {
 	case 0:
 		text = filepath.Base(photo.File)
 		data.TextStyle.Bold = false
 		data.Alignment = fyne.TextAlignLeading
-	case 1, 2, 3:
-		text = listDateToDisplayDate(photo.Dates[id.Col-1])
-		if id.Col-1 == photo.DateUsed {
-			data.TextStyle.Bold = true
-		} else {
-			data.TextStyle.Bold = false
-		}
-		data.Alignment = fyne.TextAlignLeading
-	case 4:
+	case 1:
 		if photo.Dropped {
 			text = "Yes"
+		} else {
+			text = ""
+		}
+		data.TextStyle.Bold = true
+		data.Alignment = fyne.TextAlignCenter
+	case 2, 3, 4:
+		text = listDateToDisplayDate(photo.Dates[id.Col-2])
+		if id.Col-2 == photo.DateUsed {
 			data.TextStyle.Bold = true
 		} else {
 			data.TextStyle.Bold = false
@@ -133,8 +115,7 @@ func (a *App) dataUpdate(id widget.TableCellID, o fyne.CanvasObject) {
 		data.TextStyle.Bold = false
 		data.Alignment = fyne.TextAlignLeading
 	case 6:
-		// text = HumanBytes(photo.ByteSize, false)
-		text = fmt.Sprintf("%.1f", float64(photo.ByteSize)/1024.0/1024.0)
+		text = fmt.Sprintf("%.1f", float64(photo.ByteSize)/1000000.0)
 		data.TextStyle.Bold = false
 		data.Alignment = fyne.TextAlignTrailing
 	case 7:
@@ -143,93 +124,97 @@ func (a *App) dataUpdate(id widget.TableCellID, o fyne.CanvasObject) {
 		data.Alignment = fyne.TextAlignLeading
 	}
 	data.SetText(text)
-	data.OnTapped = func() {
-		a.toggleView()
-		a.scrollFrame(id.Row)
+	a.listTable.OnSelected = func(id widget.TableCellID) {
+		a.listTable.Unselect(id)
 	}
 }
 
 func (a *App) headerCreate() fyne.CanvasObject {
-	header := newListCell("000")
-	return header
+	return widget.NewButton("000", nil)
 
 }
 func (a *App) headerUpdate(id widget.TableCellID, o fyne.CanvasObject) {
-	header := o.(*ListCell)
-	header.TextStyle.Bold = true
+	header := o.(*widget.Button)
 	if id.Col == -1 {
-		header.Label.SetText(strconv.Itoa(id.Row + 1))
+		header.SetText(strconv.Itoa(id.Row + 1))
+		header.Icon = theme.NavigateBackIcon()
+		header.OnTapped = func() {
+			a.toggleView()
+			a.scrollFrame(id.Row)
+		}
 		return
 	} else {
-		header.Label.SetText(a.listColumns[id.Col].Name + orderSymbols[a.listColumns[id.Col].Order])
-		if a.listColumns[id.Col].SortAsc == nil && a.listColumns[id.Col].SortDesc == nil {
-			header.TextStyle.Italic = true
-			return
+		orderIcons := []fyne.Resource{nil, theme.MoveUpIcon(), theme.MoveDownIcon()}
+		header.Icon = orderIcons[a.listColumns[id.Col].Order]
+		header.SetText(a.listColumns[id.Col].Name)
+		if a.listColumns[id.Col].Sortable {
+			header.Importance = widget.MediumImportance
+		} else {
+			// header.Importance = widget.LowImportance
+			header.Disable()
 		}
 	}
 	header.OnTapped = func() {
-		for j, h := range a.listColumns {
-			if j == id.Col {
-				switch h.Order {
-				case unordered, orderDesc:
-					h.Order = orderAsc
-					a.reorderList(a.listColumns[id.Col].SortAsc)
-				case orderAsc:
-					h.Order = orderDesc
-					a.reorderList(a.listColumns[id.Col].SortDesc)
-				}
-				continue
-			} else {
-				h.Order = unordered
-			}
-			h.Refresh()
+		if a.listColumns[id.Col].Sortable {
+			a.reorderList(id.Col)
 		}
-		a.listView.Refresh()
 	}
 }
 
 // List sort functions
 
-func (a *App) reorderList(less func(i int, j int) bool) {
-	sort.Slice(list, less)
-}
+func (a *App) reorderList(col int) {
+	order := a.listColumns[col].Order
+	order++
+	if order > descOrder {
+		order = natOrder
+	}
+	for i := 0; i < len(a.listColumns); i++ {
+		a.listColumns[i].Order = natOrder
+	}
+	a.listColumns[col].Order = order
 
-func (a *App) orderByFileNameAsc(i, j int) bool {
-	return list[i].File < list[j].File
-}
+	sort.Slice(list, func(i, j int) bool {
+		a := list[i]
+		b := list[j]
 
-func (a *App) orderByFileNameDesc(i, j int) bool {
-	return list[j].File < list[i].File
-}
+		if order == natOrder {
+			return a.id < b.id
+		}
 
-func (a *App) orderByExifDateAsc(i, j int) bool {
-	return list[i].Dates[UseExifDate] < list[j].Dates[UseExifDate]
-}
+		switch col {
+		case 0:
+			if order == ascOrder {
+				return a.File < b.File
+			}
+			return a.File > b.File
+		case 2:
+			if order == ascOrder {
+				return a.Dates[UseExifDate] < b.Dates[UseExifDate]
+			}
+			return a.Dates[UseExifDate] > b.Dates[UseExifDate]
+		case 3:
+			if order == ascOrder {
+				return a.Dates[UseFileDate] < b.Dates[UseFileDate]
+			}
+			return a.Dates[UseFileDate] > b.Dates[UseFileDate]
+		case 4:
+			if order == ascOrder {
+				return a.Dates[UseEnteredDate] < b.Dates[UseEnteredDate]
+			}
+			return a.Dates[UseEnteredDate] > b.Dates[UseEnteredDate]
+		case 6:
+			if order == ascOrder {
+				return a.ByteSize < b.ByteSize
+			}
+			return a.ByteSize > b.ByteSize
+		default:
+			if order == descOrder {
+				return a.id > b.id
+			}
+			return a.id < b.id
+		}
+	})
 
-func (a *App) orderByExifDateDesc(i, j int) bool {
-	return list[j].Dates[UseExifDate] < list[i].Dates[UseExifDate]
-}
-
-func (a *App) orderByFileDateAsc(i, j int) bool {
-	return list[i].Dates[UseFileDate] < list[j].Dates[UseFileDate]
-}
-
-func (a *App) orderByFileDateDesc(i, j int) bool {
-	return list[j].Dates[UseFileDate] < list[i].Dates[UseFileDate]
-}
-
-func (a *App) orderByEnteredDateAsc(i, j int) bool {
-	return list[i].Dates[UseEnteredDate] < list[j].Dates[UseEnteredDate]
-}
-
-func (a *App) orderByEnteredDateDesc(i, j int) bool {
-	return list[j].Dates[UseEnteredDate] < list[i].Dates[UseEnteredDate]
-}
-
-func (a *App) orderBySizeAsc(i, j int) bool {
-	return list[i].ByteSize < list[j].ByteSize
-}
-
-func (a *App) orderBySizeDesc(i, j int) bool {
-	return list[j].ByteSize < list[i].ByteSize
+	a.listTable.Refresh()
 }

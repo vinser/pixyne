@@ -22,6 +22,7 @@ const (
 
 // Photo
 type Photo struct {
+	id       int
 	File     string        `json:"-"`
 	Dropped  bool          `json:"dropped"`
 	Img      *canvas.Image `json:"-"`
