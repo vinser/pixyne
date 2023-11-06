@@ -11,11 +11,11 @@ import (
 	"github.com/tajtiattila/metadata/exif"
 )
 
-const InitDisplayDateFormat = "02.01.2006 15:04:05"
+const DefaultDisplayDateFormat = "02.01.2006 15:04:05"
 const ListDateFormat = "2006.01.02 15:04:05"
 const FileNameDateFormat = "20060102_150405"
 
-var DisplayDateFormat string = InitDisplayDateFormat
+var DisplayDateFormat string = DefaultDisplayDateFormat
 
 // get EXIF metadata from file
 func getJpegExif(fileName string) (*exif.Exif, error) {
