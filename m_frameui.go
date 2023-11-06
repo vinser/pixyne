@@ -47,7 +47,7 @@ func (a *App) initFrame() {
 	}
 	frame.Container = container.NewGridWithColumns(getFrameColumnNum(frame.Size))
 	for i := 0; i < frame.Size && i < len(list); i++ {
-		frame.Container.Add(list[frame.Pos+i].NewFrameColumn())
+		frame.Container.Add(list[frame.Pos+i].NewFrameColumn(a.simpleMode))
 	}
 }
 
@@ -74,9 +74,9 @@ func (a *App) scrollFrame(newPos int) {
 	}
 
 	switch {
-	case newPos == frame.Pos:
-		return
-	case newPos-frame.Pos >= frame.Size || frame.Pos-newPos >= frame.Size:
+	// case newPos == frame.Pos:
+	// 	return
+	case newPos-frame.Pos >= frame.Size || frame.Pos-newPos >= frame.Size || newPos == frame.Pos:
 		for i := 0; i < frame.Size; i++ {
 			list[frame.Pos+i].Img = nil
 			list[newPos+i].SetImage(frame.Size)
@@ -94,7 +94,7 @@ func (a *App) scrollFrame(newPos int) {
 	}
 	frame.Container.RemoveAll()
 	for i := 0; i < frame.Size; i++ {
-		frame.Container.Add(list[newPos+i].NewFrameColumn())
+		frame.Container.Add(list[newPos+i].NewFrameColumn(a.simpleMode))
 	}
 	frame.Container.Refresh()
 	frame.Pos = newPos
@@ -102,14 +102,14 @@ func (a *App) scrollFrame(newPos int) {
 }
 
 const (
-	AddPhoto    = 1
-	RemovePhoto = -1
+	MorePhoto = 1
+	LessPhoto = -1
 )
 
 // resizeFrame frame
 func (a *App) resizeFrame(zoom int) {
 	switch zoom {
-	case RemovePhoto:
+	case LessPhoto:
 		switch {
 		case frame.Size-1 < MinFrameSize:
 			return
@@ -120,7 +120,7 @@ func (a *App) resizeFrame(zoom int) {
 			list[frame.Pos+frame.Size+i].Img = nil
 		}
 		frame.Size += zoom
-	case AddPhoto:
+	case MorePhoto:
 		switch {
 		case frame.Size == MaxFrameSize || frame.Size == len(list):
 			return
@@ -141,7 +141,7 @@ func (a *App) resizeFrame(zoom int) {
 	}
 	frame.Container.RemoveAll()
 	for i := 0; i < frame.Size; i++ {
-		frame.Container.Add(list[frame.Pos+i].NewFrameColumn())
+		frame.Container.Add(list[frame.Pos+i].NewFrameColumn(a.simpleMode))
 	}
 	frame.Container.Layout = layout.NewGridLayoutWithColumns(getFrameColumnNum(len(frame.Container.Objects)))
 	frame.Container.Refresh()

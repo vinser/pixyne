@@ -14,6 +14,7 @@ type State struct {
 }
 
 func (a *App) saveState() {
+	a.Preferences().SetBool("simple_mode", a.simpleMode)
 	a.Preferences().SetString("display_date_format", DisplayDateFormat)
 	sl := map[string]*Photo{}
 	for _, p := range list {
@@ -29,9 +30,8 @@ func (a *App) saveState() {
 }
 
 func (a *App) loadState() {
-	if dateFormat := a.Preferences().String("display_date_format"); dateFormat != "" {
-		DisplayDateFormat = dateFormat
-	}
+	DisplayDateFormat = a.Preferences().StringWithFallback("display_date_format", DefaultDisplayDateFormat)
+	a.simpleMode = a.Preferences().BoolWithFallback("simple_mode", false)
 	if state := a.Preferences().String("state"); state != "" {
 		if err := json.Unmarshal([]byte(state), &a.state); err == nil {
 			if _, err = os.Stat(a.state.Folder); err == nil {
@@ -47,6 +47,4 @@ func (a *App) clearState() {
 	a.state.List = map[string]*Photo{}
 	a.state.FramePos = InitListPos
 	a.state.FrameSize = InitFrameSize
-	// a.state.DisplyDateFormat = InitDisplayDateFormat
-	// a.Preferences().RemoveValue("state")
 }

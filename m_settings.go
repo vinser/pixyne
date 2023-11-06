@@ -228,31 +228,25 @@ func (r *colorRenderer) Destroy() {
 }
 
 // theme
-const (
-	systemThemeName = "system"
-)
-
 func (s *Settings) themesRow() *widget.RadioGroup {
 	def := s.fyneSettings.ThemeName
 	themeNames := []string{"dark", "light"}
 	if runtime.GOOS == "darwin" || runtime.GOOS == "windows" {
-		themeNames = append(themeNames, systemThemeName)
+		themeNames = append(themeNames, "system")
 		if s.fyneSettings.ThemeName == "" {
-			def = systemThemeName
+			def = "system"
 		}
 	}
-	themes := widget.NewRadioGroup(themeNames, s.themeChoosed)
+	themes := widget.NewRadioGroup(themeNames, func(selected string) {
+		if selected == "system" {
+			selected = ""
+		}
+		s.fyneSettings.ThemeName = selected
+		s.applySettings()
+	})
 	themes.SetSelected(def)
 	themes.Horizontal = true
 	return themes
-}
-
-func (s *Settings) themeChoosed(name string) {
-	if name == systemThemeName {
-		name = ""
-	}
-	s.fyneSettings.ThemeName = name
-	s.applySettings()
 }
 
 // date format
@@ -285,4 +279,23 @@ func (s *Settings) datesRow(a *App) *fyne.Container {
 		display.SetText(time.Now().Format(DisplayDateFormat))
 	}
 	return container.NewGridWithColumns(3, choice, label, display)
+}
+
+func (s *Settings) modeRow(a *App) *widget.RadioGroup {
+	mode := widget.NewRadioGroup([]string{"full", "simple"}, func(selected string) {
+		if selected == "simple" {
+			a.simpleMode = true
+		} else {
+			a.simpleMode = false
+		}
+		a.scrollFrame(frame.Pos)
+
+	})
+	if a.simpleMode {
+		mode.SetSelected("simple")
+	} else {
+		mode.SetSelected("full")
+	}
+	mode.Horizontal = true
+	return mode
 }

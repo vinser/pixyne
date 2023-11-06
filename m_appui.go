@@ -20,6 +20,9 @@ type App struct {
 	fyne.App
 	topWindow fyne.Window
 
+	// Simple mode
+	simpleMode bool
+
 	// Current folder state
 	state State
 
@@ -70,8 +73,8 @@ func (a *App) newToolBar() {
 	a.actOpenFolder = widget.NewToolbarAction(theme.FolderOpenIcon(), a.openFolderDialog)
 	a.actSaveList = widget.NewToolbarAction(theme.DocumentSaveIcon(), a.savePhotoList)
 	a.actSettings = widget.NewToolbarAction(theme.SettingsIcon(), a.settingsDialog)
-	a.actAddPhoto = widget.NewToolbarAction(theme.ContentAddIcon(), func() { a.resizeFrame(AddPhoto) })
-	a.actRemovePhoto = widget.NewToolbarAction(theme.ContentRemoveIcon(), func() { a.resizeFrame(RemovePhoto) })
+	a.actAddPhoto = widget.NewToolbarAction(theme.ContentAddIcon(), func() { a.resizeFrame(MorePhoto) })
+	a.actRemovePhoto = widget.NewToolbarAction(theme.ContentRemoveIcon(), func() { a.resizeFrame(LessPhoto) })
 	a.actToggleView = widget.NewToolbarAction(theme.ListIcon(), a.toggleView)
 	a.actToggleFullScreen = widget.NewToolbarAction(theme.ViewFullScreenIcon(), a.toggleFullScreen)
 	a.actNoAction = widget.NewToolbarAction(theme.NewThemedResource(iconBlank), func() {})
@@ -173,6 +176,7 @@ func (a *App) settingsDialog() {
 		widget.NewFormItem("Scale", s.scalesRow()),
 		widget.NewFormItem("Main Color", s.colorsRow()),
 		widget.NewFormItem("Theme", s.themesRow()),
+		widget.NewFormItem("Mode", s.modeRow(a)),
 		widget.NewFormItem("Date Format", s.datesRow(a)),
 	)
 	dialog.ShowCustom("Settings", "Close", settingsForm, a.topWindow)
