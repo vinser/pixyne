@@ -44,6 +44,7 @@ func (a *App) newPhotoList() {
 		}
 	}
 	list = photos
+	sortList(a.state.ListOrderColumn, a.state.ListOrder)
 }
 
 // Save choosed photos:
@@ -106,7 +107,7 @@ func (a *App) savePhotoList() {
 						os.Rename(p.File, fileNameToDate(p.File, p.Dates[p.DateUsed]))
 					}
 				}
-				a.clearState()
+				a.defaultState()
 			}
 		},
 		a.topWindow)

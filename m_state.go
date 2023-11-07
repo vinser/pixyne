@@ -7,15 +7,26 @@ import (
 )
 
 type State struct {
-	Folder    string            `json:"folder"`
-	FramePos  int               `json:"frame_pos"`
-	FrameSize int               `json:"frame_size"`
-	List      map[string]*Photo `json:"list"`
+	Folder          string            `json:"folder"`
+	FramePos        int               `json:"frame_pos"`
+	FrameSize       int               `json:"frame_size"`
+	ListOrderColumn int               `json:"list_order_column"`
+	ListOrder       order             `json:"list_order"`
+	List            map[string]*Photo `json:"list"`
 }
 
 func (a *App) saveState() {
 	a.Preferences().SetBool("simple_mode", a.simpleMode)
 	a.Preferences().SetString("display_date_format", DisplayDateFormat)
+	a.state.FramePos = frame.Pos
+	a.state.FrameSize = frame.Size
+	for i, v := range a.listColumns {
+		if v.Order != natOrder {
+			a.state.ListOrderColumn = i
+			a.state.ListOrder = v.Order
+			break
+		}
+	}
 	sl := map[string]*Photo{}
 	for _, p := range list {
 		if p.Dropped || p.DateUsed != UseExifDate {
@@ -23,8 +34,6 @@ func (a *App) saveState() {
 		}
 	}
 	a.state.List = sl
-	a.state.FramePos = frame.Pos
-	a.state.FrameSize = frame.Size
 	bytes, _ := json.Marshal(a.state)
 	a.Preferences().SetString("state", string(bytes))
 }
@@ -39,12 +48,15 @@ func (a *App) loadState() {
 			}
 		}
 	}
-	wd, _ := os.Getwd()
-	a.state.Folder = wd
+	a.defaultState()
 }
 
-func (a *App) clearState() {
+func (a *App) defaultState() {
 	a.state.List = map[string]*Photo{}
-	a.state.FramePos = InitListPos
-	a.state.FrameSize = InitFrameSize
+	a.state.FramePos = DefaultListPos
+	a.state.FrameSize = DefaultFrameSize
+	a.state.ListOrderColumn = DefaultListOrderColumn
+	a.state.ListOrder = DefaultListOrder
+	home, _ := os.UserHomeDir()
+	a.state.Folder = home
 }

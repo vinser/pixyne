@@ -85,10 +85,11 @@ func (a *App) newToolBar() {
 func (a *App) toggleView() {
 	if a.frameView.Hidden {
 		a.showFrameToolbar()
-		a.frameView.Refresh()
 		a.frameView.Show()
 		a.listView.Hide()
 		a.actToggleView.SetIcon(theme.ListIcon())
+		a.scrollFrame(frame.Pos)
+		a.frameView.Refresh()
 	} else {
 		a.showListToolbar()
 		a.frameView.Hide()
@@ -158,7 +159,7 @@ func (a *App) openFolderDialog() {
 			// a.topWindow.Close()
 			return
 		}
-		a.clearState()
+		a.defaultState()
 		a.state.Folder = list.Path()
 		a.newPhotoList()
 		a.newLayout()

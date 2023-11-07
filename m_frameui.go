@@ -13,11 +13,11 @@ import (
 )
 
 const (
-	InitListPos    = 0
-	InitFrameSize  = 3
-	MinFrameSize   = 1
-	MaxFrameSize   = 6
-	MaxFrameColumn = 3
+	DefaultListPos   = 0
+	DefaultFrameSize = 3
+	MinFrameSize     = 1
+	MaxFrameSize     = 6
+	MaxFrameColumn   = 3
 )
 
 // Choice tab frame - rows with photos
@@ -37,7 +37,7 @@ func (a *App) initFrame() {
 	}
 	frame.Pos = a.state.FramePos
 	if frame.Size = a.state.FrameSize; frame.Size == 0 {
-		frame.Size = InitFrameSize
+		frame.Size = DefaultFrameSize
 	}
 	if frame.Size > len(list) {
 		frame.Size = len(list)

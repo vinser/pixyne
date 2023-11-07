@@ -19,6 +19,9 @@ const (
 	natOrder order = iota
 	ascOrder
 	descOrder
+
+	DefaultListOrderColumn int   = 0
+	DefaultListOrder       order = ascOrder
 )
 
 type ListColumn struct {
@@ -30,7 +33,7 @@ type ListColumn struct {
 
 func (a *App) newListView() {
 	a.listColumns = []*ListColumn{
-		{Name: "File name", Sortable: true, Order: ascOrder},
+		{Name: "File name", Sortable: true},
 		{Name: "Dropped"},
 		{Name: "Exif date", Sortable: true},
 		{Name: "File date", Sortable: true},
@@ -46,6 +49,11 @@ func (a *App) newListView() {
 	a.listColumns[4].Width = columnWidth(a.listColumns[4].Name, DisplayDateFormat)
 	a.listColumns[5].Width = columnWidth(a.listColumns[5].Name, "0000x0000")
 	a.listColumns[6].Width = columnWidth(a.listColumns[6].Name, "999.9")
+	for i := 0; i < len(a.listColumns); i++ {
+		if a.listColumns[i].Sortable && a.state.ListOrderColumn == i {
+			a.listColumns[i].Order = a.state.ListOrder
+		}
+	}
 
 	a.listTable = widget.NewTableWithHeaders(a.dataLength, a.dataCreate, a.dataUpdate)
 	a.listTable.CreateHeader = a.headerCreate
@@ -137,12 +145,17 @@ func (a *App) headerUpdate(id widget.TableCellID, o fyne.CanvasObject) {
 	header := o.(*widget.Button)
 	if id.Col == -1 {
 		header.SetText(strconv.Itoa(id.Row + 1))
-		header.Icon = theme.NavigateBackIcon()
-		header.OnTapped = func() {
-			a.toggleView()
-			a.scrollFrame(id.Row)
+		if id.Row >= frame.Pos && id.Row < frame.Pos+frame.Size {
+			header.Importance = widget.HighImportance
+		} else {
+			header.Importance = widget.MediumImportance
 		}
-		return
+		// header.Icon = theme.NavigateBackIcon()
+		header.OnTapped = func() {
+			frame.Pos = id.Row
+			a.toggleView()
+		}
+		header.Refresh()
 	} else {
 		orderIcons := []fyne.Resource{nil, theme.MoveUpIcon(), theme.MoveDownIcon()}
 		header.Icon = orderIcons[a.listColumns[id.Col].Order]
@@ -153,15 +166,14 @@ func (a *App) headerUpdate(id widget.TableCellID, o fyne.CanvasObject) {
 			// header.Importance = widget.LowImportance
 			header.Disable()
 		}
-	}
-	header.OnTapped = func() {
-		if a.listColumns[id.Col].Sortable {
-			a.reorderList(id.Col)
+		header.OnTapped = func() {
+			if a.listColumns[id.Col].Sortable {
+				a.reorderList(id.Col)
+				header.Refresh()
+			}
 		}
 	}
 }
-
-// List sort functions
 
 func (a *App) reorderList(col int) {
 	order := a.listColumns[col].Order
@@ -174,6 +186,18 @@ func (a *App) reorderList(col int) {
 	}
 	a.listColumns[col].Order = order
 
+	posId := list[frame.Pos].id
+	sortList(col, order)
+	for i := 0; i < len(list); i++ {
+		if list[i].id == posId {
+			frame.Pos = i
+			break
+		}
+	}
+	a.listTable.Refresh()
+}
+
+func sortList(column int, order order) {
 	sort.Slice(list, func(i, j int) bool {
 		a := list[i]
 		b := list[j]
@@ -182,7 +206,7 @@ func (a *App) reorderList(col int) {
 			return a.id < b.id
 		}
 
-		switch col {
+		switch column {
 		case 0:
 			if order == ascOrder {
 				return a.File < b.File
@@ -216,5 +240,4 @@ func (a *App) reorderList(col int) {
 		}
 	})
 
-	a.listTable.Refresh()
 }
