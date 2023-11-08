@@ -66,10 +66,13 @@ func getFrameColumnNum(frameSize int) int {
 
 // scrollFrame frame at position pos
 func (a *App) scrollFrame(newPos int) {
+	if frame.Pos+frame.Size > len(list) {
+		frame.Pos = len(list) - frame.Size
+	}
 	switch {
 	case newPos < 0:
 		newPos = 0
-	case newPos > len(list)-frame.Size:
+	case newPos+frame.Size > len(list):
 		newPos = len(list) - frame.Size
 	}
 
