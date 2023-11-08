@@ -194,6 +194,10 @@ func (a *App) reorderList(col int) {
 			break
 		}
 	}
+	if frame.Pos+frame.Size > len(list) {
+		frame.Pos = len(list) - frame.Size
+	}
+	a.listTable.ScrollTo(widget.TableCellID{Col: 0, Row: frame.Pos})
 	a.listTable.Refresh()
 }
 

@@ -92,6 +92,7 @@ func (a *App) toggleView() {
 		a.frameView.Refresh()
 	} else {
 		a.showListToolbar()
+		a.listTable.ScrollTo(widget.TableCellID{Col: 0, Row: frame.Pos})
 		a.frameView.Hide()
 		a.listView.Refresh()
 		a.listView.Show()
