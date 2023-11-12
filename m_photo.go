@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"math"
-	"path/filepath"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -23,19 +22,19 @@ const (
 // Photo
 type Photo struct {
 	id       int
-	File     string        `json:"-"`
-	Dropped  bool          `json:"dropped"`
-	Img      *canvas.Image `json:"-"`
-	Dates    [3]string     `json:"dates"`
-	DateUsed int           `json:"date_used"`
-	Width    int           `json:"-"`
-	Height   int           `json:"-"`
-	ByteSize int64         `json:"-"`
+	fileURI  fyne.URI
+	img      *canvas.Image
+	width    int
+	height   int
+	byteSize int64
+	Dropped  bool      `json:"dropped"`
+	Dates    [3]string `json:"dates"`
+	DateUsed int       `json:"date_used"`
 }
 
 // New frame column that contains button with photo image as background and date fix input
 func (p *Photo) NewFrameColumn(simpleMode bool) *fyne.Container {
-	fileLabel := widget.NewLabelWithStyle(filepath.Base(p.File), fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	fileLabel := widget.NewLabelWithStyle(p.fileURI.Name(), fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	fileLabel.Truncation = fyne.TextTruncateEllipsis
 	if simpleMode {
 		return container.NewBorder(fileLabel, nil, nil, nil, p.NewImgButton())
@@ -51,20 +50,20 @@ func (p *Photo) NewImgButton() *fyne.Container {
 		func() {
 			if p.Dropped {
 				btn.SetText("")
-				p.Img.Translucency = 0
+				p.img.Translucency = 0
 				p.Dropped = false
 			} else {
 				btn.SetText("DROPPED")
-				p.Img.Translucency = 0.5
+				p.img.Translucency = 0.5
 				p.Dropped = true
 			}
 		},
 	)
 	if p.Dropped {
 		btn.SetText("DROPPED")
-		p.Img.Translucency = 0.5
+		p.img.Translucency = 0.5
 	}
-	return container.NewStack(p.Img, btn)
+	return container.NewStack(p.img, btn)
 }
 
 // single photo date fix input
@@ -118,7 +117,7 @@ var Max4K = 3840
 
 // get canvas image from file
 func (p *Photo) SetImage(frameSize int) {
-	m, err := imaging.Open(p.File, imaging.AutoOrientation(true))
+	m, err := imaging.Open(p.fileURI.Path(), imaging.AutoOrientation(true))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -129,7 +128,7 @@ func (p *Photo) SetImage(frameSize int) {
 	} else {
 		m = imaging.Resize(m, 0, int(float64(m.Bounds().Dy())*scale), filter)
 	}
-	p.Img = canvas.NewImageFromImage(m)
-	p.Img.FillMode = canvas.ImageFillContain
-	p.Img.ScaleMode = canvas.ImageScaleFastest
+	p.img = canvas.NewImageFromImage(m)
+	p.img.FillMode = canvas.ImageFillContain
+	p.img.ScaleMode = canvas.ImageScaleFastest
 }

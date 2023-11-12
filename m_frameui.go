@@ -81,17 +81,17 @@ func (a *App) scrollFrame(newPos int) {
 	// 	return
 	case newPos-frame.Pos >= frame.Size || frame.Pos-newPos >= frame.Size || newPos == frame.Pos:
 		for i := 0; i < frame.Size; i++ {
-			list[frame.Pos+i].Img = nil
+			list[frame.Pos+i].img = nil
 			list[newPos+i].SetImage(frame.Size)
 		}
 	case newPos > frame.Pos:
 		for i := 0; i < newPos-frame.Pos; i++ {
-			list[frame.Pos+i].Img = nil
+			list[frame.Pos+i].img = nil
 			list[frame.Pos+frame.Size+i].SetImage(frame.Size)
 		}
 	case newPos < frame.Pos:
 		for i := 0; i < frame.Pos-newPos; i++ {
-			list[newPos+frame.Size+i].Img = nil
+			list[newPos+frame.Size+i].img = nil
 			list[newPos+i].SetImage(frame.Size)
 		}
 	}
@@ -120,7 +120,7 @@ func (a *App) resizeFrame(zoom int) {
 			zoom--
 		}
 		for i := zoom; i < 0; i++ {
-			list[frame.Pos+frame.Size+i].Img = nil
+			list[frame.Pos+frame.Size+i].img = nil
 		}
 		frame.Size += zoom
 	case MorePhoto:

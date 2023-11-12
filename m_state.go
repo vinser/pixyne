@@ -3,7 +3,8 @@ package main
 import (
 	"encoding/json"
 	"os"
-	"path/filepath"
+
+	"fyne.io/fyne/v2/storage"
 )
 
 type State struct {
@@ -20,6 +21,7 @@ func (a *App) saveState() {
 	a.Preferences().SetString("display_date_format", DisplayDateFormat)
 	a.state.FramePos = frame.Pos
 	a.state.FrameSize = frame.Size
+	a.state.Folder = rootURI.Path()
 	for i, v := range a.listColumns {
 		if v.Order != natOrder {
 			a.state.ListOrderColumn = i
@@ -27,13 +29,13 @@ func (a *App) saveState() {
 			break
 		}
 	}
-	sl := map[string]*Photo{}
-	for _, p := range list {
-		if p.Dropped || p.DateUsed != UseExifDate {
-			sl[filepath.Base(p.File)] = p
+	stateList := map[string]*Photo{}
+	for _, photo := range list {
+		if photo.Dropped || photo.DateUsed != UseExifDate {
+			stateList[photo.fileURI.Name()] = photo
 		}
 	}
-	a.state.List = sl
+	a.state.List = stateList
 	bytes, _ := json.Marshal(a.state)
 	a.Preferences().SetString("state", string(bytes))
 }
@@ -43,7 +45,9 @@ func (a *App) loadState() {
 	a.simpleMode = a.Preferences().BoolWithFallback("simple_mode", false)
 	if state := a.Preferences().String("state"); state != "" {
 		if err := json.Unmarshal([]byte(state), &a.state); err == nil {
-			if _, err = os.Stat(a.state.Folder); err == nil {
+			rootURI, _ = storage.ListerForURI(storage.NewFileURI(a.state.Folder))
+			if isDir, _ := storage.CanList(rootURI); isDir {
+				a.topWindowTitle.Set(rootURI.Path())
 				return
 			}
 		}
@@ -59,4 +63,7 @@ func (a *App) defaultState() {
 	a.state.ListOrder = DefaultListOrder
 	home, _ := os.UserHomeDir()
 	a.state.Folder = home
+	uri := storage.NewFileURI(home)
+	rootURI, _ = storage.ListerForURI(uri)
+	a.topWindowTitle.Set(rootURI.Path())
 }

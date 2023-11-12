@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"path/filepath"
 	"regexp"
 	"sort"
 	"strconv"
@@ -73,7 +72,7 @@ func columnWidth(labels ...string) float32 {
 	re := regexp.MustCompile(`\w`)
 	for _, l := range labels {
 		l := re.ReplaceAllString(l, "0")
-		if w := widget.NewLabelWithStyle(l, fyne.TextAlignLeading, fyne.TextStyle{Bold: true}).MinSize().Width; w > width {
+		if w := widget.NewLabelWithStyle(l, fyne.TextAlignLeading, fyne.TextStyle{Bold: true}).MinSize().Width + theme.Padding(); w > width {
 			width = w
 		}
 	}
@@ -99,7 +98,7 @@ func (a *App) dataUpdate(id widget.TableCellID, o fyne.CanvasObject) {
 	data := o.(*widget.Label)
 	switch id.Col {
 	case 0:
-		text = filepath.Base(photo.File)
+		text = photo.fileURI.Name()
 		data.TextStyle.Bold = false
 		data.Alignment = fyne.TextAlignLeading
 	case 1:
@@ -119,11 +118,11 @@ func (a *App) dataUpdate(id widget.TableCellID, o fyne.CanvasObject) {
 		}
 		data.Alignment = fyne.TextAlignLeading
 	case 5:
-		text = fmt.Sprintf("%dx%d", photo.Width, photo.Height)
+		text = fmt.Sprintf("%dx%d", photo.width, photo.height)
 		data.TextStyle.Bold = false
 		data.Alignment = fyne.TextAlignLeading
 	case 6:
-		text = fmt.Sprintf("%.1f", float64(photo.ByteSize)/1000000.0)
+		text = fmt.Sprintf("%.1f", float64(photo.byteSize)/1000000.0)
 		data.TextStyle.Bold = false
 		data.Alignment = fyne.TextAlignTrailing
 	case 7:
@@ -213,9 +212,9 @@ func sortList(column int, order order) {
 		switch column {
 		case 0:
 			if order == ascOrder {
-				return a.File < b.File
+				return a.fileURI.Name() < b.fileURI.Name()
 			}
-			return a.File > b.File
+			return a.fileURI.Name() > b.fileURI.Name()
 		case 2:
 			if order == ascOrder {
 				return a.Dates[UseExifDate] < b.Dates[UseExifDate]
@@ -233,9 +232,9 @@ func sortList(column int, order order) {
 			return a.Dates[UseEnteredDate] > b.Dates[UseEnteredDate]
 		case 6:
 			if order == ascOrder {
-				return a.ByteSize < b.ByteSize
+				return a.byteSize < b.byteSize
 			}
-			return a.ByteSize > b.ByteSize
+			return a.byteSize > b.byteSize
 		default:
 			if order == descOrder {
 				return a.id > b.id

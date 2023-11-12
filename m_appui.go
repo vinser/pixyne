@@ -1,13 +1,19 @@
 package main
 
 import (
+	"errors"
+	"time"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
-	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
+
+// List folder URI
+var rootURI fyne.ListableURI
 
 // List of photos
 var list []*Photo
@@ -18,15 +24,14 @@ var frame *Frame
 // application App
 type App struct {
 	fyne.App
-	topWindow fyne.Window
+	topWindow      fyne.Window
+	topWindowTitle binding.String
 
 	// Simple mode
 	simpleMode bool
 
 	// Current folder state
 	state State
-
-	mainContent *fyne.Container
 
 	// Toolbar
 	toolBar *widget.Toolbar
@@ -64,14 +69,13 @@ func (a *App) newLayout() {
 	a.newFrameView()
 	a.newListView()
 	a.listView.Hide()
-	a.mainContent = container.NewBorder(a.toolBar, nil, nil, nil, container.NewStack(a.frameView, a.listView))
-	a.topWindow.SetContent(a.mainContent)
+	a.topWindow.SetContent(container.NewBorder(a.toolBar, nil, nil, nil, container.NewStack(a.frameView, a.listView)))
 }
 
 func (a *App) newToolBar() {
 	a.actAbout = widget.NewToolbarAction(theme.InfoIcon(), a.aboutDialog)
 	a.actOpenFolder = widget.NewToolbarAction(theme.FolderOpenIcon(), a.openFolderDialog)
-	a.actSaveList = widget.NewToolbarAction(theme.DocumentSaveIcon(), a.savePhotoList)
+	a.actSaveList = widget.NewToolbarAction(theme.DocumentSaveIcon(), a.savePhotoListDialog)
 	a.actSettings = widget.NewToolbarAction(theme.SettingsIcon(), a.settingsDialog)
 	a.actAddPhoto = widget.NewToolbarAction(theme.ContentAddIcon(), func() { a.resizeFrame(MorePhoto) })
 	a.actRemovePhoto = widget.NewToolbarAction(theme.ContentRemoveIcon(), func() { a.resizeFrame(LessPhoto) })
@@ -157,17 +161,47 @@ func (a *App) openFolderDialog() {
 			return
 		}
 		if list == nil {
-			// a.topWindow.Close()
+			return
+		}
+		if list.Scheme() != "file" {
+			dialog.ShowError(errors.New("only local files are supported"), a.topWindow)
 			return
 		}
 		a.defaultState()
-		a.state.Folder = list.Path()
+		rootURI = list
+		a.topWindowTitle.Set(rootURI.Path())
 		a.newPhotoList()
 		a.newLayout()
 	}, a.topWindow)
-	locationUri, _ := storage.ListerForURI(storage.NewFileURI(a.state.Folder))
-	d.SetLocation(locationUri)
+	d.SetLocation(rootURI)
 	d.Resize(fyne.NewSize(672, 378))
+	d.Show()
+}
+
+// Save choosed photos:
+// 1. move dropped photo to droppped folder
+// 2. update exif dates with file modify date or input date
+func (a *App) savePhotoListDialog() {
+	renameFiles := false
+	datedFileFormat := time.Now().Format(FileNameDateFormat)
+	content := container.NewVBox(
+		widget.NewLabel("Ready to save changes?"),
+		widget.NewCheck("Rename files to date taken format "+datedFileFormat, func(b bool) { renameFiles = b }),
+	)
+	d := dialog.NewCustomConfirm(
+		"Save changes",
+		"Proceed",
+		"Cancel",
+		content,
+		func(b bool) {
+			if b {
+				a.SavePhotoList(renameFiles)
+				a.defaultState()
+				a.newPhotoList()
+				a.newLayout()
+			}
+		},
+		a.topWindow)
 	d.Show()
 }
 
