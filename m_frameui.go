@@ -13,137 +13,141 @@ import (
 )
 
 const (
-	InitListPos   = 0
-	InitFrameSize = 3
-	MinFrameSize  = 1
-	MaxFrameSize  = 6
+	DefaultListPos   = 0
+	DefaultFrameSize = 3
+	MinFrameSize     = 1
+	MaxFrameSize     = 6
+	MaxFrameColumn   = 3
 )
 
-// Choice tab frame - row with photos
+// Choice tab frame - rows with photos
 type Frame struct {
-	*fyne.Container `json:"-"`
-	Pos             int `json:"pos"`
-	Size            int `json:"size"`
+	Container *fyne.Container `json:"-"`
+	Pos       int             `json:"pos"`
+	Size      int             `json:"size"`
 }
 
 // fill frame with photo images starting from pos = 0.
 func (a *App) initFrame() {
-	a.frame = &Frame{}
-	f := a.frame
-	if len(a.List) == 0 {
+	frame = &Frame{}
+	if len(list) == 0 {
 		dialog.ShowInformation("No photos", "There are no JPEG photos in the current folder,\nplease choose another one", a.topWindow)
-		f.Container = container.NewGridWithColumns(1, canvas.NewText("", color.Black))
+		frame.Container = container.NewGridWithColumns(1, canvas.NewText("", color.Black))
 		return
 	}
-	f.Pos = a.state.Pos
-	if f.Size = a.state.Size; f.Size == 0 {
-		f.Size = InitFrameSize
+	frame.Pos = a.state.FramePos
+	if frame.Size = a.state.FrameSize; frame.Size == 0 {
+		frame.Size = DefaultFrameSize
 	}
-	if f.Size > len(a.List) {
-		f.Size = len(a.List)
+	if frame.Size > len(list) {
+		frame.Size = len(list)
 	}
-	for i := f.Pos; i < f.Pos+f.Size; i++ {
-		a.List[i].Img = a.List[i].GetImage(f.Size)
+	for i := frame.Pos; i < frame.Pos+frame.Size; i++ {
+		list[i].SetImage(frame.Size)
 	}
-	f.Container = container.NewGridWithColumns(f.Size)
-	for i := 0; i < f.Size && i < len(a.List); i++ {
-		f.Add(a.List[f.Pos+i].FrameColumn())
+	frame.Container = container.NewGridWithColumns(getFrameColumnNum(frame.Size))
+	for i := 0; i < frame.Size && i < len(list); i++ {
+		frame.Container.Add(list[frame.Pos+i].NewFrameColumn(a.simpleMode))
+	}
+}
+
+func getFrameColumnNum(frameSize int) int {
+	switch {
+	case frame.Size > 4:
+		return MaxFrameColumn
+	case frame.Size == 4:
+		return 2
+	case frame.Size < 1:
+		return 1
+	default:
+		return frame.Size
 	}
 }
 
 // scrollFrame frame at position pos
-func (a *App) scrollFrame(pos int) {
-	f := a.frame
+func (a *App) scrollFrame(newPos int) {
+	if frame.Pos+frame.Size > len(list) {
+		frame.Pos = len(list) - frame.Size
+	}
 	switch {
-	case pos < 0:
-		pos = 0
-	case pos > len(a.List)-f.Size:
-		pos = len(a.List) - f.Size
+	case newPos < 0:
+		newPos = 0
+	case newPos+frame.Size > len(list):
+		newPos = len(list) - frame.Size
 	}
 
 	switch {
-	case pos-f.Pos >= f.Size || f.Pos-pos >= f.Size:
-		for i := f.Pos; i < f.Pos+f.Size; i++ {
-			a.List[i].Img = nil
+	// case newPos == frame.Pos:
+	// 	return
+	case newPos-frame.Pos >= frame.Size || frame.Pos-newPos >= frame.Size || newPos == frame.Pos:
+		for i := 0; i < frame.Size; i++ {
+			list[frame.Pos+i].img = nil
+			list[newPos+i].SetImage(frame.Size)
 		}
-		for i := pos; i < pos+f.Size; i++ {
-			a.List[i].Img = a.List[i].GetImage(f.Size)
-			if a.List[i].Dropped {
-				a.List[i].Img.Translucency = 0.5
-			}
+	case newPos > frame.Pos:
+		for i := 0; i < newPos-frame.Pos; i++ {
+			list[frame.Pos+i].img = nil
+			list[frame.Pos+frame.Size+i].SetImage(frame.Size)
 		}
-	case pos > f.Pos:
-		for i := f.Pos; i < pos; i++ {
-			a.List[i].Img = nil
-			a.List[i+f.Size].Img = a.List[i+f.Size].GetImage(f.Size)
-			if a.List[i+f.Size].Dropped {
-				a.List[i+f.Size].Img.Translucency = 0.5
-			}
-		}
-	case f.Pos > pos:
-		for i := pos; i < f.Pos; i++ {
-			a.List[i+f.Size].Img = nil
-			a.List[i].Img = a.List[i].GetImage(f.Size)
-			if a.List[i].Dropped {
-				a.List[i].Img.Translucency = 0.5
-			}
+	case newPos < frame.Pos:
+		for i := 0; i < frame.Pos-newPos; i++ {
+			list[newPos+frame.Size+i].img = nil
+			list[newPos+i].SetImage(frame.Size)
 		}
 	}
-
-	// TODO: may be optimized when for scroll les than frame size by not all objects deletion/addition? Somwthing like this:
-	// https://stackoverflow.com/questions/63995289/how-to-remove-objects-from-golang-fyne-container
-	f.RemoveAll()
-	for i := 0; i < f.Size; i++ {
-		f.Add(a.List[pos+i].FrameColumn())
+	frame.Container.RemoveAll()
+	for i := 0; i < frame.Size; i++ {
+		frame.Container.Add(list[newPos+i].NewFrameColumn(a.simpleMode))
 	}
-	f.Refresh()
-	f.Pos = pos
+	frame.Container.Refresh()
+	frame.Pos = newPos
 	a.updateFrameScrollButtons()
 }
 
 const (
-	AddColumn = iota
-	RemoveColumn
+	MorePhoto = 1
+	LessPhoto = -1
 )
 
 // resizeFrame frame
 func (a *App) resizeFrame(zoom int) {
-	f := a.frame
 	switch zoom {
-	case RemoveColumn:
-		if f.Size-1 < MinFrameSize {
+	case LessPhoto:
+		switch {
+		case frame.Size-1 < MinFrameSize:
 			return
+		case frame.Size == 6: // skip 5 photos frame layout
+			zoom--
 		}
-		a.List[f.Pos+f.Size-1].Img = nil
-		f.Size--
-	case AddColumn:
-		if f.Size+1 > MaxFrameSize || f.Size+1 > len(a.List) {
+		for i := zoom; i < 0; i++ {
+			list[frame.Pos+frame.Size+i].img = nil
+		}
+		frame.Size += zoom
+	case MorePhoto:
+		switch {
+		case frame.Size == MaxFrameSize || frame.Size == len(list):
 			return
+		case frame.Size == 4 && len(list) > 5: // skip 5 photos frame layout
+			zoom++
 		}
-		i := f.Pos + f.Size
-		if i == len(a.List) {
-			f.Pos--
-			i = f.Pos
+		if frame.Pos+frame.Size+zoom > len(list) {
+			frame.Pos = frame.Pos - zoom
+			for i := 0; i < zoom; i++ {
+				list[frame.Pos+i].SetImage(frame.Size)
+			}
+		} else {
+			for i := 0; i < zoom; i++ {
+				list[frame.Pos+frame.Size+i].SetImage(frame.Size)
+			}
 		}
-		a.List[i].Img = a.List[i].GetImage(f.Size)
-		if a.List[i].Dropped {
-			a.List[i].Img.Translucency = 0.5
-		}
-		f.Size++
+		frame.Size += zoom
 	}
-	//      0-1-2-3-4-5-6-7-8
-	//          2-3-4			p=2, s=3
-	// 		0-1-2				p=0, s=3
-	// 					6-7-8	p=6, s=3
-
-	// TODO: may be optimized when for scroll les than frame size by not all objects deletion/addition? Somwthing like this:
-	// https://stackoverflow.com/questions/63995289/how-to-remove-objects-from-golang-fyne-container
-	f.RemoveAll()
-	for i := 0; i < f.Size; i++ {
-		f.Add(a.List[f.Pos+i].FrameColumn())
+	frame.Container.RemoveAll()
+	for i := 0; i < frame.Size; i++ {
+		frame.Container.Add(list[frame.Pos+i].NewFrameColumn(a.simpleMode))
 	}
-	f.Layout = layout.NewGridLayoutWithColumns(len(f.Objects))
-	f.Refresh()
+	frame.Container.Layout = layout.NewGridLayoutWithColumns(getFrameColumnNum(len(frame.Container.Objects)))
+	frame.Container.Refresh()
 	a.showFrameToolbar()
 	a.updateFrameScrollButtons()
 }
@@ -167,11 +171,11 @@ type scrollButtonOpts struct {
 func (a *App) newFrameView() {
 	sbo := map[int]scrollButtonOpts{
 		firstPhotoBtn: {label: "|<", icon: theme.MediaSkipPreviousIcon(), tapped: func() { a.scrollFrame(0) }},
-		prevFrameBtn:  {label: "<<", icon: theme.MediaFastRewindIcon(), tapped: func() { a.scrollFrame(a.frame.Pos - a.frame.Size) }},
-		prevPhotoBtn:  {label: "<", icon: theme.NewThemedResource(iconScrollBack), tapped: func() { a.scrollFrame(a.frame.Pos - 1) }},
-		nextPhotoBtn:  {label: ">", icon: theme.MediaPlayIcon(), tapped: func() { a.scrollFrame(a.frame.Pos + 1) }},
-		nextFrameBtn:  {label: ">>", icon: theme.MediaFastForwardIcon(), tapped: func() { a.scrollFrame(a.frame.Pos + a.frame.Size) }},
-		lastPhotoBtn:  {label: ">|", icon: theme.MediaSkipNextIcon(), tapped: func() { a.scrollFrame(len(a.List)) }},
+		prevFrameBtn:  {label: "<<", icon: theme.MediaFastRewindIcon(), tapped: func() { a.scrollFrame(frame.Pos - frame.Size) }},
+		prevPhotoBtn:  {label: "<", icon: theme.NewThemedResource(iconScrollBack), tapped: func() { a.scrollFrame(frame.Pos - 1) }},
+		nextPhotoBtn:  {label: ">", icon: theme.MediaPlayIcon(), tapped: func() { a.scrollFrame(frame.Pos + 1) }},
+		nextFrameBtn:  {label: ">>", icon: theme.MediaFastForwardIcon(), tapped: func() { a.scrollFrame(frame.Pos + frame.Size) }},
+		lastPhotoBtn:  {label: ">|", icon: theme.MediaSkipNextIcon(), tapped: func() { a.scrollFrame(len(list)) }},
 	}
 	o := make([]fyne.CanvasObject, len(sbo))
 	a.scrollButton = make([]*widget.Button, len(sbo))
@@ -183,7 +187,7 @@ func (a *App) newFrameView() {
 	}
 
 	a.bottomButtons = container.NewGridWithColumns(len(o), o...)
-	a.frameView = container.NewBorder(nil, a.bottomButtons, nil, nil, a.frame.Container)
+	a.frameView = container.NewBorder(nil, a.bottomButtons, nil, nil, frame.Container)
 	a.updateFrameScrollButtons()
 }
 
@@ -194,12 +198,12 @@ func (a *App) updateFrameScrollButtons() {
 	a.scrollButton[nextPhotoBtn].Enable()
 	a.scrollButton[nextFrameBtn].Enable()
 	a.scrollButton[lastPhotoBtn].Enable()
-	if a.frame.Pos == 0 {
+	if frame.Pos == 0 {
 		a.scrollButton[prevPhotoBtn].Disable()
 		a.scrollButton[prevFrameBtn].Disable()
 		a.scrollButton[firstPhotoBtn].Disable()
 	}
-	if a.frame.Pos+a.frame.Size == len(a.List) {
+	if frame.Pos+frame.Size == len(list) {
 		a.scrollButton[nextPhotoBtn].Disable()
 		a.scrollButton[nextFrameBtn].Disable()
 		a.scrollButton[lastPhotoBtn].Disable()

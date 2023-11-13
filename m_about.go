@@ -26,7 +26,7 @@ You may also set EXIF shooting date to the file date or to a manually entered da
 	if buildVersion = a.Metadata().Version; buildVersion == "" {
 		buildVersion = "selfcrafted"
 	}
-	versionLine = "Version :" + buildVersion
+	versionLine = "Version: " + buildVersion
 
 	if buildFor = a.Metadata().Custom["BuildForOS"]; buildFor != "" {
 		buildLine = fmt.Sprintf("Build for: %s ", buildFor)

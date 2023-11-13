@@ -1,10 +1,6 @@
 //go:generate fyne bundle --package main --name appIcon --output m_bundled.go appIcon.png
-//go:generate fyne bundle --name fontRegular --output m_bundled.go --append fonts/Inter-Regular.ttf
-//go:generate fyne bundle --name fontBold --output m_bundled.go --append fonts/Inter-Bold.ttf
-//go:generate fyne bundle --name fontItalic --output m_bundled.go --append fonts/Inter-Italic.ttf
-//go:generate fyne bundle --name fontBoldItalic --output m_bundled.go --append fonts/Inter-BoldItalic.ttf
-
 //go:generate fyne bundle --name iconScrollBack --output m_bundled.go --append icons/scroll-back.svg
+//go:generate fyne bundle --name iconBlank --output m_bundled.go --append icons/blank.svg
 
 package main
 
@@ -31,31 +27,10 @@ func (t *Theme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color
 }
 
 func (t *Theme) Font(style fyne.TextStyle) fyne.Resource {
-	if style.Monospace {
-		return fontRegular
-	}
-	if style.Bold {
-		if style.Italic {
-			return fontBoldItalic
-		}
-		return fontBold
-	}
-	if style.Italic {
-		return fontItalic
-	}
-	if style.Symbol {
-		return fontRegular
-	}
-	return fontRegular
+	return theme.DefaultTheme().Font(style)
 }
 
 func (t *Theme) Icon(name fyne.ThemeIconName) fyne.Resource {
-	// switch name {
-	// case theme.IconNameRadioButton:
-	// 	return theme.NewThemedResource(iconRadioFree)
-	// case theme.IconNameRadioButtonChecked:
-	// 	return theme.NewThemedResource(iconRadioChecked)
-	// }
 	return theme.DefaultTheme().Icon(name)
 }
 

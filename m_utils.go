@@ -1,104 +1,115 @@
 package main
 
 import (
-	"bufio"
+	"image"
 	"io"
+	"log"
 	"os"
-	"path/filepath"
 	"time"
 
+	"fyne.io/fyne/v2"
 	"github.com/tajtiattila/metadata/exif"
 )
 
-// get EXIF metadata from file
-func getJpegExif(fileName string) (*exif.Exif, error) {
-	f, err := os.Open(fileName)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-	exifReader := bufio.NewReader(f)
-	fileExif, err := exif.Decode(exifReader)
-	if err != nil {
-		return nil, err
-	}
-	return fileExif, nil
-}
+const DefaultDisplayDateFormat = "02.01.2006 15:04:05"
+const ListDateFormat = "2006.01.02 15:04:05"
+const FileNameDateFormat = "20060102_150405"
 
-// get EXIF date from file
-func GetExifDate(file string) string {
-	fileExif, err := getJpegExif(file)
-	if err != nil {
-		return ""
-	}
-	exifTime, ok := fileExif.DateTime()
-	if !ok {
-		return ""
-	}
-	return exifTime.Format(DisplyDateFormat)
-}
+var DisplayDateFormat string = DefaultDisplayDateFormat
 
-// update EXIF dates in file
-func UpdateExifDate(file, backupDirName, date string) error {
-	newDate, err := time.Parse(DisplyDateFormat, date)
-	if err != nil {
-		return err
-	}
-	src := file
-	bak := filepath.Join(backupDirName, filepath.Base(file))
-	err = os.Rename(src, bak)
-	if err != nil {
-		return err
-	}
-	metadata, err := getJpegExif(bak)
-	if err != nil {
-		return err
-	}
-
-	metadata.SetDateTime(newDate)
-
-	f, err := os.Open(bak)
+// get photo properties (width, height, file size and date, exif date) from file
+func (p *Photo) GetPhotoProperties(URI fyne.URI) error {
+	f, err := os.Open(URI.Path())
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	reader := bufio.NewReader(f)
-	of, err := os.Create(src)
-	if err != nil {
-		return err
+	imgConfig, _, err := image.DecodeConfig(f)
+	if err == nil {
+		p.width = imgConfig.Width
+		p.height = imgConfig.Height
 	}
-	writer := bufio.NewWriter(of)
-	defer of.Close()
-	err = exif.Copy(writer, reader, metadata)
-	if err != nil {
-		return err
+	fi, err := f.Stat()
+	if err == nil {
+		p.Dates[UseFileDate] = fi.ModTime().Format(ListDateFormat)
+		p.byteSize = fi.Size()
+
 	}
-	writer.Flush()
+
+	// get EXIF metadata from file
+	f.Seek(0, io.SeekStart)
+	fileExif, err := exif.Decode(f)
+	if err == nil {
+		exifTime, ok := fileExif.DateTime()
+		if ok {
+			p.Dates[UseExifDate] = exifTime.Format(ListDateFormat)
+		}
+	}
 	return nil
 }
 
-// copy photo from source to destination path
-func copyPhoto(source, destination string) (int64, error) {
-	src, err := os.Open(source)
+// update EXIF dates in file
+func UpdateExif(src, dst fyne.URI, dateTime string) error {
+	srcFile, err := os.Open(src.Path())
 	if err != nil {
-		return 0, err
+		return err
 	}
-	defer src.Close()
+	defer srcFile.Close()
+	// Decode the existing EXIF metadata
+	exifData, err := exif.Decode(srcFile)
+	if err != nil && err != exif.NotFound {
+		return err
+	}
 
-	dst, err := os.Create(destination)
-	if err != nil {
-		return 0, err
+	// If no existing EXIF data, create a new instance
+	if err == exif.NotFound {
+		srcFile.Seek(0, io.SeekStart)
+		c, _, err := image.DecodeConfig(srcFile)
+		if err != nil {
+			log.Fatal("image.DecodeConfig error:", err)
+		}
+		exifData = exif.New(c.Width, c.Height)
 	}
-	defer dst.Close()
-	nBytes, err := io.Copy(dst, src)
-	return nBytes, err
+
+	newDate, _ := time.Parse(ListDateFormat, dateTime)
+	exifData.SetDateTime(newDate)
+
+	// Save the modified EXIF data
+	dstFile, err := os.Create(dst.Path())
+	if err != nil {
+		return err
+	}
+	defer dstFile.Close()
+
+	srcFile.Seek(0, io.SeekStart)
+	err = exif.Copy(dstFile, srcFile, exifData)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-const DisplyDateFormat = "2006.01.02 15:04:05"
-const FileNameDateFormat = "20060102_150405"
+// Convert list date format to display date
+func listDateToDisplayDate(listDate string) string {
+	return convertDate(ListDateFormat, DisplayDateFormat, listDate)
+}
 
-// replace file name with dateTime in the path
-func fileNameToDate(path, displayDate string) string {
-	t, _ := time.Parse(DisplyDateFormat, displayDate)
-	return filepath.Join(filepath.Dir(path), t.Format(FileNameDateFormat)) + "." + filepath.Ext(path)
+// Convert list date format to file name date
+func listDateToFileNameDate(listDate string) string {
+	return convertDate(ListDateFormat, FileNameDateFormat, listDate)
+}
+
+// Convert display date to list date format
+func displayDateToListDate(displayDate string) string {
+	return convertDate(DisplayDateFormat, ListDateFormat, displayDate)
+}
+
+// Convert a date from one string format to another string format.
+func convertDate(from, to, date string) string {
+	t, err := time.Parse(from, date)
+	if err != nil {
+		return ""
+	}
+	return t.Format(to)
 }
