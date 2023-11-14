@@ -3,9 +3,9 @@
 ### Use Pixyne to quickly review your photo folders, safely delete bad and similar shots, and fix the shooting dates. 
 ---
 
-![image](docs/pixyneapp.jpg)
+![frame](docs/pixyneapp.png)
 
-![image](docs/pixyneapp2.jpg)
+![list](docs/pixyneapp2.png)
 
 ## How to use
 
