@@ -6,7 +6,7 @@ if [ "$?" -gt 0 ] ; then
 fi
 
 # turn macOS .app to dmg
-dd if=/dev/zero of=fyne-cross/tmp/darwin-$1/Pixyne.dmg bs=1M count=19 status=progress 
+dd if=/dev/zero of=fyne-cross/tmp/darwin-$1/Pixyne.dmg bs=1M count=22 status=progress 
 mkfs.hfsplus -v Pixyne fyne-cross/tmp/darwin-$1/Pixyne.dmg
 
 sudo mkdir -pv /mnt/tmp

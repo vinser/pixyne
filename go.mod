@@ -5,7 +5,6 @@ go 1.20
 require (
 	fyne.io/fyne/v2 v2.4.1
 	github.com/disintegration/imaging v1.6.2
-	github.com/tajtiattila/metadata v0.0.0-20221215122306-ecdbfc756113
 )
 
 // replace fyne.io/fyne/v2 v2.3.4 => ../fyne
@@ -29,6 +28,7 @@ require (
 	github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c // indirect
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
+	github.com/tajtiattila/metadata v0.0.0-20231113113956-31b820c695da
 	github.com/tevino/abool v1.2.0 // indirect
 	github.com/yuin/goldmark v1.5.5 // indirect
 	golang.org/x/image v0.11.0 // indirect
