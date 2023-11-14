@@ -267,8 +267,8 @@ github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO
 github.com/stretchr/testify v1.8.4 h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcUk=
 github.com/stretchr/testify v1.8.4/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
 github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69rRypqCw=
-github.com/tajtiattila/metadata v0.0.0-20221215122306-ecdbfc756113 h1:ln4PkbY9mw93/nTpzpMrTHDUqT5CUjjCBr4QSI+ZJ40=
-github.com/tajtiattila/metadata v0.0.0-20221215122306-ecdbfc756113/go.mod h1:qZzqptgLD1Lrl8lLbmFmQbVlu8kM1lOBuWVtfI1OTec=
+github.com/tajtiattila/metadata v0.0.0-20231113113956-31b820c695da h1:B9wvJJxQZJdiFWs/2WRMW010BaOGR9+kSgdpxRzr2b0=
+github.com/tajtiattila/metadata v0.0.0-20231113113956-31b820c695da/go.mod h1:qZzqptgLD1Lrl8lLbmFmQbVlu8kM1lOBuWVtfI1OTec=
 github.com/tevino/abool v1.2.0 h1:heAkClL8H6w+mK5md9dzsuohKeXHUpY7Vw0ZCKW+huA=
 github.com/tevino/abool v1.2.0/go.mod h1:qc66Pna1RiIsPa7O4Egxxs9OqkuxDX55zznh9K07Tzg=
 github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=

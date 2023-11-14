@@ -4,5 +4,4 @@ Website = "https://github.com/vinser/pixyne"
   Icon = "appIcon.png"
   Name = "Pixyne"
   ID = "com.github.vinser.pixyne"
-  Version = "1.2.0"
-
+  Version = "1.3.0"
