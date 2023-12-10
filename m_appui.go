@@ -21,6 +21,8 @@ var list []*Photo
 // Frame with photos
 var frame *Frame
 
+var loadProgress *widget.ProgressBarInfinite
+
 // application App
 type App struct {
 	fyne.App
@@ -63,13 +65,16 @@ type App struct {
 
 // make main window newLayout
 func (a *App) newLayout() {
+	loadProgress = widget.NewProgressBarInfinite()
+	loadProgress.Hide()
 	a.newToolBar()
 	a.initFrame()
 	a.showFrameToolbar()
 	a.newFrameView()
 	a.newListView()
 	a.listView.Hide()
-	a.topWindow.SetContent(container.NewBorder(a.toolBar, nil, nil, nil, container.NewStack(a.frameView, a.listView)))
+	top := container.NewStack(a.toolBar, container.NewGridWithColumns(3, widget.NewLabel(""), loadProgress))
+	a.topWindow.SetContent(container.NewBorder(top, nil, nil, nil, container.NewStack(a.frameView, a.listView)))
 }
 
 func (a *App) newToolBar() {

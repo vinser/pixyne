@@ -29,6 +29,9 @@ type Frame struct {
 
 // fill frame with photo images starting from pos = 0.
 func (a *App) initFrame() {
+	loadProgress.Show()
+	defer loadProgress.Hide()
+
 	frame = &Frame{}
 	if len(list) == 0 {
 		dialog.ShowInformation("No photos", "There are no JPEG photos in the current folder,\nplease choose another one", a.topWindow)
@@ -66,6 +69,9 @@ func getFrameColumnNum(frameSize int) int {
 
 // scrollFrame frame at position pos
 func (a *App) scrollFrame(newPos int) {
+	loadProgress.Show()
+	defer loadProgress.Hide()
+
 	if frame.Pos+frame.Size > len(list) {
 		frame.Pos = len(list) - frame.Size
 	}
@@ -111,6 +117,9 @@ const (
 
 // resizeFrame frame
 func (a *App) resizeFrame(zoom int) {
+	loadProgress.Show()
+	defer loadProgress.Hide()
+
 	switch zoom {
 	case LessPhoto:
 		switch {
