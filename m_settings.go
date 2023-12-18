@@ -274,7 +274,7 @@ func (s *Settings) datesRow(a *App) *fyne.Container {
 		if a.frameView.Hidden {
 			a.listTable.Refresh()
 		} else {
-			a.scrollFrame(frame.Pos)
+			frame.At(frame.ListPos)
 		}
 		display.SetText(time.Now().Format(DisplayDateFormat))
 	}
@@ -284,14 +284,14 @@ func (s *Settings) datesRow(a *App) *fyne.Container {
 func (s *Settings) modeRow(a *App) *widget.RadioGroup {
 	mode := widget.NewRadioGroup([]string{"full", "simple"}, func(selected string) {
 		if selected == "simple" {
-			a.simpleMode = true
+			frame.Simple = true
 		} else {
-			a.simpleMode = false
+			frame.Simple = false
 		}
-		a.scrollFrame(frame.Pos)
+		frame.At(frame.ListPos)
 
 	})
-	if a.simpleMode {
+	if frame.Simple {
 		mode.SetSelected("simple")
 	} else {
 		mode.SetSelected("full")

@@ -29,9 +29,6 @@ type App struct {
 	topWindow      fyne.Window
 	topWindowTitle binding.String
 
-	// Simple mode
-	simpleMode bool
-
 	// Current folder state
 	state State
 
@@ -50,10 +47,6 @@ type App struct {
 
 	// Frame view
 	frameView *fyne.Container
-	// Frame view scroll buttons
-	bottomButtons *fyne.Container
-	// Frame scroll buttons
-	scrollButton []*widget.Button
 
 	// List view
 	listView *fyne.Container
@@ -63,15 +56,17 @@ type App struct {
 	listColumns []*ListColumn
 }
 
+var a *App
+
 // make main window newLayout
 func (a *App) newLayout() {
 	loadProgress = widget.NewProgressBarInfinite()
 	loadProgress.Hide()
 	a.newToolBar()
-	a.initFrame()
+	a.newFrame()
 	a.showFrameToolbar()
-	a.newFrameView()
-	a.newListView()
+	a.frameView = frame.newFrameView()
+	a.listView = a.newListView()
 	a.listView.Hide()
 	top := container.NewStack(a.toolBar, container.NewGridWithColumns(3, widget.NewLabel(""), loadProgress))
 	a.topWindow.SetContent(container.NewBorder(top, nil, nil, nil, container.NewStack(a.frameView, a.listView)))
@@ -82,8 +77,8 @@ func (a *App) newToolBar() {
 	a.actOpenFolder = widget.NewToolbarAction(theme.FolderOpenIcon(), a.openFolderDialog)
 	a.actSaveList = widget.NewToolbarAction(theme.DocumentSaveIcon(), a.savePhotoListDialog)
 	a.actSettings = widget.NewToolbarAction(theme.SettingsIcon(), a.settingsDialog)
-	a.actAddPhoto = widget.NewToolbarAction(theme.ContentAddIcon(), func() { a.resizeFrame(MorePhoto) })
-	a.actRemovePhoto = widget.NewToolbarAction(theme.ContentRemoveIcon(), func() { a.resizeFrame(LessPhoto) })
+	a.actAddPhoto = widget.NewToolbarAction(theme.ContentAddIcon(), func() { frame.AddItem() })
+	a.actRemovePhoto = widget.NewToolbarAction(theme.ContentRemoveIcon(), func() { frame.RemoveItem() })
 	a.actToggleView = widget.NewToolbarAction(theme.ListIcon(), a.toggleView)
 	a.actToggleFullScreen = widget.NewToolbarAction(theme.ViewFullScreenIcon(), a.toggleFullScreen)
 	a.actNoAction = widget.NewToolbarAction(theme.NewThemedResource(iconBlank), func() {})
@@ -97,11 +92,11 @@ func (a *App) toggleView() {
 		a.frameView.Show()
 		a.listView.Hide()
 		a.actToggleView.SetIcon(theme.ListIcon())
-		a.scrollFrame(frame.Pos)
+		frame.At(frame.ListPos)
 		a.frameView.Refresh()
 	} else {
 		a.showListToolbar()
-		a.listTable.ScrollTo(widget.TableCellID{Col: 0, Row: frame.Pos})
+		a.listTable.ScrollTo(widget.TableCellID{Col: 0, Row: frame.ListPos})
 		a.frameView.Hide()
 		a.listView.Refresh()
 		a.listView.Show()
