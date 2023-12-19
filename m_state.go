@@ -5,9 +5,13 @@ import (
 	"os"
 
 	"fyne.io/fyne/v2/storage"
+	"fyne.io/fyne/v2/theme"
 )
 
 type State struct {
+	Theme           string            `json:"theme"`
+	Scale           float32           `json:"scale"`
+	Color           string            `json:"color"`
 	Simple          bool              `json:"simple_mode"`
 	Folder          string            `json:"folder"`
 	FramePos        int               `json:"frame_pos"`
@@ -19,10 +23,7 @@ type State struct {
 
 func (a *App) saveState() {
 	a.Preferences().SetString("display_date_format", DisplayDateFormat)
-	a.state.FramePos = frame.ListPos
-	a.state.FrameSize = frame.Size
 	a.state.Folder = rootURI.Path()
-	a.state.Simple = frame.Simple
 	for i, v := range a.listColumns {
 		if v.Order != natOrder {
 			a.state.ListOrderColumn = i
@@ -56,6 +57,9 @@ func (a *App) loadState() {
 }
 
 func (a *App) defaultState() {
+	a.state.Theme = "dark"
+	a.state.Scale = 1.0
+	a.state.Color = theme.ColorOrange
 	a.state.Simple = false
 	a.state.List = map[string]*Photo{}
 	a.state.FramePos = DefaultListPos

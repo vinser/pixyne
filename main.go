@@ -20,7 +20,6 @@ var progress *widget.ProgressBar
 func main() {
 	a = &App{App: app.New()}
 	a.SetIcon(appIcon)
-	a.Settings().SetTheme(&Theme{})
 	a.topWindow = a.NewWindow(a.Metadata().Name)
 	a.topWindowTitle = binding.NewString()
 	a.topWindowTitle.AddListener(binding.NewDataListener(func() {
@@ -28,6 +27,7 @@ func main() {
 		a.topWindow.SetTitle(a.Metadata().Name + ": " + path)
 	}))
 	a.loadState()
+	a.Settings().SetTheme(&Theme{})
 	go initScreen()
 	go mainJob()
 	a.Run()

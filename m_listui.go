@@ -144,7 +144,7 @@ func (a *App) headerUpdate(id widget.TableCellID, o fyne.CanvasObject) {
 	header := o.(*widget.Button)
 	if id.Col == -1 {
 		header.SetText(strconv.Itoa(id.Row + 1))
-		if id.Row >= frame.ListPos && id.Row < frame.ListPos+frame.Size {
+		if id.Row >= a.state.FramePos && id.Row < a.state.FramePos+a.state.FrameSize {
 			header.Importance = widget.HighImportance
 		} else {
 			header.Importance = widget.MediumImportance
@@ -153,7 +153,7 @@ func (a *App) headerUpdate(id widget.TableCellID, o fyne.CanvasObject) {
 		header.OnTapped = func() {
 			frame.ShowProgress()
 			defer frame.HideProgress()
-			frame.ListPos = id.Row
+			a.state.FramePos = id.Row
 			a.toggleView()
 		}
 		header.Refresh()
@@ -187,18 +187,18 @@ func (a *App) reorderList(col int) {
 	}
 	a.listColumns[col].Order = order
 
-	posId := list[frame.ListPos].id
+	posId := list[a.state.FramePos].id
 	sortList(col, order)
 	for i := 0; i < len(list); i++ {
 		if list[i].id == posId {
-			frame.ListPos = i
+			a.state.FramePos = i
 			break
 		}
 	}
-	if frame.ListPos+frame.Size > len(list) {
-		frame.ListPos = len(list) - frame.Size
+	if a.state.FramePos+a.state.FrameSize > len(list) {
+		a.state.FramePos = len(list) - a.state.FrameSize
 	}
-	a.listTable.ScrollTo(widget.TableCellID{Col: 0, Row: frame.ListPos})
+	a.listTable.ScrollTo(widget.TableCellID{Col: 0, Row: a.state.FramePos})
 	a.listTable.Refresh()
 }
 

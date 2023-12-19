@@ -92,11 +92,11 @@ func (a *App) toggleView() {
 		a.frameView.Show()
 		a.listView.Hide()
 		a.actToggleView.SetIcon(theme.ListIcon())
-		frame.At(frame.ListPos)
+		frame.At(a.state.FramePos)
 		a.frameView.Refresh()
 	} else {
 		a.showListToolbar()
-		a.listTable.ScrollTo(widget.TableCellID{Col: 0, Row: frame.ListPos})
+		a.listTable.ScrollTo(widget.TableCellID{Col: 0, Row: a.state.FramePos})
 		a.frameView.Hide()
 		a.listView.Refresh()
 		a.listView.Show()
@@ -125,12 +125,12 @@ func (a *App) showFrameToolbar() {
 	a.toolBar.Append(a.actSettings)
 	a.toolBar.Append(a.actAbout)
 	if len(list) > 0 {
-		if frame.Size < MaxFrameSize && frame.Size < len(list) {
+		if a.state.FrameSize < MaxFrameSize && a.state.FrameSize < len(list) {
 			a.toolBar.Prepend(a.actAddPhoto)
 		} else {
 			a.toolBar.Prepend(a.actNoAction)
 		}
-		if frame.Size > MinFrameSize {
+		if a.state.FrameSize > MinFrameSize {
 			a.toolBar.Prepend(a.actRemovePhoto)
 		} else {
 			a.toolBar.Prepend(a.actNoAction)

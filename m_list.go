@@ -50,8 +50,8 @@ func GetListImageAt(pos int) *canvas.Image {
 	}
 	// bytesBefore := float64(size.Of(m)) / 1024. / 1024.
 	filter := imaging.Box
-	scaleDx := float64(W4K) / float64(m.Bounds().Dx()) / float64(frame.Size)
-	scaleDy := float64(H4K) / float64(m.Bounds().Dy()) / float64(frame.Size)
+	scaleDx := float64(W4K) / float64(m.Bounds().Dx()) / float64(a.state.FrameSize)
+	scaleDy := float64(H4K) / float64(m.Bounds().Dy()) / float64(a.state.FrameSize)
 	if scaleDx < scaleDy {
 		if scaleDx < 1 {
 			m = imaging.Resize(m, int(float64(m.Bounds().Dx())*scaleDx), 0, filter)

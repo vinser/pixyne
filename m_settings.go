@@ -1,15 +1,10 @@
 package main
 
 import (
-	"encoding/json"
 	"image/color"
-	"os"
-	"path/filepath"
-	"runtime"
 	"time"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
@@ -18,72 +13,13 @@ import (
 
 // access to user interfaces to control Fyne settings
 type Settings struct {
-	fyneSettings app.SettingsSchema
-	colors       []fyne.CanvasObject
-}
-
-func (s *Settings) load() {
-	err := s.loadFromFile(s.fyneSettings.StoragePath())
-	if err != nil {
-		fyne.LogError("Settings load error:", err)
-	}
-}
-
-func (s *Settings) loadFromFile(path string) error {
-	file, err := os.Open(path) // #nosec
-	if err != nil {
-		if os.IsNotExist(err) {
-			err := os.MkdirAll(filepath.Dir(path), 0700)
-			if err != nil {
-				return err
-			}
-			return nil
-		}
-		return err
-	}
-	decode := json.NewDecoder(file)
-
-	return decode.Decode(&s.fyneSettings)
-}
-
-func (s *Settings) save() error {
-	return s.saveToFile(s.fyneSettings.StoragePath())
-}
-
-func (s *Settings) saveToFile(path string) error {
-	err := os.MkdirAll(filepath.Dir(path), 0700)
-	if err != nil { // this is not an exists error according to docs
-		return err
-	}
-
-	data, err := json.Marshal(&s.fyneSettings)
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(path, data, 0644)
+	colors []fyne.CanvasObject
 }
 
 // a new settings instance with the current configuration loaded
 func NewSettings() *Settings {
 	s := &Settings{}
-	s.load()
-	if s.fyneSettings.Scale == 0 {
-		s.fyneSettings.Scale = 1
-	}
 	return s
-}
-
-func (s *Settings) applySettings() {
-	if s.fyneSettings.Scale == 0.0 {
-		s.choosedScale(1.0)
-	}
-	err := s.save()
-	if err != nil {
-		fyne.LogError("Failed on saving", err)
-	}
-
-	s.appliedScale(s.fyneSettings.Scale)
 }
 
 // scale
@@ -97,19 +33,13 @@ type scaleItems struct {
 var scales = []*scaleItems{
 	{scale: 0.5, name: "Tiny"},
 	{scale: 0.8, name: "Small"},
-	{scale: 1, name: "Normal"},
+	{scale: 1.0, name: "Normal"},
 	{scale: 1.3, name: "Big"},
 	{scale: 1.8, name: "Large"},
 	{scale: 2.2, name: "Huge"}}
 
-func (s *Settings) appliedScale(value float32) {
-	for _, scale := range scales {
-		scale.preview.TextSize = theme.TextSize() * scale.scale / value
-	}
-}
-
 func (s *Settings) choosedScale(value float32) {
-	s.fyneSettings.Scale = value
+	a.state.Scale = value
 
 	for _, scale := range scales {
 		if scale.scale == value {
@@ -120,7 +50,6 @@ func (s *Settings) choosedScale(value float32) {
 			scale.button.Refresh()
 		}
 	}
-	s.applySettings()
 }
 
 func (s *Settings) scalesRow() *fyne.Container {
@@ -129,8 +58,9 @@ func (s *Settings) scalesRow() *fyne.Container {
 		value := scale.scale
 		button := widget.NewButton(scale.name, func() {
 			s.choosedScale(value)
+			a.topWindow.Content().Refresh()
 		})
-		if s.fyneSettings.Scale == scale.scale {
+		if a.state.Scale == scale.scale {
 			button.Importance = widget.HighImportance
 		}
 
@@ -180,7 +110,7 @@ func (b *colorButton) CreateRenderer() fyne.WidgetRenderer {
 	r := canvas.NewRectangle(b.color)
 	r.StrokeWidth = 2
 
-	if b.name == b.s.fyneSettings.PrimaryColor {
+	if b.name == a.state.Color {
 		r.StrokeColor = theme.PrimaryColor()
 	}
 
@@ -188,11 +118,13 @@ func (b *colorButton) CreateRenderer() fyne.WidgetRenderer {
 }
 
 func (b *colorButton) Tapped(_ *fyne.PointEvent) {
-	b.s.fyneSettings.PrimaryColor = b.name
+	a.state.Color = b.name
 	for _, child := range b.s.colors {
 		child.Refresh()
 	}
-	b.s.applySettings()
+	a.Settings().SetTheme(&Theme{})
+	a.topWindow.Content().Refresh()
+
 }
 
 type colorRenderer struct {
@@ -210,7 +142,7 @@ func (r *colorRenderer) MinSize() fyne.Size {
 }
 
 func (r *colorRenderer) Refresh() {
-	if r.btn.name == r.btn.s.fyneSettings.PrimaryColor {
+	if r.btn.name == a.state.Color {
 		r.rect.StrokeColor = theme.PrimaryColor()
 	} else {
 		r.rect.StrokeColor = color.Transparent
@@ -229,20 +161,12 @@ func (r *colorRenderer) Destroy() {
 
 // theme
 func (s *Settings) themesRow() *widget.RadioGroup {
-	def := s.fyneSettings.ThemeName
+	def := a.state.Theme
 	themeNames := []string{"dark", "light"}
-	if runtime.GOOS == "darwin" || runtime.GOOS == "windows" {
-		themeNames = append(themeNames, "system")
-		if s.fyneSettings.ThemeName == "" {
-			def = "system"
-		}
-	}
 	themes := widget.NewRadioGroup(themeNames, func(selected string) {
-		if selected == "system" {
-			selected = ""
-		}
-		s.fyneSettings.ThemeName = selected
-		s.applySettings()
+		a.state.Theme = selected
+		a.Settings().SetTheme(&Theme{})
+		a.topWindow.Content().Refresh()
 	})
 	themes.SetSelected(def)
 	themes.Horizontal = true
@@ -274,7 +198,7 @@ func (s *Settings) datesRow(a *App) *fyne.Container {
 		if a.frameView.Hidden {
 			a.listTable.Refresh()
 		} else {
-			frame.At(frame.ListPos)
+			frame.At(a.state.FramePos)
 		}
 		display.SetText(time.Now().Format(DisplayDateFormat))
 	}
@@ -282,16 +206,17 @@ func (s *Settings) datesRow(a *App) *fyne.Container {
 }
 
 func (s *Settings) modeRow(a *App) *widget.RadioGroup {
-	mode := widget.NewRadioGroup([]string{"full", "simple"}, func(selected string) {
-		if selected == "simple" {
-			frame.Simple = true
-		} else {
-			frame.Simple = false
-		}
-		frame.At(frame.ListPos)
+	mode := widget.NewRadioGroup([]string{"full", "simple"},
+		func(selected string) {
+			if selected == "simple" {
+				a.state.Simple = true
+			} else {
+				a.state.Simple = false
+			}
+			frame.At(a.state.FramePos)
 
-	})
-	if frame.Simple {
+		})
+	if a.state.Simple {
 		mode.SetSelected("simple")
 	} else {
 		mode.SetSelected("full")

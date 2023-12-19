@@ -37,38 +37,38 @@ func shapeFame(shape Shape) (cols, size int) {
 	switch {
 	case shape == shapeBigger:
 		switch {
-		case frame.Size >= 4:
+		case a.state.FrameSize >= 4:
 			cols = MaxFrameColumn
 			size = MaxFrameSize
-		case frame.Size == 3:
+		case a.state.FrameSize == 3:
 			cols = 2
 			size = 4
 		default:
-			cols = frame.Size + 1
-			size = frame.Size + 1
+			cols = a.state.FrameSize + 1
+			size = a.state.FrameSize + 1
 		}
 		return
 	case shape == shapeSmaller:
 		switch {
-		case frame.Size >= 5:
+		case a.state.FrameSize >= 5:
 			cols = 2
 			size = 4
-		case frame.Size <= 4:
-			cols = frame.Size - 1
-			size = frame.Size - 1
+		case a.state.FrameSize <= 4:
+			cols = a.state.FrameSize - 1
+			size = a.state.FrameSize - 1
 		}
 		return
 	case shape == shapeDefault:
 		switch {
-		case frame.Size > 4:
+		case a.state.FrameSize > 4:
 			cols = MaxFrameColumn
 			size = MaxFrameSize
-		case frame.Size == 4:
+		case a.state.FrameSize == 4:
 			cols = 2
 			size = 4
 		default:
-			cols = frame.Size
-			size = frame.Size
+			cols = a.state.FrameSize
+			size = a.state.FrameSize
 		}
 		return
 	}
@@ -77,14 +77,11 @@ func shapeFame(shape Shape) (cols, size int) {
 
 // Choice tab frame - rows with photos
 type Frame struct {
-	Content *fyne.Container  `json:"-"`
-	ListPos int              `json:"list_pos"`
-	Size    int              `json:"frame_size"`
-	Cols    int              `json:"-"`
-	ItemPos int              `json:"-"`
-	Items   []*FrameItem     `json:"-"`
-	Simple  bool             `json:"simple_mode"`
-	Buttons []*widget.Button `json:"-"`
+	Content *fyne.Container
+	Cols    int
+	ItemPos int
+	Items   []*FrameItem
+	Buttons []*widget.Button
 }
 
 func (a *App) newFrame() {
@@ -94,15 +91,13 @@ func (a *App) newFrame() {
 		frame.Content = container.NewGridWithColumns(1, canvas.NewText("", color.Black))
 		return
 	}
-	frame.ListPos = a.state.FramePos
-	if frame.Size = a.state.FrameSize; frame.Size == 0 {
-		frame.Size = DefaultFrameSize
+	if a.state.FrameSize = a.state.FrameSize; a.state.FrameSize == 0 {
+		a.state.FrameSize = DefaultFrameSize
 	}
-	frame.Cols, frame.Size = shapeFame(shapeDefault)
-	frame.Simple = a.state.Simple
+	frame.Cols, a.state.FrameSize = shapeFame(shapeDefault)
 	frame.Content = container.NewGridWithColumns(frame.Cols)
-	frame.Items = make([]*FrameItem, frame.Size)
-	frame.At(frame.ListPos)
+	frame.Items = make([]*FrameItem, a.state.FrameSize)
+	frame.At(a.state.FramePos)
 }
 
 func (f *Frame) ShowProgress() {
@@ -119,14 +114,14 @@ func (f *Frame) At(pos int) {
 		return
 	}
 	f.Content.RemoveAll()
-	for i := 0; i < f.Size; i++ {
-		f.Items[i] = NewFrameItem(pos+i, f.Simple)
+	for i := 0; i < a.state.FrameSize; i++ {
+		f.Items[i] = NewFrameItem(pos+i, a.state.Simple)
 	}
-	for i := 0; i < f.Size; i++ {
+	for i := 0; i < a.state.FrameSize; i++ {
 		f.Content.Add(f.Items[i].Content)
 	}
 	f.Content.Refresh()
-	f.ListPos = pos
+	a.state.FramePos = pos
 }
 
 func (f *Frame) First() {
@@ -139,7 +134,7 @@ func (f *Frame) First() {
 func (f *Frame) Last() {
 	f.ShowProgress()
 	defer f.HideProgress()
-	pos := len(list) - f.Size
+	pos := len(list) - a.state.FrameSize
 	f.At(pos)
 	f.updateFrameScrollButtons()
 }
@@ -147,7 +142,7 @@ func (f *Frame) Last() {
 func (f *Frame) Prev() {
 	f.ShowProgress()
 	defer f.HideProgress()
-	pos := f.ListPos - f.Size
+	pos := a.state.FramePos - a.state.FrameSize
 	if pos < 0 {
 		f.First()
 		return
@@ -159,8 +154,8 @@ func (f *Frame) Prev() {
 func (f *Frame) Next() {
 	f.ShowProgress()
 	defer f.HideProgress()
-	pos := f.ListPos + f.Size
-	if pos > len(list)-f.Size {
+	pos := a.state.FramePos + a.state.FrameSize
+	if pos > len(list)-a.state.FrameSize {
 		f.Last()
 		return
 	}
@@ -171,15 +166,15 @@ func (f *Frame) Next() {
 func (f *Frame) PrevItem() {
 	f.ShowProgress()
 	defer f.HideProgress()
-	if f.ListPos > 0 {
+	if a.state.FramePos > 0 {
 		f.Items = f.Items[:len(f.Items)-1]
-		f.Items = append([]*FrameItem{NewFrameItem(f.ListPos-1, f.Simple)}, f.Items...)
+		f.Items = append([]*FrameItem{NewFrameItem(a.state.FramePos-1, a.state.Simple)}, f.Items...)
 		f.Content.RemoveAll()
-		for i := 0; i < f.Size; i++ {
+		for i := 0; i < a.state.FrameSize; i++ {
 			f.Content.Add(f.Items[i].Content)
 		}
 		f.Content.Refresh()
-		f.ListPos--
+		a.state.FramePos--
 		f.updateFrameScrollButtons()
 	}
 }
@@ -187,30 +182,30 @@ func (f *Frame) PrevItem() {
 func (f *Frame) NextItem() {
 	f.ShowProgress()
 	defer f.HideProgress()
-	if f.ListPos < len(list)-f.Size {
+	if a.state.FramePos < len(list)-a.state.FrameSize {
 		f.Items = f.Items[1:]
-		f.Items = append(f.Items, NewFrameItem(f.ListPos+f.Size, f.Simple))
+		f.Items = append(f.Items, NewFrameItem(a.state.FramePos+a.state.FrameSize, a.state.Simple))
 		f.Content.RemoveAll()
-		for i := 0; i < f.Size; i++ {
+		for i := 0; i < a.state.FrameSize; i++ {
 			f.Content.Add(f.Items[i].Content)
 		}
 		f.Content.Refresh()
-		f.ListPos++
+		a.state.FramePos++
 		f.updateFrameScrollButtons()
 	}
 }
 
 func (f *Frame) RemoveItem() {
-	if f.Size > MinFrameSize {
+	if a.state.FrameSize > MinFrameSize {
 		f.ShowProgress()
 		defer f.HideProgress()
 		newCols, newSize := shapeFame(shapeSmaller)
-		f.Items = f.Items[:len(f.Items)-f.Size+newSize]
-		f.Size = newSize
+		f.Items = f.Items[:len(f.Items)-a.state.FrameSize+newSize]
+		a.state.FrameSize = newSize
 		f.Cols = newCols
 		f.Content.RemoveAll()
 		f.Content.Layout = layout.NewGridLayoutWithColumns(newCols)
-		for i := 0; i < f.Size; i++ {
+		for i := 0; i < a.state.FrameSize; i++ {
 			f.Content.Add(f.Items[i].Content)
 		}
 		f.Content.Refresh()
@@ -220,21 +215,21 @@ func (f *Frame) RemoveItem() {
 }
 
 func (f *Frame) AddItem() {
-	if f.Size < MaxFrameSize {
+	if a.state.FrameSize < MaxFrameSize {
 		f.ShowProgress()
 		defer f.HideProgress()
 		newCols, newSize := shapeFame(shapeBigger)
-		if f.ListPos+f.Size >= len(list) {
+		if a.state.FramePos+a.state.FrameSize >= len(list) {
 			f.At(len(list) - newSize)
 		}
-		for i := 0; i < newSize-f.Size; i++ {
-			f.Items = append(f.Items, NewFrameItem(f.ListPos+f.Size+i, f.Simple))
+		for i := 0; i < newSize-a.state.FrameSize; i++ {
+			f.Items = append(f.Items, NewFrameItem(a.state.FramePos+a.state.FrameSize+i, a.state.Simple))
 		}
-		f.Size = newSize
+		a.state.FrameSize = newSize
 		f.Cols = newCols
 		f.Content.RemoveAll()
 		f.Content.Layout = layout.NewGridLayoutWithColumns(newCols)
-		for i := 0; i < f.Size; i++ {
+		for i := 0; i < a.state.FrameSize; i++ {
 			f.Content.Add(f.Items[i].Content)
 		}
 		f.Content.Refresh()
@@ -299,12 +294,12 @@ func (f *Frame) updateFrameScrollButtons() {
 	f.Buttons[nextPhotoBtn].Enable()
 	f.Buttons[nextFrameBtn].Enable()
 	f.Buttons[lastPhotoBtn].Enable()
-	if frame.ListPos == 0 {
+	if a.state.FramePos == 0 {
 		f.Buttons[prevPhotoBtn].Disable()
 		f.Buttons[prevFrameBtn].Disable()
 		f.Buttons[firstPhotoBtn].Disable()
 	}
-	if frame.ListPos+frame.Size == len(list) {
+	if a.state.FramePos+a.state.FrameSize == len(list) {
 		f.Buttons[nextPhotoBtn].Disable()
 		f.Buttons[nextFrameBtn].Disable()
 		f.Buttons[lastPhotoBtn].Disable()
