@@ -20,8 +20,8 @@ const (
 	DropDirName   = "dropped"
 )
 
-var W4K = 3840 * 3 / 4
-var H4K = 2160 * 3 / 4
+var ScreenWidth = 3840 * 3 / 4
+var ScreenHeight = 2160 * 3 / 4
 
 // File date to use
 const (
@@ -50,8 +50,8 @@ func GetListImageAt(pos int) *canvas.Image {
 	}
 	// bytesBefore := float64(size.Of(m)) / 1024. / 1024.
 	filter := imaging.Box
-	scaleDx := float64(W4K) / float64(m.Bounds().Dx()) / float64(a.state.FrameSize)
-	scaleDy := float64(H4K) / float64(m.Bounds().Dy()) / float64(a.state.FrameSize)
+	scaleDx := float64(ScreenWidth) / float64(m.Bounds().Dx()) / float64(a.state.FrameSize)
+	scaleDy := float64(ScreenHeight) / float64(m.Bounds().Dy()) / float64(a.state.FrameSize)
 	if scaleDx < scaleDy {
 		if scaleDx < 1 {
 			m = imaging.Resize(m, int(float64(m.Bounds().Dx())*scaleDx), 0, filter)

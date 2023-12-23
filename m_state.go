@@ -48,7 +48,6 @@ func (a *App) loadState() {
 		if err := json.Unmarshal([]byte(state), &a.state); err == nil {
 			rootURI, _ = storage.ListerForURI(storage.NewFileURI(a.state.Folder))
 			if isDir, _ := storage.CanList(rootURI); isDir {
-				a.topWindowTitle.Set(rootURI.Path())
 				return
 			}
 		}
@@ -57,10 +56,10 @@ func (a *App) loadState() {
 }
 
 func (a *App) defaultState() {
-	a.state.Theme = "dark"
-	a.state.Scale = 1.0
+	a.state.Theme = DefaultTheme
+	a.state.Scale = DefaultScale
 	a.state.Color = theme.ColorOrange
-	a.state.Simple = false
+	a.state.Simple = true
 	a.state.List = map[string]*Photo{}
 	a.state.FramePos = DefaultListPos
 	a.state.FrameSize = DefaultFrameSize
@@ -70,5 +69,4 @@ func (a *App) defaultState() {
 	a.state.Folder = home
 	uri := storage.NewFileURI(home)
 	rootURI, _ = storage.ListerForURI(uri)
-	a.topWindowTitle.Set(rootURI.Path())
 }

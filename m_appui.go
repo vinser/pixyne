@@ -1,13 +1,9 @@
 package main
 
 import (
-	"errors"
-	"time"
-
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
-	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
@@ -54,6 +50,10 @@ type App struct {
 	listTable *widget.Table
 	// List columns settings
 	listColumns []*ListColumn
+
+	// Shortcuts
+	ControlShortCuts []ShortCutInfo
+	AltShortCuts     []ShortCutInfo
 }
 
 var a *App
@@ -103,6 +103,7 @@ func (a *App) toggleView() {
 		a.actToggleView.SetIcon(theme.GridIcon())
 	}
 	a.toolBar.Refresh()
+	frame.ItemEndingAt(frame.ItemPos)
 }
 
 func (a *App) toggleFullScreen() {
@@ -153,67 +154,9 @@ func (a *App) showListToolbar() {
 	a.toolBar.Append(a.actAbout)
 }
 
-// open photo folder dialog
-func (a *App) openFolderDialog() {
-	d := dialog.NewFolderOpen(func(list fyne.ListableURI, err error) {
-		if err != nil {
-			dialog.ShowError(err, a.topWindow)
-			return
-		}
-		if list == nil {
-			return
-		}
-		if list.Scheme() != "file" {
-			dialog.ShowError(errors.New("only local files are supported"), a.topWindow)
-			return
-		}
-		a.defaultState()
-		rootURI = list
-		a.topWindowTitle.Set(rootURI.Path())
-		a.newPhotoList()
-		a.newLayout()
-	}, a.topWindow)
-	d.SetLocation(rootURI)
-	d.Resize(fyne.NewSize(672, 378))
-	d.Show()
-}
-
-// Save choosed photos:
-// 1. move dropped photo to droppped folder
-// 2. update exif dates with file modify date or input date
-func (a *App) savePhotoListDialog() {
-	renameFiles := false
-	datedFileFormat := time.Now().Format(FileNameDateFormat)
-	content := container.NewVBox(
-		widget.NewLabel("Ready to save changes?"),
-		widget.NewCheck("Rename files to date taken format "+datedFileFormat, func(b bool) { renameFiles = b }),
-	)
-	d := dialog.NewCustomConfirm(
-		"Save changes",
-		"Proceed",
-		"Cancel",
-		content,
-		func(b bool) {
-			if b {
-				a.SavePhotoList(renameFiles)
-				a.defaultState()
-				a.newPhotoList()
-				a.newLayout()
-			}
-		},
-		a.topWindow)
-	d.Show()
-}
-
-func (a *App) settingsDialog() {
-	s := NewSettings()
-	settingsForm := widget.NewForm(
-		widget.NewFormItem("", s.scalePreviewsRow(a.topWindow.Canvas().Scale())),
-		widget.NewFormItem("Scale", s.scalesRow()),
-		widget.NewFormItem("Main Color", s.colorsRow()),
-		widget.NewFormItem("Theme", s.themesRow()),
-		widget.NewFormItem("Mode", s.modeRow(a)),
-		widget.NewFormItem("Date Format", s.datesRow(a)),
-	)
-	dialog.ShowCustom("Settings", "Close", settingsForm, a.topWindow)
+func (a *App) toggleMode() {
+	loadProgress.Show()
+	defer loadProgress.Hide()
+	a.state.Simple = !a.state.Simple
+	frame.At(a.state.FramePos)
 }

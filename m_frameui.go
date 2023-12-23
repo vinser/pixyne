@@ -91,13 +91,14 @@ func (a *App) newFrame() {
 		frame.Content = container.NewGridWithColumns(1, canvas.NewText("", color.Black))
 		return
 	}
-	if a.state.FrameSize = a.state.FrameSize; a.state.FrameSize == 0 {
+	if a.state.FrameSize == 0 {
 		a.state.FrameSize = DefaultFrameSize
 	}
 	frame.Cols, a.state.FrameSize = shapeFame(shapeDefault)
 	frame.Content = container.NewGridWithColumns(frame.Cols)
 	frame.Items = make([]*FrameItem, a.state.FrameSize)
 	frame.At(a.state.FramePos)
+	frame.ItemEndingAt(1)
 }
 
 func (f *Frame) ShowProgress() {
@@ -128,6 +129,7 @@ func (f *Frame) First() {
 	f.ShowProgress()
 	defer f.HideProgress()
 	f.At(0)
+	f.ItemEndingAt(0)
 	f.updateFrameScrollButtons()
 }
 
@@ -136,6 +138,7 @@ func (f *Frame) Last() {
 	defer f.HideProgress()
 	pos := len(list) - a.state.FrameSize
 	f.At(pos)
+	f.ItemEndingAt(a.state.FrameSize - 1)
 	f.updateFrameScrollButtons()
 }
 
@@ -148,6 +151,7 @@ func (f *Frame) Prev() {
 		return
 	}
 	f.At(pos)
+	f.ItemEndingAt(0)
 	f.updateFrameScrollButtons()
 }
 
@@ -160,12 +164,18 @@ func (f *Frame) Next() {
 		return
 	}
 	f.At(pos)
+	f.ItemEndingAt(a.state.FrameSize - 1)
 	f.updateFrameScrollButtons()
 }
 
 func (f *Frame) PrevItem() {
 	f.ShowProgress()
 	defer f.HideProgress()
+	if f.ItemPos > 0 {
+		f.ItemEndingAt(f.ItemPos - 1)
+		f.Content.Refresh()
+		return
+	}
 	if a.state.FramePos > 0 {
 		f.Items = f.Items[:len(f.Items)-1]
 		f.Items = append([]*FrameItem{NewFrameItem(a.state.FramePos-1, a.state.Simple)}, f.Items...)
@@ -173,6 +183,7 @@ func (f *Frame) PrevItem() {
 		for i := 0; i < a.state.FrameSize; i++ {
 			f.Content.Add(f.Items[i].Content)
 		}
+		f.ItemEndingAt(0)
 		f.Content.Refresh()
 		a.state.FramePos--
 		f.updateFrameScrollButtons()
@@ -182,6 +193,11 @@ func (f *Frame) PrevItem() {
 func (f *Frame) NextItem() {
 	f.ShowProgress()
 	defer f.HideProgress()
+	if f.ItemPos < a.state.FrameSize-1 {
+		f.ItemEndingAt(f.ItemPos + 1)
+		f.Content.Refresh()
+		return
+	}
 	if a.state.FramePos < len(list)-a.state.FrameSize {
 		f.Items = f.Items[1:]
 		f.Items = append(f.Items, NewFrameItem(a.state.FramePos+a.state.FrameSize, a.state.Simple))
@@ -189,6 +205,7 @@ func (f *Frame) NextItem() {
 		for i := 0; i < a.state.FrameSize; i++ {
 			f.Content.Add(f.Items[i].Content)
 		}
+		f.ItemEndingAt(a.state.FrameSize - 1)
 		f.Content.Refresh()
 		a.state.FramePos++
 		f.updateFrameScrollButtons()
@@ -208,6 +225,7 @@ func (f *Frame) RemoveItem() {
 		for i := 0; i < a.state.FrameSize; i++ {
 			f.Content.Add(f.Items[i].Content)
 		}
+		f.ItemEndingAt(0)
 		f.Content.Refresh()
 		f.updateFrameScrollButtons()
 		a.showFrameToolbar()
@@ -232,6 +250,7 @@ func (f *Frame) AddItem() {
 		for i := 0; i < a.state.FrameSize; i++ {
 			f.Content.Add(f.Items[i].Content)
 		}
+		f.ItemEndingAt(a.state.FrameSize - 1)
 		f.Content.Refresh()
 		f.updateFrameScrollButtons()
 		a.showFrameToolbar()
@@ -306,11 +325,21 @@ func (f *Frame) updateFrameScrollButtons() {
 	}
 }
 
+func (f *Frame) ItemEndingAt(pos int) {
+	for i := 0; i < a.state.FrameSize; i++ {
+		f.Items[i].Ending.StrokeWidth = 0
+	}
+	f.ItemPos = pos
+	f.Items[f.ItemPos].Ending.StrokeWidth = 5
+	f.Items[f.ItemPos].Content.Refresh()
+}
+
 type FrameItem struct {
 	Content *fyne.Container
 	Label   string
 	Img     *canvas.Image
 	Button  *widget.Button
+	Ending  *canvas.Rectangle
 }
 
 // NewFrameItem creates a new FrameItem
@@ -319,6 +348,12 @@ func NewFrameItem(listPos int, simpleMode bool) *FrameItem {
 	item.Img = GetListImageAt(listPos)
 	item.Label = fmt.Sprint(list[listPos].fileURI.Name())
 	item.Button = widget.NewButton("", func() { toggleDrop(listPos, item) })
+	item.Ending = &canvas.Rectangle{FillColor: color.Transparent,
+		StrokeColor: theme.PrimaryColor(),
+		// StrokeColor:  color.White,
+		StrokeWidth:  0,
+		CornerRadius: 0,
+	}
 	if list[listPos].Drop {
 		item.Button.SetText("DROPPED")
 		item.Img.Translucency = 0.8
@@ -328,6 +363,7 @@ func NewFrameItem(listPos int, simpleMode bool) *FrameItem {
 	centerStack := container.NewStack()
 	centerStack.Add(item.Img)
 	centerStack.Add(item.Button)
+	centerStack.Add(item.Ending)
 	if simpleMode {
 		item.Content = container.NewBorder(topLabel, nil, nil, nil, centerStack)
 	} else {
@@ -390,5 +426,10 @@ func toggleDrop(pos int, item *FrameItem) {
 	} else {
 		item.Button.SetText("")
 		item.Img.Translucency = 0
+	}
+	for i := 0; i < a.state.FrameSize; i++ {
+		if frame.Items[i] == item {
+			frame.ItemEndingAt(i)
+		}
 	}
 }

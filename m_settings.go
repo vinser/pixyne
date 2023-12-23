@@ -11,6 +11,11 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+const (
+	DefaultScale = 1.3
+	DefaultTheme = "dark"
+)
+
 // access to user interfaces to control Fyne settings
 type Settings struct {
 	colors []fyne.CanvasObject
@@ -58,7 +63,6 @@ func (s *Settings) scalesRow() *fyne.Container {
 		value := scale.scale
 		button := widget.NewButton(scale.name, func() {
 			s.choosedScale(value)
-			a.topWindow.Content().Refresh()
 		})
 		if a.state.Scale == scale.scale {
 			button.Importance = widget.HighImportance
@@ -123,8 +127,6 @@ func (b *colorButton) Tapped(_ *fyne.PointEvent) {
 		child.Refresh()
 	}
 	a.Settings().SetTheme(&Theme{})
-	a.topWindow.Content().Refresh()
-
 }
 
 type colorRenderer struct {
@@ -161,14 +163,21 @@ func (r *colorRenderer) Destroy() {
 
 // theme
 func (s *Settings) themesRow() *widget.RadioGroup {
-	def := a.state.Theme
-	themeNames := []string{"dark", "light"}
+	themeNames := []string{"Dark", "Light"}
 	themes := widget.NewRadioGroup(themeNames, func(selected string) {
-		a.state.Theme = selected
+		if selected == "Dark" {
+			a.state.Theme = "dark"
+
+		} else {
+			a.state.Theme = "light"
+		}
 		a.Settings().SetTheme(&Theme{})
-		a.topWindow.Content().Refresh()
 	})
-	themes.SetSelected(def)
+	if a.state.Theme == "dark" {
+		themes.SetSelected("Dark")
+	} else {
+		themes.SetSelected("Light")
+	}
 	themes.Horizontal = true
 	return themes
 }
@@ -195,32 +204,41 @@ func (s *Settings) datesRow(a *App) *fyne.Container {
 	choice.SetText(byFormat[DisplayDateFormat])
 	choice.OnChanged = func(s string) {
 		DisplayDateFormat = toFormat[s]
-		if a.frameView.Hidden {
-			a.listTable.Refresh()
-		} else {
-			frame.At(a.state.FramePos)
-		}
 		display.SetText(time.Now().Format(DisplayDateFormat))
 	}
 	return container.NewGridWithColumns(3, choice, label, display)
 }
 
 func (s *Settings) modeRow(a *App) *widget.RadioGroup {
-	mode := widget.NewRadioGroup([]string{"full", "simple"},
+	mode := widget.NewRadioGroup([]string{"Simple", "Advanced"},
 		func(selected string) {
-			if selected == "simple" {
+			if selected == "Simple" {
 				a.state.Simple = true
 			} else {
 				a.state.Simple = false
 			}
-			frame.At(a.state.FramePos)
-
 		})
 	if a.state.Simple {
-		mode.SetSelected("simple")
+		mode.SetSelected("Simple")
 	} else {
-		mode.SetSelected("full")
+		mode.SetSelected("Advanced")
 	}
 	mode.Horizontal = true
 	return mode
+}
+
+func (s *Settings) hotkeysRow() *widget.Label {
+	hotkey := "No shortcut for hotkeys"
+	for i := range a.ControlShortCuts {
+		if a.ControlShortCuts[i].Name == "Hotkeys" {
+			hotkey = "To see hotkeys press Ctrl + " + string(a.ControlShortCuts[i].KeyName)
+		}
+	}
+	for i := range a.AltShortCuts {
+		if a.AltShortCuts[i].Name == "Hotkeys" {
+			hotkey = "To see hotkeys press Alt + " + string(a.AltShortCuts[i].KeyName)
+		}
+	}
+	lbl := widget.NewLabel(hotkey)
+	return lbl
 }

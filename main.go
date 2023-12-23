@@ -19,14 +19,19 @@ var progress *widget.ProgressBar
 
 func main() {
 	a = &App{App: app.New()}
-	a.SetIcon(appIcon)
+	a.loadState()
+	if a.state.Theme == "dark" {
+		a.SetIcon(appIconDark)
+	} else {
+		a.SetIcon(appIconLight)
+	}
 	a.topWindow = a.NewWindow(a.Metadata().Name)
 	a.topWindowTitle = binding.NewString()
 	a.topWindowTitle.AddListener(binding.NewDataListener(func() {
 		path, _ := a.topWindowTitle.Get()
 		a.topWindow.SetTitle(a.Metadata().Name + ": " + path)
 	}))
-	a.loadState()
+	a.Shortcuts()
 	a.Settings().SetTheme(&Theme{})
 	go initScreen()
 	go mainJob()
@@ -40,7 +45,12 @@ func initScreen() {
 	w.SetFullScreen(true)
 	w.Show()
 	time.Sleep(time.Second * 1)
-	logo := canvas.NewImageFromResource(appIcon)
+	var logo *canvas.Image
+	if a.state.Theme == "dark" {
+		logo = canvas.NewImageFromResource(appIconDark)
+	} else {
+		logo = canvas.NewImageFromResource(appIconLight)
+	}
 	logo.SetMinSize(fyne.NewSquareSize(400))
 	emptyObj := canvas.NewRectangle(color.Transparent)
 	progress = widget.NewProgressBar()
@@ -56,18 +66,19 @@ func initScreen() {
 	w.SetContent(content)
 	a.newPhotoList()
 
-	W4K = int(w.Canvas().Size().Width)
-	H4K = int(w.Canvas().Size().Height)
+	ScreenWidth = int(w.Canvas().Size().Width)
+	ScreenHeight = int(w.Canvas().Size().Height)
 	initCh <- struct{}{}
 	<-respCh
 }
 
 func mainJob() {
 	<-initCh
-	// log.Printf("Screen: %d x %d", W4K, H4K)
+	// log.Printf("Screen: %d x %d", ScreenWidth, ScreenHeight)
+	a.topWindowTitle.Set(rootURI.Path())
 	a.topWindow.SetOnClosed(a.saveState)
 	a.topWindow.SetMaster()
-	a.topWindow.Resize(fyne.NewSize(1344, 756))
+	a.topWindow.Resize(fyne.NewSize(float32(ScreenWidth)*0.6, float32(ScreenHeight)*0.6))
 	a.topWindow.CenterOnScreen()
 	a.newLayout()
 	a.topWindow.Show()

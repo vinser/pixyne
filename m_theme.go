@@ -1,4 +1,5 @@
-//go:generate fyne bundle --package main --name appIcon --output m_bundled.go appIcon.png
+//go:generate fyne bundle --package main --name appIconDark --output m_bundled.go icons/appIconDark.png
+//go:generate fyne bundle --name appIconLight --output m_bundled.go --append icons/appIconLight.png
 //go:generate fyne bundle --name iconScrollBack --output m_bundled.go --append icons/scroll-back.svg
 //go:generate fyne bundle --name iconBlank --output m_bundled.go --append icons/blank.svg
 
