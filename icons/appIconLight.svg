@@ -1,0 +1,20 @@
+<svg width="96" height="96" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="clip">
+      <rect width="68" height="68" x="8" y="8" rx="4" />
+    </clipPath>
+  </defs>
+
+  <g transform="translate(16,0) rotate(10)" style="clip-path: url(#clip);">
+    <rect id="byl" width="68" height="68" x="8" y="8" rx="4" fill="#29AFEA" />
+    <rect id="bym" width="68" height="68" x="8" y="8" rx="4" fill="#4B69C2" transform="translate(55,26) rotate(45)" />
+    <rect id="byd" width="68" height="68" x="8" y="8" rx="4" fill="#163972" transform="translate(30,18) rotate(45)" />
+    <circle id="sun" cx="55" cy="24" r="6" fill="#cae0e0" />
+  </g>
+  <g style="clip-path: url(#clip);">
+    <rect id="byl" width="68" height="68" x="8" y="8" rx="4" fill="#EAAD29" />
+    <rect id="bym" width="68" height="68" x="8" y="8" rx="4" fill="#D6742D" transform="translate(55,26) rotate(45)" />
+    <rect id="byd" width="68" height="68" x="8" y="8" rx="4" fill="#B75315" transform="translate(30,18) rotate(45)" />
+    <circle id="sun" cx="55" cy="24" r="6" fill="#FFF8DE" />
+  </g>
+</svg>
