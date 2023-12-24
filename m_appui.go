@@ -60,15 +60,13 @@ var a *App
 
 // make main window newLayout
 func (a *App) newLayout() {
-	loadProgress = widget.NewProgressBarInfinite()
-	loadProgress.Hide()
 	a.newToolBar()
 	a.newFrame()
 	a.showFrameToolbar()
 	a.frameView = frame.newFrameView()
 	a.listView = a.newListView()
 	a.listView.Hide()
-	top := container.NewStack(a.toolBar, container.NewGridWithColumns(3, widget.NewLabel(""), loadProgress))
+	top := container.NewStack(a.toolBar, container.NewGridWithColumns(3, widget.NewLabel(""), frame.NewProgress()))
 	a.topWindow.SetContent(container.NewBorder(top, nil, nil, nil, container.NewStack(a.frameView, a.listView)))
 }
 
@@ -155,8 +153,8 @@ func (a *App) showListToolbar() {
 }
 
 func (a *App) toggleMode() {
-	loadProgress.Show()
-	defer loadProgress.Hide()
+	frame.ShowProgress()
+	defer frame.HideProgress()
 	a.state.Simple = !a.state.Simple
 	frame.At(a.state.FramePos)
 }

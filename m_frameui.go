@@ -101,6 +101,12 @@ func (a *App) newFrame() {
 	frame.ItemEndingAt(1)
 }
 
+func (f *Frame) NewProgress() *widget.ProgressBarInfinite {
+	loadProgress = widget.NewProgressBarInfinite()
+	loadProgress.Hide()
+	return loadProgress
+}
+
 func (f *Frame) ShowProgress() {
 	f.DisableButtons()
 	loadProgress.Show()
