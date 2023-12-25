@@ -10,12 +10,11 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
-	"fyne.io/fyne/v2/widget"
+	"fyne.io/fyne/v2/theme"
 )
 
-var initCh = make(chan struct{})
-var respCh = make(chan struct{})
-var progress *widget.ProgressBar
+var initCh chan struct{}
+var respCh chan struct{}
 
 func main() {
 	a = &App{App: app.New()}
@@ -33,15 +32,51 @@ func main() {
 	}))
 	a.Shortcuts()
 	a.Settings().SetTheme(&Theme{})
-	go initScreen()
-	go mainJob()
+	if ScreenWidth == 0 {
+		go firstRun()
+	} else {
+		standardRun()
+	}
+
 	a.Run()
 }
 
-func initScreen() {
+func standardRun() {
+	// log.Printf("Screen: %d x %d", ScreenWidth, ScreenHeight)
+	a.topWindowTitle.Set(rootURI.Path())
+	a.topWindow.SetOnClosed(a.saveState)
+	a.topWindow.SetMaster()
+	a.newPhotoList()
+	a.topWindow.Resize(fyne.NewSize(float32(ScreenWidth)*0.6, float32(ScreenHeight)*0.6))
+	a.newLayout()
+	a.topWindow.CenterOnScreen()
+	a.topWindow.Show()
+}
+func firstRun() {
+
+	// log.Printf("Screen: %d x %d", ScreenWidth, ScreenHeight)
+	a.topWindowTitle.Set(rootURI.Path())
+	a.topWindow.SetOnClosed(a.saveState)
+	a.topWindow.SetMaster()
+	a.topWindow.Show()
+	initCh = make(chan struct{})
+	respCh = make(chan struct{})
+	go initScreenRoutine()
+	<-initCh
+	a.newPhotoList()
+	a.topWindow.Resize(fyne.NewSize(float32(ScreenWidth)*0.6, float32(ScreenHeight)*0.6))
+	a.newLayout()
+	a.topWindow.CenterOnScreen()
+	respCh <- struct{}{}
+}
+
+func initScreenRoutine() {
 	w := a.NewWindow("Probe")
-	defer w.Close()
-	// w := a.w
+	defer func() {
+		w.Close()
+		close(initCh)
+		close(respCh)
+	}()
 	w.SetFullScreen(true)
 	w.Show()
 	time.Sleep(time.Second * 1)
@@ -53,36 +88,21 @@ func initScreen() {
 	}
 	logo.SetMinSize(fyne.NewSquareSize(400))
 	emptyObj := canvas.NewRectangle(color.Transparent)
-	progress = widget.NewProgressBar()
+	text := canvas.NewText("Optimizing Pixyne...", theme.PrimaryColor())
+	text.TextSize = theme.TextSize() * 3
+	text.Alignment = fyne.TextAlignCenter
 	content := container.NewGridWithColumns(3,
 		emptyObj,
 		container.NewGridWithRows(3,
 			emptyObj,
 			container.NewCenter(logo),
-			container.NewVBox(
-				widget.NewLabel("Processing folder with photos"),
-				progress)),
+			container.NewGridWithRows(3, text),
+		),
 		emptyObj)
 	w.SetContent(content)
-	a.newPhotoList()
 
 	ScreenWidth = int(w.Canvas().Size().Width)
 	ScreenHeight = int(w.Canvas().Size().Height)
 	initCh <- struct{}{}
 	<-respCh
-}
-
-func mainJob() {
-	<-initCh
-	// log.Printf("Screen: %d x %d", ScreenWidth, ScreenHeight)
-	a.topWindowTitle.Set(rootURI.Path())
-	a.topWindow.SetOnClosed(a.saveState)
-	a.topWindow.SetMaster()
-	a.topWindow.Resize(fyne.NewSize(float32(ScreenWidth)*0.6, float32(ScreenHeight)*0.6))
-	a.topWindow.CenterOnScreen()
-	a.newLayout()
-	a.topWindow.Show()
-	respCh <- struct{}{}
-	time.Sleep(time.Second * 1)
-	// log.Printf("Window: %f x %f", a.topWindow.Content().Size().Width, a.topWindow.Content().Size().Height)
 }

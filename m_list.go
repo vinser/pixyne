@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -20,8 +19,7 @@ const (
 	DropDirName   = "dropped"
 )
 
-var ScreenWidth = 3840 * 3 / 4
-var ScreenHeight = 2160 * 3 / 4
+var ScreenWidth, ScreenHeight int
 
 // File date to use
 const (
@@ -90,12 +88,13 @@ func (a *App) newPhotoList() {
 		}
 	}
 	if len(photos) > 0 {
-		progress.TextFormatter = func() string {
-			return fmt.Sprintf("processing %d of %d files", int(progress.Value), int(progress.Max))
-		}
-		progress.Min = 0
-		progress.Max = float64(len(photos))
-		for i, p := range photos {
+		// progress.TextFormatter = func() string {
+		// 	return fmt.Sprintf("processing %d of %d files", int(progress.Value), int(progress.Max))
+		// }
+		// progress.Min = 0
+		// progress.Max = float64(len(photos))
+		// for i, p := range photos {
+		for _, p := range photos {
 			p.GetPhotoProperties(p.fileURI)
 			if len(p.Dates[UseExifDate]) != len(ListDateFormat) {
 				p.DateUsed = UseFileDate
@@ -105,7 +104,7 @@ func (a *App) newPhotoList() {
 				p.DateUsed = s.DateUsed
 				p.Dates = s.Dates
 			}
-			progress.SetValue(float64(i + 1))
+			// progress.SetValue(float64(i + 1))
 		}
 	}
 	list = photos

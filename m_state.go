@@ -23,6 +23,8 @@ type State struct {
 
 func (a *App) saveState() {
 	a.Preferences().SetString("display_date_format", DisplayDateFormat)
+	a.Preferences().SetInt("screen_width", ScreenWidth)
+	a.Preferences().SetInt("screen_height", ScreenHeight)
 	a.state.Folder = rootURI.Path()
 	for i, v := range a.listColumns {
 		if v.Order != natOrder {
@@ -44,12 +46,15 @@ func (a *App) saveState() {
 
 func (a *App) loadState() {
 	DisplayDateFormat = a.Preferences().StringWithFallback("display_date_format", DefaultDisplayDateFormat)
+	ScreenWidth = a.Preferences().IntWithFallback("screen_width", 0)
+	ScreenHeight = a.Preferences().IntWithFallback("screen_height", 0)
 	if state := a.Preferences().String("state"); state != "" {
 		if err := json.Unmarshal([]byte(state), &a.state); err == nil {
-			rootURI, _ = storage.ListerForURI(storage.NewFileURI(a.state.Folder))
-			if isDir, _ := storage.CanList(rootURI); isDir {
+			// if exists, err := storage.Exists(rootURI); exists && err == nil {
+			if rootURI, err = storage.ListerForURI(storage.NewFileURI(a.state.Folder)); err == nil {
 				return
 			}
+			// }
 		}
 	}
 	a.defaultState()
