@@ -86,6 +86,8 @@ func (a *App) newToolBar() {
 
 func (a *App) toggleView() {
 	if a.frameView.Hidden {
+		frame.ShowProgress()
+		defer frame.HideProgress()
 		a.showFrameToolbar()
 		a.frameView.Show()
 		a.listView.Hide()
@@ -94,7 +96,7 @@ func (a *App) toggleView() {
 		a.frameView.Refresh()
 	} else {
 		a.showListToolbar()
-		a.listTable.ScrollTo(widget.TableCellID{Col: 0, Row: a.state.FramePos})
+		a.syncListViewScroll()
 		a.frameView.Hide()
 		a.listView.Refresh()
 		a.listView.Show()
@@ -102,6 +104,20 @@ func (a *App) toggleView() {
 	}
 	a.toolBar.Refresh()
 	frame.ItemEndingAt(frame.ItemPos)
+}
+
+func (a *App) syncListViewScroll() {
+	col := 0
+	row := a.state.FramePos
+	switch {
+	case row < a.state.FrameSize:
+		a.listTable.ScrollToTop()
+	case row >= len(list)-a.state.FrameSize:
+		a.listTable.ScrollToBottom()
+	default:
+		a.listTable.ScrollTo(widget.TableCellID{Col: col, Row: row})
+	}
+	a.listTable.ScrollToLeading()
 }
 
 func (a *App) toggleFullScreen() {

@@ -199,7 +199,7 @@ func (a *App) reorderList(col int) {
 	if a.state.FramePos+a.state.FrameSize > len(list) {
 		a.state.FramePos = len(list) - a.state.FrameSize
 	}
-	a.listTable.ScrollTo(widget.TableCellID{Col: 0, Row: a.state.FramePos})
+	a.syncListViewScroll()
 	a.listTable.Refresh()
 }
 
