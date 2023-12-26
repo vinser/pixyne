@@ -1,0 +1,142 @@
+Tiff,,A. Tags relating to image data structure,,,
+Image width,ImageWidth,256,100,SHORT or LONG,1
+Image height,ImageLength,257,101,SHORT or LONG,1
+Number of bits per component,BitsPerSample,258,102,SHORT,3
+Compression scheme,Compression,259,103,SHORT,1
+Pixel composition,PhotometricInterpretation,262,106,SHORT,1
+Orientation of image,Orientation,274,112,SHORT,1
+Number of components,SamplesPerPixel,277,115,SHORT,1
+Image data arrangement,PlanarConfiguration,284,11C,SHORT,1
+Subsampling ratio of Y to C,YCbCrSubSampling,530,212,SHORT,2
+Y and C positioning,YCbCrPositioning,531,213,SHORT,1
+Image resolution in width direction,XResolution,282,11A,RATIONAL,1
+Image resolution in height direction,YResolution,283,11B,RATIONAL,1
+Unit of X and Y resolution,ResolutionUnit,296,128,SHORT,1
+
+Tiff,,B. Tags relating to recording offset,,,
+Image data location,StripOffsets,273,111,SHORT or LONG,*S
+Number of rows per strip,RowsPerStrip,278,116,SHORT or LONG,1
+Bytes per compressed strip,StripByteCounts,279,117,SHORT or LONG,*S
+Offset to JPEG SOI,JPEGInterchangeFormat,513,201,LONG,1
+Bytes of JPEG data,JPEGInterchangeFormatLength,514,202,LONG,1
+
+Tiff,,C. Tags relating to image data characteristics,,,
+Transfer function,TransferFunction,301,12D,SHORT,3*256
+White point chromaticity,WhitePoint,318,13E,RATIONAL,2
+Chromaticities of primaries,PrimaryChromaticities,319,13F,RATIONAL,6
+Color space transformation matrix coefficients,YCbCrCoefficients,529,211,RATIONAL,3
+Pair of black and white reference values,ReferenceBlackWhite,532,214,RATIONAL,6
+
+Tiff,,D. Other tags,,,
+File change date and time,DateTime,306,132,ASCII,20
+Image title,ImageDescription,270,10E,ASCII,Any
+Image input equipment manufacturer,Make,271,10F,ASCII,Any
+Image input equipment model,Model,272,110,ASCII,Any
+Software used,Software,305,131,ASCII,Any
+Person who created the image,Artist,315,13B,ASCII,Any
+Copyright holder,Copyright,33432,8298,ASCII,Any
+
+Exif,,A. Tags Relating to Version,,,
+Exif version,ExifVersion,36864,9000,UNDEFINED,4
+Supported Flashpix version,FlashpixVersion,40960,A000,UNDEFINED,4
+
+Exif,,B. Tag Relating to Image Data Characteristics,,,
+Color space information,ColorSpace,40961,A001,SHORT,1
+
+Exif,,C. Tags Relating to Image Configuration,,,
+Meaning of each component,ComponentsConfiguration,37121,9101,UNDEFINED,4
+Image compression mode,CompressedBitsPerPixel,37122,9102,RATIONAL,1
+Valid image width,PixelXDimension,40962,A002,SHORT or LONG,1
+Valid image height,PixelYDimension,40963,A003,SHORT or LONG,1
+
+Exif,,D. Tags Relating to User Information,,,
+Manufacturer notes,MakerNote,37500,927C,UNDEFINED,Any
+User comments,UserComment,37510,9286,UNDEFINED,Any
+
+Exif,,E. Tag Relating to Related File Information,,,
+Related audio file,RelatedSoundFile,40964,A004,ASCII,13
+
+Exif,,F. Tags Relating to Date and Time,,,
+Date and time of original data generation,DateTimeOriginal,36867,9003,ASCII,20
+Date and time of digital data generation,DateTimeDigitized,36868,9004,ASCII,20
+DateTime subseconds,SubSecTime,37520,9290,ASCII,Any
+DateTimeOriginal subseconds,SubSecTimeOriginal,37521,9291,ASCII,Any
+DateTimeDigitized subseconds,SubSecTimeDigitized,37522,9292,ASCII,Any
+
+Exif,,G. Tags Relating to Picture-Taking Conditions,,,
+Exposure time,ExposureTime,33434,829A,RATIONAL,1
+F number,FNumber,33437,829D,RATIONAL,1
+Exposure program,ExposureProgram,34850,8822,SHORT,1
+Spectral sensitivity,SpectralSensitivity,34852,8824,ASCII,Any
+ISO speed rating,ISOSpeedRatings,34855,8827,SHORT,Any
+Optoelectric conversion factor,OECF,34856,8828,UNDEFINED,Any
+Shutter speed,ShutterSpeedValue,37377,9201,SRATIONAL,1
+Aperture,ApertureValue,37378,9202,RATIONAL,1
+Brightness,BrightnessValue,37379,9203,SRATIONAL,1
+Exposure bias,ExposureBiasValue,37380,9204,SRATIONAL,1
+Maximum lens aperture,MaxApertureValue,37381,9205,RATIONAL,1
+Subject distance,SubjectDistance,37382,9206,RATIONAL,1
+Metering mode,MeteringMode,37383,9207,SHORT,1
+Light source,LightSource,37384,9208,SHORT,1
+Flash,Flash,37385,9209,SHORT,1
+Lens focal length,FocalLength,37386,920A,RATIONAL,1
+Subject area,SubjectArea,37396,9214,SHORT,2 or 3 or 4
+Flash energy,FlashEnergy,41483,A20B,RATIONAL,1
+Spatial frequency response,SpatialFrequencyResponse,41484,A20C,UNDEFINED,Any
+Focal plane X resolution,FocalPlaneXResolution,41486,A20E,RATIONAL,1
+Focal plane Y resolution,FocalPlaneYResolution,41487,A20F,RATIONAL,1
+Focal plane resolution unit,FocalPlaneResolutionUnit,41488,A210,SHORT,1
+Subject location,SubjectLocation,41492,A214,SHORT,2
+Exposure index,ExposureIndex,41493,A215,RATIONAL,1
+Sensing method,SensingMethod,41495,A217,SHORT,1
+File source,FileSource,41728,A300,UNDEFINED,1
+Scene type,SceneType,41729,A301,UNDEFINED,1
+CFA pattern,CFAPattern,41730,A302,UNDEFINED,Any
+Custom image processing,CustomRendered,41985,A401,SHORT,1
+Exposure mode,ExposureMode,41986,A402,SHORT,1
+White balance,WhiteBalance,41987,A403,SHORT,1
+Digital zoom ratio,DigitalZoomRatio,41988,A404,RATIONAL,1
+Focal length in 35 mm film,FocalLengthIn35mmFilm,41989,A405,SHORT,1
+Scene capture type,SceneCaptureType,41990,A406,SHORT,1
+Gain control,GainControl,41991,A407,RATIONAL,1
+Contrast,Contrast,41992,A408,SHORT,1
+Saturation,Saturation,41993,A409,SHORT,1
+Sharpness,Sharpness,41994,A40A,SHORT,1
+Device settings description,DeviceSettingDescription,41995,A40B,UNDEFINED,Any
+Subject distance range,SubjectDistanceRange,41996,A40C,SHORT,1
+
+Exif,,H. Other Tags,,,
+Unique image ID,ImageUniqueID,42016,A420,ASCII,33
+
+GPS,,Tags Relating to GPS,,,
+GPS tag version,GPSVersionID,0,0,BYTE,4
+North or South Latitude,GPSLatitudeRef,1,1,ASCII,2
+Latitude,GPSLatitude,2,2,RATIONAL,3
+East or West Longitude,GPSLongitudeRef,3,3,ASCII,2
+Longitude,GPSLongitude,4,4,RATIONAL,3
+Altitude reference,GPSAltitudeRef,5,5,BYTE,1
+Altitude,GPSAltitude,6,6,RATIONAL,1
+GPS time (atomic clock),GPSTimeStamp,7,7,RATIONAL,3
+GPS satellites used for measurement,GPSSatellites,8,8,ASCII,Any
+GPS receiver status,GPSStatus,9,9,ASCII,2
+GPS measurement mode,GPSMeasureMode,10,A,ASCII,2
+Measurement precision,GPSDOP,11,B,RATIONAL,1
+Speed unit,GPSSpeedRef,12,C,ASCII,2
+Speed of GPS receiver,GPSSpeed,13,D,RATIONAL,1
+Reference for direction of movement,GPSTrackRef,14,E,ASCII,2
+Direction of movement,GPSTrack,15,F,RATIONAL,1
+Reference for direction of image,GPSImgDirectionRef,16,10,ASCII,2
+Direction of image,GPSImgDirection,17,11,RATIONAL,1
+Geodetic survey data used,GPSMapDatum,18,12,ASCII,Any
+Reference for latitude of destination,GPSDestLatitudeRef,19,13,ASCII,2
+Latitude of destination,GPSDestLatitude,20,14,RATIONAL,3
+Reference for longitude of destination,GPSDestLongitudeRef,21,15,ASCII,2
+Longitude of destination,GPSDestLongitude,22,16,RATIONAL,3
+Reference for bearing of destination,GPSDestBearingRef,23,17,ASCII,2
+Bearing of destination,GPSDestBearing,24,18,RATIONAL,1
+Reference for distance to destination,GPSDestDistanceRef,25,19,ASCII,2
+Distance to destination,GPSDestDistance,26,1A,RATIONAL,1
+Name of GPS processing method,GPSProcessingMethod,27,1B,UNDEFINED,Any
+Name of GPS area,GPSAreaInformation,28,1C,UNDEFINED,Any
+GPS date,GPSDateStamp,29,1D,ASCII,11
+GPS differential correction,GPSDifferential,30,1E,SHORT,1
