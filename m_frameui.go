@@ -7,6 +7,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/data/validation"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
@@ -77,15 +78,18 @@ func shapeFame(shape Shape) (cols, size int) {
 
 // Choice tab frame - rows with photos
 type Frame struct {
-	Content *fyne.Container
-	Cols    int
-	ItemPos int
-	Items   []*FrameItem
-	Buttons []*widget.Button
+	Content  *fyne.Container
+	Cols     int
+	ItemPos  int
+	Items    []*FrameItem
+	Buttons  []*widget.Button
+	Progress *fyne.Container
+	Loading  binding.String
 }
 
 func (a *App) newFrame() {
 	frame = &Frame{}
+	frame.NewProgress()
 	if len(list) == 0 {
 		dialog.ShowInformation("No photos", "There are no JPEG photos in the current folder,\nplease choose another one", a.topWindow)
 		frame.Content = container.NewGridWithColumns(1, canvas.NewText("", color.Black))
@@ -101,19 +105,22 @@ func (a *App) newFrame() {
 	frame.ItemEndingAt(1)
 }
 
-func (f *Frame) NewProgress() *widget.ProgressBarInfinite {
-	loadProgress = widget.NewProgressBarInfinite()
-	loadProgress.Hide()
-	return loadProgress
+func (f *Frame) NewProgress() {
+	f.Loading = binding.NewString()
+	f.Loading.Set("Loading...")
+	label := widget.NewLabelWithData(f.Loading)
+	progress := widget.NewProgressBarInfinite()
+	f.Progress = container.NewStack(label, progress)
+	f.Progress.Hide()
 }
 
 func (f *Frame) ShowProgress() {
 	f.DisableButtons()
-	loadProgress.Show()
+	f.Progress.Show()
 }
 
 func (f *Frame) HideProgress() {
-	loadProgress.Hide()
+	f.Progress.Hide()
 	f.EnableButtons()
 }
 func (f *Frame) At(pos int) {
