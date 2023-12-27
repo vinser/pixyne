@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	DefaultScale = 1.3
+	DefaultScale = 1.0
 	DefaultTheme = "dark"
 )
 
