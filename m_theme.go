@@ -1,4 +1,5 @@
-//go:generate fyne bundle --package main --name appIcon --output m_bundled.go appIcon.png
+//go:generate fyne bundle --package main --name appIconDark --output m_bundled.go icons/appIconDark.png
+//go:generate fyne bundle --name appIconLight --output m_bundled.go --append icons/appIconLight.png
 //go:generate fyne bundle --name iconScrollBack --output m_bundled.go --append icons/scroll-back.svg
 //go:generate fyne bundle --name iconBlank --output m_bundled.go --append icons/blank.svg
 
@@ -14,8 +15,17 @@ import (
 // Application custom theme and interface inplementation
 type Theme struct{}
 
-func (t *Theme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
+func (t *Theme) Color(name fyne.ThemeColorName, _ fyne.ThemeVariant) color.Color {
+	variant := theme.VariantDark
+	switch a.state.Theme {
+	case "light":
+		variant = theme.VariantLight
+	case "dark":
+		variant = theme.VariantDark
+	}
 	switch {
+	case name == theme.ColorNamePrimary:
+		return theme.PrimaryColorNamed(a.state.Color)
 	case name == theme.ColorNameButton:
 		return color.Transparent
 	case name == theme.ColorNameDisabled && variant == theme.VariantDark:
@@ -35,5 +45,5 @@ func (t *Theme) Icon(name fyne.ThemeIconName) fyne.Resource {
 }
 
 func (t *Theme) Size(name fyne.ThemeSizeName) float32 {
-	return theme.DefaultTheme().Size(name)
+	return theme.DefaultTheme().Size(name) * a.state.Scale
 }

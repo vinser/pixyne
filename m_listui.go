@@ -30,7 +30,7 @@ type ListColumn struct {
 	Width    float32
 }
 
-func (a *App) newListView() {
+func (a *App) newListView() *fyne.Container {
 	a.listColumns = []*ListColumn{
 		{Name: "File name", Sortable: true},
 		{Name: "Dropped"},
@@ -64,7 +64,7 @@ func (a *App) newListView() {
 	bottomCount := widget.NewLabel(fmt.Sprintf("total: %d", len(list)))
 	bottomCount.TextStyle.Bold = true
 
-	a.listView = container.NewBorder(nil, nil, nil, nil, container.NewBorder(nil, bottomCount, nil, nil, a.listTable))
+	return container.NewBorder(nil, nil, nil, nil, container.NewBorder(nil, bottomCount, nil, nil, a.listTable))
 }
 
 func columnWidth(labels ...string) float32 {
@@ -102,7 +102,7 @@ func (a *App) dataUpdate(id widget.TableCellID, o fyne.CanvasObject) {
 		data.TextStyle.Bold = false
 		data.Alignment = fyne.TextAlignLeading
 	case 1:
-		if photo.Dropped {
+		if photo.Drop {
 			text = "Yes"
 		} else {
 			text = ""
@@ -144,14 +144,17 @@ func (a *App) headerUpdate(id widget.TableCellID, o fyne.CanvasObject) {
 	header := o.(*widget.Button)
 	if id.Col == -1 {
 		header.SetText(strconv.Itoa(id.Row + 1))
-		if id.Row >= frame.Pos && id.Row < frame.Pos+frame.Size {
+		if id.Row >= a.state.FramePos && id.Row < a.state.FramePos+a.state.FrameSize {
 			header.Importance = widget.HighImportance
 		} else {
 			header.Importance = widget.MediumImportance
 		}
 		// header.Icon = theme.NavigateBackIcon()
 		header.OnTapped = func() {
-			frame.Pos = id.Row
+			frame.ShowProgress()
+			defer frame.HideProgress()
+			a.state.FramePos = id.Row
+			frame.ItemPos = 0
 			a.toggleView()
 		}
 		header.Refresh()
@@ -185,18 +188,18 @@ func (a *App) reorderList(col int) {
 	}
 	a.listColumns[col].Order = order
 
-	posId := list[frame.Pos].id
+	posId := list[a.state.FramePos].id
 	sortList(col, order)
 	for i := 0; i < len(list); i++ {
 		if list[i].id == posId {
-			frame.Pos = i
+			a.state.FramePos = i
 			break
 		}
 	}
-	if frame.Pos+frame.Size > len(list) {
-		frame.Pos = len(list) - frame.Size
+	if a.state.FramePos+a.state.FrameSize > len(list) {
+		a.state.FramePos = len(list) - a.state.FrameSize
 	}
-	a.listTable.ScrollTo(widget.TableCellID{Col: 0, Row: frame.Pos})
+	a.syncListViewScroll()
 	a.listTable.Refresh()
 }
 

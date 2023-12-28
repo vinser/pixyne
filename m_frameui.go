@@ -1,11 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"image/color"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/data/binding"
+	"fyne.io/fyne/v2/data/validation"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
@@ -20,136 +23,261 @@ const (
 	MaxFrameColumn   = 3
 )
 
-// Choice tab frame - rows with photos
-type Frame struct {
-	Container *fyne.Container `json:"-"`
-	Pos       int             `json:"pos"`
-	Size      int             `json:"size"`
-}
-
-// fill frame with photo images starting from pos = 0.
-func (a *App) initFrame() {
-	frame = &Frame{}
-	if len(list) == 0 {
-		dialog.ShowInformation("No photos", "There are no JPEG photos in the current folder,\nplease choose another one", a.topWindow)
-		frame.Container = container.NewGridWithColumns(1, canvas.NewText("", color.Black))
-		return
-	}
-	frame.Pos = a.state.FramePos
-	if frame.Size = a.state.FrameSize; frame.Size == 0 {
-		frame.Size = DefaultFrameSize
-	}
-	if frame.Size > len(list) {
-		frame.Size = len(list)
-	}
-	for i := frame.Pos; i < frame.Pos+frame.Size; i++ {
-		list[i].SetImage(frame.Size)
-	}
-	frame.Container = container.NewGridWithColumns(getFrameColumnNum(frame.Size))
-	for i := 0; i < frame.Size && i < len(list); i++ {
-		frame.Container.Add(list[frame.Pos+i].NewFrameColumn(a.simpleMode))
-	}
-}
-
-func getFrameColumnNum(frameSize int) int {
-	switch {
-	case frame.Size > 4:
-		return MaxFrameColumn
-	case frame.Size == 4:
-		return 2
-	case frame.Size < 1:
-		return 1
-	default:
-		return frame.Size
-	}
-}
-
-// scrollFrame frame at position pos
-func (a *App) scrollFrame(newPos int) {
-	if frame.Pos+frame.Size > len(list) {
-		frame.Pos = len(list) - frame.Size
-	}
-	switch {
-	case newPos < 0:
-		newPos = 0
-	case newPos+frame.Size > len(list):
-		newPos = len(list) - frame.Size
-	}
-
-	switch {
-	// case newPos == frame.Pos:
-	// 	return
-	case newPos-frame.Pos >= frame.Size || frame.Pos-newPos >= frame.Size || newPos == frame.Pos:
-		for i := 0; i < frame.Size; i++ {
-			list[frame.Pos+i].img = nil
-			list[newPos+i].SetImage(frame.Size)
-		}
-	case newPos > frame.Pos:
-		for i := 0; i < newPos-frame.Pos; i++ {
-			list[frame.Pos+i].img = nil
-			list[frame.Pos+frame.Size+i].SetImage(frame.Size)
-		}
-	case newPos < frame.Pos:
-		for i := 0; i < frame.Pos-newPos; i++ {
-			list[newPos+frame.Size+i].img = nil
-			list[newPos+i].SetImage(frame.Size)
-		}
-	}
-	frame.Container.RemoveAll()
-	for i := 0; i < frame.Size; i++ {
-		frame.Container.Add(list[newPos+i].NewFrameColumn(a.simpleMode))
-	}
-	frame.Container.Refresh()
-	frame.Pos = newPos
-	a.updateFrameScrollButtons()
-}
+type Shape int
 
 const (
-	MorePhoto = 1
-	LessPhoto = -1
+	shapeDefault Shape = iota
+	shapeBigger
+	shapeSmaller
 )
 
-// resizeFrame frame
-func (a *App) resizeFrame(zoom int) {
-	switch zoom {
-	case LessPhoto:
-		switch {
-		case frame.Size-1 < MinFrameSize:
-			return
-		case frame.Size == 6: // skip 5 photos frame layout
-			zoom--
-		}
-		for i := zoom; i < 0; i++ {
-			list[frame.Pos+frame.Size+i].img = nil
-		}
-		frame.Size += zoom
-	case MorePhoto:
-		switch {
-		case frame.Size == MaxFrameSize || frame.Size == len(list):
-			return
-		case frame.Size == 4 && len(list) > 5: // skip 5 photos frame layout
-			zoom++
-		}
-		if frame.Pos+frame.Size+zoom > len(list) {
-			frame.Pos = frame.Pos - zoom
-			for i := 0; i < zoom; i++ {
-				list[frame.Pos+i].SetImage(frame.Size)
-			}
-		} else {
-			for i := 0; i < zoom; i++ {
-				list[frame.Pos+frame.Size+i].SetImage(frame.Size)
-			}
-		}
-		frame.Size += zoom
+func shapeFame(shape Shape) (cols, size int) {
+	if size > len(list) {
+		size = len(list)
 	}
-	frame.Container.RemoveAll()
-	for i := 0; i < frame.Size; i++ {
-		frame.Container.Add(list[frame.Pos+i].NewFrameColumn(a.simpleMode))
+	switch {
+	case shape == shapeBigger:
+		switch {
+		case a.state.FrameSize >= 4:
+			cols = MaxFrameColumn
+			size = MaxFrameSize
+		case a.state.FrameSize == 3:
+			cols = 2
+			size = 4
+		default:
+			cols = a.state.FrameSize + 1
+			size = a.state.FrameSize + 1
+		}
+		return
+	case shape == shapeSmaller:
+		switch {
+		case a.state.FrameSize >= 5:
+			cols = 2
+			size = 4
+		case a.state.FrameSize <= 4:
+			cols = a.state.FrameSize - 1
+			size = a.state.FrameSize - 1
+		}
+		return
+	case shape == shapeDefault:
+		switch {
+		case a.state.FrameSize > 4:
+			cols = MaxFrameColumn
+			size = MaxFrameSize
+		case a.state.FrameSize == 4:
+			cols = 2
+			size = 4
+		default:
+			cols = a.state.FrameSize
+			size = a.state.FrameSize
+		}
+		return
 	}
-	frame.Container.Layout = layout.NewGridLayoutWithColumns(getFrameColumnNum(len(frame.Container.Objects)))
-	frame.Container.Refresh()
-	a.showFrameToolbar()
-	a.updateFrameScrollButtons()
+	return DefaultFrameSize, DefaultFrameSize
+}
+
+// Choice tab frame - rows with photos
+type Frame struct {
+	Content    *fyne.Container
+	Cols       int
+	ItemPos    int
+	Items      []*FrameItem
+	Buttons    []*widget.Button
+	Status     *fyne.Container
+	StatusText binding.String
+}
+
+func (a *App) newFrame() {
+	frame = &Frame{}
+	frame.NewStatusInfo()
+	if len(list) == 0 {
+		dialog.ShowInformation("No photos", "There are no JPEG photos in the current folder,\nplease choose another one", a.topWindow)
+		frame.Content = container.NewGridWithColumns(1, canvas.NewText("", color.Black))
+		return
+	}
+	if a.state.FrameSize == 0 {
+		a.state.FrameSize = DefaultFrameSize
+	}
+	frame.Cols, a.state.FrameSize = shapeFame(shapeDefault)
+	frame.Content = container.NewGridWithColumns(frame.Cols)
+	frame.Items = make([]*FrameItem, a.state.FrameSize)
+	frame.At(a.state.FramePos)
+	frame.ItemEndingAt(1)
+}
+
+func (f *Frame) NewStatusInfo() {
+	f.StatusText = binding.NewString()
+	if len(list) == 0 {
+		f.StatusText.Set("")
+	} else {
+		f.StatusText.Set(fmt.Sprintf("%d/%d", a.state.FramePos+frame.ItemPos+1, len(list)))
+	}
+	label := widget.NewLabelWithData(f.StatusText)
+	label.Alignment = fyne.TextAlignCenter
+	progress := widget.NewProgressBarInfinite()
+	f.Status = container.NewStack(label, progress)
+	f.Status.Objects[1].(*widget.ProgressBarInfinite).Hide()
+}
+
+func (f *Frame) ShowProgress() {
+	f.DisableButtons()
+	f.Status.Objects[1].(*widget.ProgressBarInfinite).Show()
+}
+
+func (f *Frame) HideProgress() {
+	if len(list) == 0 {
+		f.StatusText.Set("")
+	} else {
+		f.StatusText.Set(fmt.Sprintf("%d/%d", a.state.FramePos+frame.ItemPos+1, len(list)))
+	}
+	f.Status.Objects[1].(*widget.ProgressBarInfinite).Hide()
+	f.EnableButtons()
+}
+func (f *Frame) At(pos int) {
+	if pos < 0 || pos >= len(list) {
+		return
+	}
+	f.Content.RemoveAll()
+	for i := 0; i < a.state.FrameSize; i++ {
+		f.Items[i] = NewFrameItem(pos+i, a.state.Simple)
+	}
+	for i := 0; i < a.state.FrameSize; i++ {
+		f.Content.Add(f.Items[i].Content)
+	}
+	f.Content.Refresh()
+	a.state.FramePos = pos
+}
+
+func (f *Frame) First() {
+	f.ShowProgress()
+	defer f.HideProgress()
+	f.At(0)
+	f.ItemEndingAt(0)
+	f.updateFrameScrollButtons()
+}
+
+func (f *Frame) Last() {
+	f.ShowProgress()
+	defer f.HideProgress()
+	pos := len(list) - a.state.FrameSize
+	f.At(pos)
+	f.ItemEndingAt(a.state.FrameSize - 1)
+	f.updateFrameScrollButtons()
+}
+
+func (f *Frame) Prev() {
+	f.ShowProgress()
+	defer f.HideProgress()
+	pos := a.state.FramePos - a.state.FrameSize
+	if pos < 0 {
+		f.First()
+		return
+	}
+	f.At(pos)
+	f.ItemEndingAt(0)
+	f.updateFrameScrollButtons()
+}
+
+func (f *Frame) Next() {
+	f.ShowProgress()
+	defer f.HideProgress()
+	pos := a.state.FramePos + a.state.FrameSize
+	if pos > len(list)-a.state.FrameSize {
+		f.Last()
+		return
+	}
+	f.At(pos)
+	f.ItemEndingAt(a.state.FrameSize - 1)
+	f.updateFrameScrollButtons()
+}
+
+func (f *Frame) PrevItem() {
+	f.ShowProgress()
+	defer f.HideProgress()
+	if f.ItemPos > 0 {
+		f.ItemEndingAt(f.ItemPos - 1)
+		f.Content.Refresh()
+		return
+	}
+	if a.state.FramePos > 0 {
+		f.Items = f.Items[:len(f.Items)-1]
+		f.Items = append([]*FrameItem{NewFrameItem(a.state.FramePos-1, a.state.Simple)}, f.Items...)
+		f.Content.RemoveAll()
+		for i := 0; i < a.state.FrameSize; i++ {
+			f.Content.Add(f.Items[i].Content)
+		}
+		f.ItemEndingAt(0)
+		f.Content.Refresh()
+		a.state.FramePos--
+		f.updateFrameScrollButtons()
+	}
+}
+
+func (f *Frame) NextItem() {
+	f.ShowProgress()
+	defer f.HideProgress()
+	if f.ItemPos < a.state.FrameSize-1 {
+		f.ItemEndingAt(f.ItemPos + 1)
+		f.Content.Refresh()
+		return
+	}
+	if a.state.FramePos < len(list)-a.state.FrameSize {
+		f.Items = f.Items[1:]
+		f.Items = append(f.Items, NewFrameItem(a.state.FramePos+a.state.FrameSize, a.state.Simple))
+		f.Content.RemoveAll()
+		for i := 0; i < a.state.FrameSize; i++ {
+			f.Content.Add(f.Items[i].Content)
+		}
+		f.ItemEndingAt(a.state.FrameSize - 1)
+		f.Content.Refresh()
+		a.state.FramePos++
+		f.updateFrameScrollButtons()
+	}
+}
+
+func (f *Frame) RemoveItem() {
+	if a.state.FrameSize > MinFrameSize {
+		f.ShowProgress()
+		defer f.HideProgress()
+		newCols, newSize := shapeFame(shapeSmaller)
+		f.Items = f.Items[:len(f.Items)-a.state.FrameSize+newSize]
+		a.state.FrameSize = newSize
+		f.Cols = newCols
+		f.Content.RemoveAll()
+		f.Content.Layout = layout.NewGridLayoutWithColumns(newCols)
+		for i := 0; i < a.state.FrameSize; i++ {
+			f.Content.Add(f.Items[i].Content)
+		}
+		f.ItemEndingAt(0)
+		f.Content.Refresh()
+		f.updateFrameScrollButtons()
+		a.showFrameToolbar()
+	}
+}
+
+func (f *Frame) AddItem() {
+	if a.state.FrameSize < MaxFrameSize {
+		f.ShowProgress()
+		defer f.HideProgress()
+		newCols, newSize := shapeFame(shapeBigger)
+		if a.state.FramePos+a.state.FrameSize >= len(list) {
+			f.At(len(list) - newSize)
+		}
+		for i := 0; i < newSize-a.state.FrameSize; i++ {
+			f.Items = append(f.Items, NewFrameItem(a.state.FramePos+a.state.FrameSize+i, a.state.Simple))
+		}
+		a.state.FrameSize = newSize
+		f.Cols = newCols
+		f.Content.RemoveAll()
+		f.Content.Layout = layout.NewGridLayoutWithColumns(newCols)
+		for i := 0; i < a.state.FrameSize; i++ {
+			f.Content.Add(f.Items[i].Content)
+		}
+		f.ItemEndingAt(a.state.FrameSize - 1)
+		f.Content.Refresh()
+		f.updateFrameScrollButtons()
+		a.showFrameToolbar()
+	}
 }
 
 // Frame scroll button names
@@ -168,44 +296,164 @@ type scrollButtonOpts struct {
 	tapped func()
 }
 
-func (a *App) newFrameView() {
-	sbo := map[int]scrollButtonOpts{
-		firstPhotoBtn: {label: "|<", icon: theme.MediaSkipPreviousIcon(), tapped: func() { a.scrollFrame(0) }},
-		prevFrameBtn:  {label: "<<", icon: theme.MediaFastRewindIcon(), tapped: func() { a.scrollFrame(frame.Pos - frame.Size) }},
-		prevPhotoBtn:  {label: "<", icon: theme.NewThemedResource(iconScrollBack), tapped: func() { a.scrollFrame(frame.Pos - 1) }},
-		nextPhotoBtn:  {label: ">", icon: theme.MediaPlayIcon(), tapped: func() { a.scrollFrame(frame.Pos + 1) }},
-		nextFrameBtn:  {label: ">>", icon: theme.MediaFastForwardIcon(), tapped: func() { a.scrollFrame(frame.Pos + frame.Size) }},
-		lastPhotoBtn:  {label: ">|", icon: theme.MediaSkipNextIcon(), tapped: func() { a.scrollFrame(len(list)) }},
+func (f *Frame) newFrameView() *fyne.Container {
+	opts := map[int]scrollButtonOpts{
+		firstPhotoBtn: {label: "|<", icon: theme.MediaSkipPreviousIcon(), tapped: func() { frame.First() }},
+		prevFrameBtn:  {label: "<<", icon: theme.MediaFastRewindIcon(), tapped: func() { frame.Prev() }},
+		prevPhotoBtn:  {label: "<", icon: theme.NewThemedResource(iconScrollBack), tapped: func() { frame.PrevItem() }},
+		nextPhotoBtn:  {label: ">", icon: theme.MediaPlayIcon(), tapped: func() { frame.NextItem() }},
+		nextFrameBtn:  {label: ">>", icon: theme.MediaFastForwardIcon(), tapped: func() { frame.Next() }},
+		lastPhotoBtn:  {label: ">|", icon: theme.MediaSkipNextIcon(), tapped: func() { frame.Last() }},
 	}
-	o := make([]fyne.CanvasObject, len(sbo))
-	a.scrollButton = make([]*widget.Button, len(sbo))
-	for i, opt := range sbo {
-		b := widget.NewButtonWithIcon("", opt.icon, opt.tapped)
-		b.Importance = widget.HighImportance
-		o[i] = b
-		a.scrollButton[i] = b
+	objs := make([]fyne.CanvasObject, len(opts))
+	f.Buttons = make([]*widget.Button, len(opts))
+	for i, opt := range opts {
+		btn := widget.NewButtonWithIcon("", opt.icon, opt.tapped)
+		btn.Importance = widget.HighImportance
+		objs[i] = btn
+		f.Buttons[i] = btn
 	}
 
-	a.bottomButtons = container.NewGridWithColumns(len(o), o...)
-	a.frameView = container.NewBorder(nil, a.bottomButtons, nil, nil, frame.Container)
-	a.updateFrameScrollButtons()
+	btns := container.NewGridWithColumns(len(objs), objs...)
+	f.updateFrameScrollButtons()
+	frame.HideProgress()
+	return container.NewBorder(nil, btns, nil, nil, f.Content)
 }
 
-func (a *App) updateFrameScrollButtons() {
-	a.scrollButton[prevPhotoBtn].Enable()
-	a.scrollButton[prevFrameBtn].Enable()
-	a.scrollButton[firstPhotoBtn].Enable()
-	a.scrollButton[nextPhotoBtn].Enable()
-	a.scrollButton[nextFrameBtn].Enable()
-	a.scrollButton[lastPhotoBtn].Enable()
-	if frame.Pos == 0 {
-		a.scrollButton[prevPhotoBtn].Disable()
-		a.scrollButton[prevFrameBtn].Disable()
-		a.scrollButton[firstPhotoBtn].Disable()
+func (f *Frame) DisableButtons() {
+	for i := 0; i < len(f.Buttons); i++ {
+		f.Buttons[i].Disable()
 	}
-	if frame.Pos+frame.Size == len(list) {
-		a.scrollButton[nextPhotoBtn].Disable()
-		a.scrollButton[nextFrameBtn].Disable()
-		a.scrollButton[lastPhotoBtn].Disable()
+}
+
+func (f *Frame) EnableButtons() {
+	f.updateFrameScrollButtons()
+}
+
+func (f *Frame) updateFrameScrollButtons() {
+	f.Buttons[prevPhotoBtn].Enable()
+	f.Buttons[prevFrameBtn].Enable()
+	f.Buttons[firstPhotoBtn].Enable()
+	f.Buttons[nextPhotoBtn].Enable()
+	f.Buttons[nextFrameBtn].Enable()
+	f.Buttons[lastPhotoBtn].Enable()
+	if a.state.FramePos == 0 {
+		f.Buttons[prevPhotoBtn].Disable()
+		f.Buttons[prevFrameBtn].Disable()
+		f.Buttons[firstPhotoBtn].Disable()
+	}
+	if a.state.FramePos+a.state.FrameSize == len(list) {
+		f.Buttons[nextPhotoBtn].Disable()
+		f.Buttons[nextFrameBtn].Disable()
+		f.Buttons[lastPhotoBtn].Disable()
+	}
+}
+
+func (f *Frame) ItemEndingAt(pos int) {
+	for i := 0; i < a.state.FrameSize; i++ {
+		f.Items[i].Ending.StrokeWidth = 0
+	}
+	f.ItemPos = pos
+	f.Items[f.ItemPos].Ending.StrokeWidth = 5
+	f.Items[f.ItemPos].Content.Refresh()
+}
+
+type FrameItem struct {
+	Content *fyne.Container
+	Label   string
+	Img     *canvas.Image
+	Button  *widget.Button
+	Ending  *canvas.Rectangle
+}
+
+// NewFrameItem creates a new FrameItem
+func NewFrameItem(listPos int, simpleMode bool) *FrameItem {
+	item := &FrameItem{}
+	item.Img = GetListImageAt(listPos)
+	item.Label = fmt.Sprint(list[listPos].fileURI.Name())
+	item.Button = widget.NewButton("", func() { toggleDrop(listPos, item) })
+	item.Ending = &canvas.Rectangle{FillColor: color.Transparent,
+		StrokeColor: theme.PrimaryColor(),
+		// StrokeColor:  color.White,
+		StrokeWidth:  0,
+		CornerRadius: 0,
+	}
+	if list[listPos].Drop {
+		item.Button.SetText("DROPPED")
+		item.Img.Translucency = 0.8
+	}
+	topLabel := widget.NewLabelWithStyle(item.Label, fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	topLabel.Truncation = fyne.TextTruncateEllipsis
+	centerStack := container.NewStack()
+	centerStack.Add(item.Img)
+	centerStack.Add(item.Button)
+	centerStack.Add(item.Ending)
+	if simpleMode {
+		item.Content = container.NewBorder(topLabel, nil, nil, nil, centerStack)
+	} else {
+		item.Content = container.NewBorder(topLabel, newDateInput(listPos), nil, nil, centerStack)
+	}
+	return item
+}
+func newDateInput(listPos int) *fyne.Container {
+	p := list[listPos]
+	choices := []string{"EXIF", "File", "Input"}
+	d := listDateToDisplayDate(p.Dates[p.DateUsed])
+
+	eDate := widget.NewEntry()
+	eDate.Validator = validation.NewTime(DisplayDateFormat)
+	eDate.SetText(d)
+	eDate.OnChanged = func(e string) {
+		p.Dates[p.DateUsed] = displayDateToListDate(e)
+	}
+
+	rgDateChoice := widget.NewRadioGroup(
+		choices,
+		func(s string) {
+			switch s {
+			case "EXIF":
+				p.Dates[UseEnteredDate] = ""
+				p.DateUsed = UseExifDate
+				eDate.SetText(listDateToDisplayDate(p.Dates[p.DateUsed]))
+				eDate.Disable()
+			case "File":
+				p.Dates[UseEnteredDate] = ""
+				p.DateUsed = UseFileDate
+				eDate.SetText(listDateToDisplayDate(p.Dates[p.DateUsed]))
+				eDate.Disable()
+			case "Input":
+				p.DateUsed = UseEnteredDate
+				if p.Dates[p.DateUsed] == "" {
+					if p.Dates[UseExifDate] == "" {
+						p.Dates[p.DateUsed] = p.Dates[UseFileDate]
+					} else {
+						p.Dates[p.DateUsed] = p.Dates[UseExifDate]
+					}
+				}
+				eDate.SetText(listDateToDisplayDate(p.Dates[p.DateUsed]))
+				eDate.Enable()
+			}
+		})
+	rgDateChoice.SetSelected(choices[p.DateUsed])
+	rgDateChoice.Horizontal = true
+
+	gr := container.NewVBox(rgDateChoice, eDate)
+
+	return container.NewCenter(gr)
+}
+
+func toggleDrop(pos int, item *FrameItem) {
+	list[pos].Drop = !list[pos].Drop
+	if list[pos].Drop {
+		item.Button.SetText("DROPPED")
+		item.Img.Translucency = 0.8
+	} else {
+		item.Button.SetText("")
+		item.Img.Translucency = 0
+	}
+	for i := 0; i < a.state.FrameSize; i++ {
+		if frame.Items[i] == item {
+			frame.ItemEndingAt(i)
+		}
 	}
 }

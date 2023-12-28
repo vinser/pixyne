@@ -1,89 +1,30 @@
 package main
 
 import (
-	"encoding/json"
 	"image/color"
-	"os"
-	"path/filepath"
-	"runtime"
 	"time"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
+const (
+	DefaultScale = 1.0
+	DefaultTheme = "dark"
+)
+
 // access to user interfaces to control Fyne settings
 type Settings struct {
-	fyneSettings app.SettingsSchema
-	colors       []fyne.CanvasObject
-}
-
-func (s *Settings) load() {
-	err := s.loadFromFile(s.fyneSettings.StoragePath())
-	if err != nil {
-		fyne.LogError("Settings load error:", err)
-	}
-}
-
-func (s *Settings) loadFromFile(path string) error {
-	file, err := os.Open(path) // #nosec
-	if err != nil {
-		if os.IsNotExist(err) {
-			err := os.MkdirAll(filepath.Dir(path), 0700)
-			if err != nil {
-				return err
-			}
-			return nil
-		}
-		return err
-	}
-	decode := json.NewDecoder(file)
-
-	return decode.Decode(&s.fyneSettings)
-}
-
-func (s *Settings) save() error {
-	return s.saveToFile(s.fyneSettings.StoragePath())
-}
-
-func (s *Settings) saveToFile(path string) error {
-	err := os.MkdirAll(filepath.Dir(path), 0700)
-	if err != nil { // this is not an exists error according to docs
-		return err
-	}
-
-	data, err := json.Marshal(&s.fyneSettings)
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(path, data, 0644)
+	colors []fyne.CanvasObject
 }
 
 // a new settings instance with the current configuration loaded
 func NewSettings() *Settings {
 	s := &Settings{}
-	s.load()
-	if s.fyneSettings.Scale == 0 {
-		s.fyneSettings.Scale = 1
-	}
 	return s
-}
-
-func (s *Settings) applySettings() {
-	if s.fyneSettings.Scale == 0.0 {
-		s.choosedScale(1.0)
-	}
-	err := s.save()
-	if err != nil {
-		fyne.LogError("Failed on saving", err)
-	}
-
-	s.appliedScale(s.fyneSettings.Scale)
 }
 
 // scale
@@ -97,19 +38,13 @@ type scaleItems struct {
 var scales = []*scaleItems{
 	{scale: 0.5, name: "Tiny"},
 	{scale: 0.8, name: "Small"},
-	{scale: 1, name: "Normal"},
+	{scale: 1.0, name: "Normal"},
 	{scale: 1.3, name: "Big"},
 	{scale: 1.8, name: "Large"},
 	{scale: 2.2, name: "Huge"}}
 
-func (s *Settings) appliedScale(value float32) {
-	for _, scale := range scales {
-		scale.preview.TextSize = theme.TextSize() * scale.scale / value
-	}
-}
-
 func (s *Settings) choosedScale(value float32) {
-	s.fyneSettings.Scale = value
+	a.state.Scale = value
 
 	for _, scale := range scales {
 		if scale.scale == value {
@@ -120,7 +55,6 @@ func (s *Settings) choosedScale(value float32) {
 			scale.button.Refresh()
 		}
 	}
-	s.applySettings()
 }
 
 func (s *Settings) scalesRow() *fyne.Container {
@@ -130,7 +64,7 @@ func (s *Settings) scalesRow() *fyne.Container {
 		button := widget.NewButton(scale.name, func() {
 			s.choosedScale(value)
 		})
-		if s.fyneSettings.Scale == scale.scale {
+		if a.state.Scale == scale.scale {
 			button.Importance = widget.HighImportance
 		}
 
@@ -180,7 +114,7 @@ func (b *colorButton) CreateRenderer() fyne.WidgetRenderer {
 	r := canvas.NewRectangle(b.color)
 	r.StrokeWidth = 2
 
-	if b.name == b.s.fyneSettings.PrimaryColor {
+	if b.name == a.state.Color {
 		r.StrokeColor = theme.PrimaryColor()
 	}
 
@@ -188,11 +122,11 @@ func (b *colorButton) CreateRenderer() fyne.WidgetRenderer {
 }
 
 func (b *colorButton) Tapped(_ *fyne.PointEvent) {
-	b.s.fyneSettings.PrimaryColor = b.name
+	a.state.Color = b.name
 	for _, child := range b.s.colors {
 		child.Refresh()
 	}
-	b.s.applySettings()
+	a.Settings().SetTheme(&Theme{})
 }
 
 type colorRenderer struct {
@@ -210,7 +144,7 @@ func (r *colorRenderer) MinSize() fyne.Size {
 }
 
 func (r *colorRenderer) Refresh() {
-	if r.btn.name == r.btn.s.fyneSettings.PrimaryColor {
+	if r.btn.name == a.state.Color {
 		r.rect.StrokeColor = theme.PrimaryColor()
 	} else {
 		r.rect.StrokeColor = color.Transparent
@@ -229,22 +163,21 @@ func (r *colorRenderer) Destroy() {
 
 // theme
 func (s *Settings) themesRow() *widget.RadioGroup {
-	def := s.fyneSettings.ThemeName
-	themeNames := []string{"dark", "light"}
-	if runtime.GOOS == "darwin" || runtime.GOOS == "windows" {
-		themeNames = append(themeNames, "system")
-		if s.fyneSettings.ThemeName == "" {
-			def = "system"
-		}
-	}
+	themeNames := []string{"Dark", "Light"}
 	themes := widget.NewRadioGroup(themeNames, func(selected string) {
-		if selected == "system" {
-			selected = ""
+		if selected == "Dark" {
+			a.state.Theme = "dark"
+
+		} else {
+			a.state.Theme = "light"
 		}
-		s.fyneSettings.ThemeName = selected
-		s.applySettings()
+		a.Settings().SetTheme(&Theme{})
 	})
-	themes.SetSelected(def)
+	if a.state.Theme == "dark" {
+		themes.SetSelected("Dark")
+	} else {
+		themes.SetSelected("Light")
+	}
 	themes.Horizontal = true
 	return themes
 }
@@ -271,31 +204,41 @@ func (s *Settings) datesRow(a *App) *fyne.Container {
 	choice.SetText(byFormat[DisplayDateFormat])
 	choice.OnChanged = func(s string) {
 		DisplayDateFormat = toFormat[s]
-		if a.frameView.Hidden {
-			a.listTable.Refresh()
-		} else {
-			a.scrollFrame(frame.Pos)
-		}
 		display.SetText(time.Now().Format(DisplayDateFormat))
 	}
 	return container.NewGridWithColumns(3, choice, label, display)
 }
 
 func (s *Settings) modeRow(a *App) *widget.RadioGroup {
-	mode := widget.NewRadioGroup([]string{"full", "simple"}, func(selected string) {
-		if selected == "simple" {
-			a.simpleMode = true
-		} else {
-			a.simpleMode = false
-		}
-		a.scrollFrame(frame.Pos)
-
-	})
-	if a.simpleMode {
-		mode.SetSelected("simple")
+	mode := widget.NewRadioGroup([]string{"Simple", "Advanced"},
+		func(selected string) {
+			if selected == "Simple" {
+				a.state.Simple = true
+			} else {
+				a.state.Simple = false
+			}
+		})
+	if a.state.Simple {
+		mode.SetSelected("Simple")
 	} else {
-		mode.SetSelected("full")
+		mode.SetSelected("Advanced")
 	}
 	mode.Horizontal = true
 	return mode
+}
+
+func (s *Settings) hotkeysRow() *widget.Label {
+	hotkey := "No shortcut for hotkeys"
+	for i := range a.ControlShortCuts {
+		if a.ControlShortCuts[i].Name == "Hotkeys" {
+			hotkey = "To see hotkeys press Ctrl + " + string(a.ControlShortCuts[i].KeyName)
+		}
+	}
+	for i := range a.AltShortCuts {
+		if a.AltShortCuts[i].Name == "Hotkeys" {
+			hotkey = "To see hotkeys press Alt + " + string(a.AltShortCuts[i].KeyName)
+		}
+	}
+	lbl := widget.NewLabel(hotkey)
+	return lbl
 }

@@ -1,13 +1,9 @@
 package main
 
 import (
-	"errors"
-	"time"
-
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
-	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
@@ -27,9 +23,6 @@ type App struct {
 	topWindow      fyne.Window
 	topWindowTitle binding.String
 
-	// Simple mode
-	simpleMode bool
-
 	// Current folder state
 	state State
 
@@ -48,10 +41,6 @@ type App struct {
 
 	// Frame view
 	frameView *fyne.Container
-	// Frame view scroll buttons
-	bottomButtons *fyne.Container
-	// Frame scroll buttons
-	scrollButton []*widget.Button
 
 	// List view
 	listView *fyne.Container
@@ -59,17 +48,24 @@ type App struct {
 	listTable *widget.Table
 	// List columns settings
 	listColumns []*ListColumn
+
+	// Shortcuts
+	ControlShortCuts []ShortCutInfo
+	AltShortCuts     []ShortCutInfo
 }
+
+var a *App
 
 // make main window newLayout
 func (a *App) newLayout() {
 	a.newToolBar()
-	a.initFrame()
+	a.newFrame()
 	a.showFrameToolbar()
-	a.newFrameView()
-	a.newListView()
+	a.frameView = frame.newFrameView()
+	a.listView = a.newListView()
 	a.listView.Hide()
-	a.topWindow.SetContent(container.NewBorder(a.toolBar, nil, nil, nil, container.NewStack(a.frameView, a.listView)))
+	top := container.NewStack(a.toolBar, container.NewGridWithColumns(3, widget.NewLabel(""), frame.Status))
+	a.topWindow.SetContent(container.NewBorder(top, nil, nil, nil, container.NewStack(a.frameView, a.listView)))
 }
 
 func (a *App) newToolBar() {
@@ -77,8 +73,8 @@ func (a *App) newToolBar() {
 	a.actOpenFolder = widget.NewToolbarAction(theme.FolderOpenIcon(), a.openFolderDialog)
 	a.actSaveList = widget.NewToolbarAction(theme.DocumentSaveIcon(), a.savePhotoListDialog)
 	a.actSettings = widget.NewToolbarAction(theme.SettingsIcon(), a.settingsDialog)
-	a.actAddPhoto = widget.NewToolbarAction(theme.ContentAddIcon(), func() { a.resizeFrame(MorePhoto) })
-	a.actRemovePhoto = widget.NewToolbarAction(theme.ContentRemoveIcon(), func() { a.resizeFrame(LessPhoto) })
+	a.actAddPhoto = widget.NewToolbarAction(theme.ContentAddIcon(), func() { frame.AddItem() })
+	a.actRemovePhoto = widget.NewToolbarAction(theme.ContentRemoveIcon(), func() { frame.RemoveItem() })
 	a.actToggleView = widget.NewToolbarAction(theme.ListIcon(), a.toggleView)
 	a.actToggleFullScreen = widget.NewToolbarAction(theme.ViewFullScreenIcon(), a.toggleFullScreen)
 	a.actNoAction = widget.NewToolbarAction(theme.NewThemedResource(iconBlank), func() {})
@@ -88,21 +84,43 @@ func (a *App) newToolBar() {
 
 func (a *App) toggleView() {
 	if a.frameView.Hidden {
+		frame.ShowProgress()
+		defer frame.HideProgress()
 		a.showFrameToolbar()
 		a.frameView.Show()
 		a.listView.Hide()
 		a.actToggleView.SetIcon(theme.ListIcon())
-		a.scrollFrame(frame.Pos)
+		pos := a.state.FramePos + a.state.FrameSize
+		if pos > len(list)-a.state.FrameSize {
+			frame.Last()
+		} else {
+			frame.At(a.state.FramePos)
+		}
 		a.frameView.Refresh()
 	} else {
 		a.showListToolbar()
-		a.listTable.ScrollTo(widget.TableCellID{Col: 0, Row: frame.Pos})
+		a.syncListViewScroll()
 		a.frameView.Hide()
 		a.listView.Refresh()
 		a.listView.Show()
 		a.actToggleView.SetIcon(theme.GridIcon())
 	}
 	a.toolBar.Refresh()
+	frame.ItemEndingAt(frame.ItemPos)
+}
+
+func (a *App) syncListViewScroll() {
+	col := 0
+	row := a.state.FramePos
+	switch {
+	case row < a.state.FrameSize:
+		a.listTable.ScrollToTop()
+	case row >= len(list)-a.state.FrameSize:
+		a.listTable.ScrollToBottom()
+	default:
+		a.listTable.ScrollTo(widget.TableCellID{Col: col, Row: row})
+	}
+	a.listTable.ScrollToLeading()
 }
 
 func (a *App) toggleFullScreen() {
@@ -125,12 +143,12 @@ func (a *App) showFrameToolbar() {
 	a.toolBar.Append(a.actSettings)
 	a.toolBar.Append(a.actAbout)
 	if len(list) > 0 {
-		if frame.Size < MaxFrameSize && frame.Size < len(list) {
+		if a.state.FrameSize < MaxFrameSize && a.state.FrameSize < len(list) {
 			a.toolBar.Prepend(a.actAddPhoto)
 		} else {
 			a.toolBar.Prepend(a.actNoAction)
 		}
-		if frame.Size > MinFrameSize {
+		if a.state.FrameSize > MinFrameSize {
 			a.toolBar.Prepend(a.actRemovePhoto)
 		} else {
 			a.toolBar.Prepend(a.actNoAction)
@@ -153,67 +171,9 @@ func (a *App) showListToolbar() {
 	a.toolBar.Append(a.actAbout)
 }
 
-// open photo folder dialog
-func (a *App) openFolderDialog() {
-	d := dialog.NewFolderOpen(func(list fyne.ListableURI, err error) {
-		if err != nil {
-			dialog.ShowError(err, a.topWindow)
-			return
-		}
-		if list == nil {
-			return
-		}
-		if list.Scheme() != "file" {
-			dialog.ShowError(errors.New("only local files are supported"), a.topWindow)
-			return
-		}
-		a.defaultState()
-		rootURI = list
-		a.topWindowTitle.Set(rootURI.Path())
-		a.newPhotoList()
-		a.newLayout()
-	}, a.topWindow)
-	d.SetLocation(rootURI)
-	d.Resize(fyne.NewSize(672, 378))
-	d.Show()
-}
-
-// Save choosed photos:
-// 1. move dropped photo to droppped folder
-// 2. update exif dates with file modify date or input date
-func (a *App) savePhotoListDialog() {
-	renameFiles := false
-	datedFileFormat := time.Now().Format(FileNameDateFormat)
-	content := container.NewVBox(
-		widget.NewLabel("Ready to save changes?"),
-		widget.NewCheck("Rename files to date taken format "+datedFileFormat, func(b bool) { renameFiles = b }),
-	)
-	d := dialog.NewCustomConfirm(
-		"Save changes",
-		"Proceed",
-		"Cancel",
-		content,
-		func(b bool) {
-			if b {
-				a.SavePhotoList(renameFiles)
-				a.defaultState()
-				a.newPhotoList()
-				a.newLayout()
-			}
-		},
-		a.topWindow)
-	d.Show()
-}
-
-func (a *App) settingsDialog() {
-	s := NewSettings()
-	settingsForm := widget.NewForm(
-		widget.NewFormItem("", s.scalePreviewsRow(a.topWindow.Canvas().Scale())),
-		widget.NewFormItem("Scale", s.scalesRow()),
-		widget.NewFormItem("Main Color", s.colorsRow()),
-		widget.NewFormItem("Theme", s.themesRow()),
-		widget.NewFormItem("Mode", s.modeRow(a)),
-		widget.NewFormItem("Date Format", s.datesRow(a)),
-	)
-	dialog.ShowCustom("Settings", "Close", settingsForm, a.topWindow)
+func (a *App) toggleMode() {
+	frame.ShowProgress()
+	defer frame.HideProgress()
+	a.state.Simple = !a.state.Simple
+	frame.At(a.state.FramePos)
 }
