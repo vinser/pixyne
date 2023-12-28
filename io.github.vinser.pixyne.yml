@@ -1,0 +1,40 @@
+app-id: io.github.vinser.pixyne
+runtime: org.freedesktop.Platform
+runtime-version: '23.08'
+sdk: org.freedesktop.Sdk
+sdk-extensions:
+    - org.freedesktop.Sdk.Extension.golang
+command: pixyne
+
+finish-args:
+    - --share=ipc 
+    - --socket=x11
+    - --device=dri
+    # We want user fs access so we can read and write folders with jpeg photo files, save user preferences
+    - --filesystem=home
+     
+build-options:
+  env:
+    - GOBIN=/app/bin
+    - GOROOT=/usr/lib/sdk/golang
+
+modules:
+  - name: pixyne
+    buildsystem: simple
+    build-commands:
+      - $GOROOT/bin/go build -o pixyne -trimpath -buildvcs=false -ldflags="-s -w"
+      - install -Dm00755 pixyne $FLATPAK_DEST/bin/pixyne
+      - install -Dm00644 pixyne.svg $FLATPAK_DEST/share/icons/hicolor/scalable/apps/$FLATPAK_ID.svg
+      - install -Dm00644 $FLATPAK_ID.desktop $FLATPAK_DEST/share/applications/$FLATPAK_ID.desktop
+      - install -Dm00644 $FLATPAK_ID.metainfo.xml $FLATPAK_DEST/share/metainfo/$FLATPAK_ID.metainfo.xml
+    sources:
+      # - type: file
+      #   path: io.github.vinser.pixyne.metainfo.xml
+      # - type: file
+      #   path: io.github.vinser.pixyne.desktop
+      # - type: dir
+      #   path: ./
+      - type: archive
+        url: "https://github.com/vinser/pixyne/archive/refs/tags/v1.4.0.tar.gz"
+        sha256: 9ab594993ad8a656f752a92bb179ab583a4e7a94c8d04a0796daa954dd076a71
+

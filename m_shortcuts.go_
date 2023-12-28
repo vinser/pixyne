@@ -1,0 +1,34 @@
+package main
+
+import (
+	"fyne.io/fyne/v2"
+)
+
+func (a *App) Shortcuts() {
+
+	a.topWindow.Canvas().SetOnTypedKey(func(ev *fyne.KeyEvent) {
+		switch ev.Name {
+		case fyne.KeyMinus:
+			frame.RemoveItem()
+		case fyne.KeyPlus:
+			frame.AddItem()
+		case fyne.KeyLeft:
+			frame.PrevItem()
+		case fyne.KeyRight:
+			frame.NextItem()
+		case fyne.KeyPageUp:
+			frame.Prev()
+		case fyne.KeyPageDown:
+			frame.Next()
+		case fyne.KeyHome:
+			frame.First()
+		case fyne.KeyEnd:
+			frame.Last()
+		case fyne.KeySpace:
+			toggleDrop(a.state.FramePos+frame.ItemPos, frame.Items[frame.ItemPos])
+		case fyne.KeyEscape:
+			a.topWindow.Close()
+		}
+		// log.Printf("ev.Name: %s, ListPos: %d, ItemPos: %d, FrameSize: %d\n", ev.Name, frame.ListPos, frame.ItemPos, frame.Size)
+	})
+}

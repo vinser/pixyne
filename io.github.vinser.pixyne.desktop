@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+
+Name=Pixyne Photo Picker
+Comment=Quickly review photo folders, safely delete bad and similar shots, fix the shooting dates
+Categories=Graphics;Photography;
+Keywords=image;viewer;JPEG;photos;browse;sort;pick;EXIF;
+
+Icon=io.github.vinser.pixyne
+Exec=pixyne
+Terminal=false
