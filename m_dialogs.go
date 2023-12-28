@@ -145,13 +145,11 @@ func (a *App) settingsDialog() {
 
 	d := dialog.NewCustom("Settings", "Ok", settingsForm, a.topWindow)
 	d.SetOnClosed(func() {
-		// if a.frameView.Hidden {
-		// 	a.listTable.Refresh()
-		// }
+		frame.ShowProgress()
 		a.topWindow.Content().Refresh()
 		frame.At(a.state.FramePos)
 		frame.ItemEndingAt(frame.ItemPos)
-
+		frame.HideProgress()
 	})
 	d.Show()
 }

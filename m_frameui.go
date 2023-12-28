@@ -78,18 +78,18 @@ func shapeFame(shape Shape) (cols, size int) {
 
 // Choice tab frame - rows with photos
 type Frame struct {
-	Content  *fyne.Container
-	Cols     int
-	ItemPos  int
-	Items    []*FrameItem
-	Buttons  []*widget.Button
-	Progress *fyne.Container
-	Loading  binding.String
+	Content    *fyne.Container
+	Cols       int
+	ItemPos    int
+	Items      []*FrameItem
+	Buttons    []*widget.Button
+	Status     *fyne.Container
+	StatusText binding.String
 }
 
 func (a *App) newFrame() {
 	frame = &Frame{}
-	frame.NewProgress()
+	frame.NewStatusInfo()
 	if len(list) == 0 {
 		dialog.ShowInformation("No photos", "There are no JPEG photos in the current folder,\nplease choose another one", a.topWindow)
 		frame.Content = container.NewGridWithColumns(1, canvas.NewText("", color.Black))
@@ -105,22 +105,32 @@ func (a *App) newFrame() {
 	frame.ItemEndingAt(1)
 }
 
-func (f *Frame) NewProgress() {
-	f.Loading = binding.NewString()
-	f.Loading.Set("Loading...")
-	label := widget.NewLabelWithData(f.Loading)
+func (f *Frame) NewStatusInfo() {
+	f.StatusText = binding.NewString()
+	if len(list) == 0 {
+		f.StatusText.Set("")
+	} else {
+		f.StatusText.Set(fmt.Sprintf("%d/%d", a.state.FramePos+frame.ItemPos+1, len(list)))
+	}
+	label := widget.NewLabelWithData(f.StatusText)
+	label.Alignment = fyne.TextAlignCenter
 	progress := widget.NewProgressBarInfinite()
-	f.Progress = container.NewStack(label, progress)
-	f.Progress.Hide()
+	f.Status = container.NewStack(label, progress)
+	f.Status.Objects[1].(*widget.ProgressBarInfinite).Hide()
 }
 
 func (f *Frame) ShowProgress() {
 	f.DisableButtons()
-	f.Progress.Show()
+	f.Status.Objects[1].(*widget.ProgressBarInfinite).Show()
 }
 
 func (f *Frame) HideProgress() {
-	f.Progress.Hide()
+	if len(list) == 0 {
+		f.StatusText.Set("")
+	} else {
+		f.StatusText.Set(fmt.Sprintf("%d/%d", a.state.FramePos+frame.ItemPos+1, len(list)))
+	}
+	f.Status.Objects[1].(*widget.ProgressBarInfinite).Hide()
 	f.EnableButtons()
 }
 func (f *Frame) At(pos int) {
@@ -306,6 +316,7 @@ func (f *Frame) newFrameView() *fyne.Container {
 
 	btns := container.NewGridWithColumns(len(objs), objs...)
 	f.updateFrameScrollButtons()
+	frame.HideProgress()
 	return container.NewBorder(nil, btns, nil, nil, f.Content)
 }
 

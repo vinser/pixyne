@@ -64,7 +64,7 @@ func (a *App) newLayout() {
 	a.frameView = frame.newFrameView()
 	a.listView = a.newListView()
 	a.listView.Hide()
-	top := container.NewStack(a.toolBar, container.NewGridWithColumns(3, widget.NewLabel(""), frame.Progress))
+	top := container.NewStack(a.toolBar, container.NewGridWithColumns(3, widget.NewLabel(""), frame.Status))
 	a.topWindow.SetContent(container.NewBorder(top, nil, nil, nil, container.NewStack(a.frameView, a.listView)))
 }
 
@@ -90,7 +90,12 @@ func (a *App) toggleView() {
 		a.frameView.Show()
 		a.listView.Hide()
 		a.actToggleView.SetIcon(theme.ListIcon())
-		frame.At(a.state.FramePos)
+		pos := a.state.FramePos + a.state.FrameSize
+		if pos > len(list)-a.state.FrameSize {
+			frame.Last()
+		} else {
+			frame.At(a.state.FramePos)
+		}
 		a.frameView.Refresh()
 	} else {
 		a.showListToolbar()

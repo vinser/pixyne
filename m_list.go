@@ -43,7 +43,7 @@ type Photo struct {
 
 // get canvas image from file
 func GetListImageAt(pos int) *canvas.Image {
-	frame.Loading.Set(fmt.Sprintf("Loading...%s - %.2f MB", list[pos].fileURI.Name(), float64(list[pos].byteSize)/1024./1024.))
+	frame.StatusText.Set(fmt.Sprintf("Loading...%s - %.2f MB", list[pos].fileURI.Name(), float64(list[pos].byteSize)/1024./1024.))
 	m, err := imaging.Open(list[pos].fileURI.Path(), imaging.AutoOrientation(true))
 	if err != nil {
 		log.Fatal(err)
