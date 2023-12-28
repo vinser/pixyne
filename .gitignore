@@ -2,4 +2,5 @@
 /photos*/
 /workpad*
 /fyne-cross/
-/pixyne*
+/build-dir/
+/.flatpak-builder/

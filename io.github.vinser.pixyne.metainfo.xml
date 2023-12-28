@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.vinser.pixyne</id>
+  
+  <name>pixyne</name>
+  <developer_name>Serguei Vine</developer_name>
+  
+  <summary>Quickly review photo folders, safely delete bad and similar shots, fix the shooting dates</summary>
+  
+  <categories>
+    <category>Utility</category>
+  </categories>
+  
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+
+  <keywords>
+    <keyword>image</keyword>
+    <keyword>viewer</keyword>
+    <keyword>JPEG</keyword>
+    <keyword>photos</keyword>
+    <keyword>browse</keyword>
+    <keyword>sort</keyword>
+    <keyword>pick</keyword>
+  </keywords>
+  
+  <recommends>
+    <control>pointing</control>
+    <control>keyboard</control>
+  </recommends>
+  
+  <description>
+    <p>Pixyne application has a simple and intuitive interface, but there are some non-obvious things:</p>
+    <p> - With a click on photo you can mark to drop it in the trash.</p>
+    <p> - When you are in a list view, clicking on a row button opens the corresponding photo.</p>
+    <p> - You may also set or correct the EXIF shooting date to the file date or to a manually entered date.</p>
+    <p> - When you save changes, you can change all file names to EXIF shooting date format.</p>
+    <p> - Made changes will not actually be applied until you save. Pixyne automaticaly stores the current state of the folder so you can undo changes at any time. This is useful when working with a large number of photos and when you need to close the application in order to continue working later.</p>
+  </description>
+  
+  <launchable type="desktop-id">io.github.vinser.pixyne.desktop</launchable>
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/vinser/pixyne/v1.4.0/docs/pixyneapp.png</image>
+      <caption>Frame View</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/vinser/pixyne/v1.4.0/docs/pixyneapp2.png</image>
+      <caption>List View</caption>
+    </screenshot>
+  </screenshots>
+
+  <url type="bugtracker">https://github.com/vinser/pixyne/issues</url>
+  <url type="homepage">https://github.com/vinser/pixyne</url>
+
+  <content_rating type="oars-1.1" />  
+  
+  <releases>
+    <release version="1.4.0" date="2023-12-28" type="stable">
+      <description>
+        <p>New features, changes and fixes in 1.4.0</p>
+      </description>
+      <url type="details">https://github.com/vinser/pixyne/releases/tag/v1.4.0</url>
+    </release>
+    <release version="1.3.0" date="2023-11-13" type="stable">
+      <description>
+        <p>New features, changes and fixes in 1.3.0</p>
+      </description>
+      <url type="details">https://github.com/vinser/pixyne/releases/tag/v1.3.0</url>
+    </release>
+    <release version="1.2.0" date="2023-06-04" type="stable">
+      <description>
+        <p>Add user installation packages for Linux, Mac OS and Windows</p>
+      </description>
+      <url type="details">https://github.com/vinser/pixyne/releases/tag/v1.2.0</url>
+    </release>
+    <release version="1.1.0" date="2023-04-13" type="stable">
+      <description>
+        <p>Enhanced list view</p>
+      </description>
+      <url type="details">https://github.com/vinser/pixyne/releases/tag/v1.1.0</url>
+    </release>
+    <release version="1.0.0" date="2023-04-08" type="stable">
+      <description>
+        <p>First prod release</p>
+      </description>
+      <url type="details">https://github.com/vinser/pixyne/releases/tag/v1.0.0</url>
+    </release>
+  </releases>
+
+</component>
