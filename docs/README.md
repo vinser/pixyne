@@ -20,18 +20,16 @@ Pixyne application has a simple and intuitive interface, but there are some non-
 
 ## Installation
 
-The easiest way to install the application is to download and run the installation file from the [latest release](https://github.com/vinser/pixyne/releases/tag/v1.3.0) that matches your operating system and CPU type.
+The easiest way to install the application is to download and run the installation file from the [latest release](https://github.com/vinser/pixyne/releases/tag/v1.4.0) that matches your operating system and CPU type.
 
 |OS        |CPU type              |Install package            |Tested* |  
 |----------|----------------------|---------------------------|:------:|  
 |Linux     | Intel, AMD 64-bit    | pixyne-linux-amd64.tar.xz |No      |  
-|Linux     | Intel, AMD 32-bit    | pixyne-linux-386.tar.xz   |No      |
 |Linux     | ARM 64-bit           | pixyne-linux-arm64.tar.xz |Yes     |
 |Linux     | ARM 32-bit           | pixyne-linux-arm.tar.xz   |No      |
 |OS X (MAC)| Intel 64-bit         | pixyne-macosx-amd64.dmg   |No      |  
 |OS X (MAC)| ARM 64-bit           | pixyne-macosx-arm64.dmg   |No      |  
 |Windows   | Intel, AMD 64-bit    | pixyne-windows-amd64.msi  |Yes     |  
-|Windows   | Intel, AMD 32-bit    | pixyne-windows-386.msi    |Yes     |
 
 \*_Some of packages was only cross-builded and not tested on real desktops, but you can still try them out_  
 

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
     <Product Id="*" UpgradeCode="FF255D9D-351D-4309-BD90-8E0E3E57D542" 
-        Version="1.3.0" Language="1033" 
+        Version="1.4.0" Language="1033" 
         Name="Pixyne" Manufacturer="vinser">
         
         <Package InstallerVersion="300" Compressed="yes"/>
@@ -20,7 +20,7 @@
         <!-- Add files to installer package -->
         <DirectoryRef Id="APPINATALLFOLDER">
             <Component Id="AppExecutable" Guid="4FAA56E5-B5E2-4F80-BF22-1302FC58026B">
-                <File Id="Pixyneexe" Source="fyne-cross/bin/windows-386/Pixyne.exe" KeyPath="yes" />
+                <File Id="Pixyneexe" Source="fyne-cross/bin/windows-amd64/Pixyne.exe" KeyPath="yes" />
             </Component>
         </DirectoryRef>
         

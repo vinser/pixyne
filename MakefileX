@@ -13,7 +13,7 @@ xdarwin_arm64:
 	$(call xbuild_cmd,darwin,arm64) -macosx-sdk-path=$(HOME)/SDKs/MacOSX11.3.sdk
 	./sh/app2dmg.sh arm64
 
-xlinux: xlinux_amd64 xlinux_arm64 xlinux_arm xlinux_386 ##    - Linux desktops and SBCs
+xlinux: xlinux_amd64 xlinux_arm64 xlinux_arm ##    - Linux desktops and SBCs
 
 xlinux_amd64:
 	$(call xbuild_cmd,linux,amd64)
@@ -27,20 +27,12 @@ xlinux_arm:
 	$(call xbuild_cmd,linux,arm)
 	cp fyne-cross/dist/linux-arm/Pixyne.tar.xz fyne-cross/pixyne-linux-arm.tar.xz
 
-xlinux_386:
-	$(call xbuild_cmd,linux,386)
-	cp fyne-cross/dist/linux-386/Pixyne.tar.xz fyne-cross/pixyne-linux-386.tar.xz
-
-xwindows: xwindows_amd64 xwindows_386 ##  - Windows desktops
+xwindows: xwindows_amd64 ##  - Windows desktops
 
 xwindows_amd64:
 	$(call xbuild_cmd,windows,amd64)
 	./sh/app2img.sh amd64
 
-xwindows_386:
-	$(call xbuild_cmd,windows,386)
-	./sh/app2img.sh 386
-	
 xsdk: ##      - Extract SDK from Apple Command Line Tools for Xcode 
 ##              only version Xcode_12.5.1 was tested 
 ##              https://developer.apple.com/download/all/?q=Command%20Line%20Tools
