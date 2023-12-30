@@ -357,7 +357,7 @@ func (f *Frame) updateFrameScrollButtons() {
 		f.Buttons[nextFrameBtn].Disable()
 		f.Buttons[lastPhotoBtn].Disable()
 	}
-	if frame.ItemPos == 0 {
+	if frame.ItemPos == 0 && a.state.FramePos == 0 {
 		f.Buttons[prevPhotoBtn].Disable()
 	}
 	if frame.ItemPos == a.state.FrameSize-1 && a.state.FramePos+a.state.FrameSize == len(list) {
