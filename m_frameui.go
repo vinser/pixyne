@@ -149,6 +149,9 @@ func (f *Frame) At(pos int) {
 }
 
 func (f *Frame) First() {
+	if a.state.FramePos == 0 {
+		return
+	}
 	f.ShowProgress()
 	defer f.HideProgress()
 	f.At(0)
@@ -157,15 +160,21 @@ func (f *Frame) First() {
 }
 
 func (f *Frame) Last() {
+	if a.state.FramePos == len(list)-a.state.FrameSize {
+		return
+	}
+	pos := len(list) - a.state.FrameSize
 	f.ShowProgress()
 	defer f.HideProgress()
-	pos := len(list) - a.state.FrameSize
 	f.At(pos)
 	f.ItemEndingAt(a.state.FrameSize - 1)
 	f.updateFrameScrollButtons()
 }
 
 func (f *Frame) Prev() {
+	if a.state.FramePos == 0 {
+		return
+	}
 	f.ShowProgress()
 	defer f.HideProgress()
 	pos := a.state.FramePos - a.state.FrameSize
@@ -179,6 +188,9 @@ func (f *Frame) Prev() {
 }
 
 func (f *Frame) Next() {
+	if a.state.FramePos == len(list)-a.state.FrameSize {
+		return
+	}
 	f.ShowProgress()
 	defer f.HideProgress()
 	pos := a.state.FramePos + a.state.FrameSize
@@ -338,22 +350,30 @@ func (f *Frame) updateFrameScrollButtons() {
 	f.Buttons[nextFrameBtn].Enable()
 	f.Buttons[lastPhotoBtn].Enable()
 	if a.state.FramePos == 0 {
-		f.Buttons[prevPhotoBtn].Disable()
 		f.Buttons[prevFrameBtn].Disable()
 		f.Buttons[firstPhotoBtn].Disable()
 	}
 	if a.state.FramePos+a.state.FrameSize == len(list) {
-		f.Buttons[nextPhotoBtn].Disable()
 		f.Buttons[nextFrameBtn].Disable()
 		f.Buttons[lastPhotoBtn].Disable()
+	}
+	if frame.ItemPos == 0 {
+		f.Buttons[prevPhotoBtn].Disable()
+	}
+	if frame.ItemPos == a.state.FrameSize-1 && a.state.FramePos+a.state.FrameSize == len(list) {
+		f.Buttons[nextPhotoBtn].Disable()
 	}
 }
 
 func (f *Frame) ItemEndingAt(pos int) {
+	if pos >= a.state.FrameSize {
+		f.ItemPos = a.state.FrameSize - 1
+	} else {
+		f.ItemPos = pos
+	}
 	for i := 0; i < a.state.FrameSize; i++ {
 		f.Items[i].Ending.StrokeWidth = 0
 	}
-	f.ItemPos = pos
 	f.Items[f.ItemPos].Ending.StrokeWidth = 5
 	f.Items[f.ItemPos].Content.Refresh()
 }
