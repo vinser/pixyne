@@ -79,7 +79,6 @@ func initScreenRoutine() {
 	}()
 	w.SetFullScreen(true)
 	w.Show()
-	time.Sleep(time.Second * 1)
 	var logo *canvas.Image
 	if a.state.Theme == "dark" {
 		logo = canvas.NewImageFromResource(appIconDark)
@@ -100,6 +99,7 @@ func initScreenRoutine() {
 		),
 		emptyObj)
 	w.SetContent(content)
+	time.Sleep(time.Second * 3)
 
 	ScreenWidth = int(w.Canvas().Size().Width)
 	ScreenHeight = int(w.Canvas().Size().Height)

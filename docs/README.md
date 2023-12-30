@@ -16,11 +16,12 @@ Pixyne application has a simple and intuitive interface, but there are some non-
 * When you save changes, you can change all file names to EXIF shooting date format.  
 * Made changes will not actually be applied until you save. Pixyne automaticaly stores the current state of the folder so you can undo changes at any time. This is useful when working with a large number of photos and when you need to close the application in order to continue working later. If you open another folder, all unsaved changes will be lost.
 * On save originals of modified photos will be copied to "originals" subfolder and photos marked to drop will be moved to "dropped" subfolder.  
+* You can control the application using the keyboard. To see the hotkeys, press Alt+K.  
 
 
 ## Installation
 
-The easiest way to install the application is to download and run the installation file from the [latest release](https://github.com/vinser/pixyne/releases/tag/v1.4.0) that matches your operating system and CPU type.
+The easiest way to install the application is to download and run the installation file from the [latest release](https://github.com/vinser/pixyne/releases/tag/v1.4.1) that matches your operating system and CPU type.
 
 |OS        |CPU type              |Install package            |Tested* |  
 |----------|----------------------|---------------------------|:------:|  

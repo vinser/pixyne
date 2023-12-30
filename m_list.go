@@ -110,6 +110,12 @@ func (a *App) newPhotoList() {
 		}
 	}
 	list = photos
+	if a.state.FramePos >= len(list) {
+		a.state.FramePos = len(list) - 1
+	}
+	if len(list) < a.state.FrameSize {
+		a.state.FrameSize = len(list)
+	}
 	sortList(a.state.ListOrderColumn, a.state.ListOrder)
 	time.Sleep(1*time.Second - time.Since(start))
 }
