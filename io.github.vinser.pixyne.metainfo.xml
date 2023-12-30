@@ -41,11 +41,11 @@
   <launchable type="desktop-id">io.github.vinser.pixyne.desktop</launchable>
   <screenshots>
     <screenshot type="default">
-      <image>https://raw.githubusercontent.com/vinser/pixyne/v1.4.0/docs/pixyneapp.png</image>
+      <image>https://raw.githubusercontent.com/vinser/pixyne/v1.4.1/docs/pixyneapp.png</image>
       <caption>Frame View</caption>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/vinser/pixyne/v1.4.0/docs/pixyneapp2.png</image>
+      <image>https://raw.githubusercontent.com/vinser/pixyne/v1.4.1/docs/pixyneapp2.png</image>
       <caption>List View</caption>
     </screenshot>
   </screenshots>
@@ -56,6 +56,12 @@
   <content_rating type="oars-1.1" />  
   
   <releases>
+    <release version="1.4.1" date="2023-12-30" type="stable">
+      <description>
+        <p>Fixed errors with one photo in folder</p>
+      </description>
+      <url type="details">https://github.com/vinser/pixyne/releases/tag/v1.4.1</url>
+    </release>
     <release version="1.4.0" date="2023-12-28" type="stable">
       <description>
         <p>New features, changes and fixes in 1.4.0</p>
