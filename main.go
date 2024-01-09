@@ -42,7 +42,6 @@ func main() {
 }
 
 func standardRun() {
-	// log.Printf("Screen: %d x %d", ScreenWidth, ScreenHeight)
 	a.topWindowTitle.Set(rootURI.Path())
 	a.topWindow.SetOnClosed(a.saveState)
 	a.topWindow.SetMaster()
@@ -55,11 +54,9 @@ func standardRun() {
 }
 func firstRun() {
 
-	// log.Printf("Screen: %d x %d", ScreenWidth, ScreenHeight)
 	a.topWindowTitle.Set(rootURI.Path())
 	a.topWindow.SetOnClosed(a.saveState)
 	a.topWindow.SetMaster()
-	a.topWindow.Show()
 	initCh = make(chan struct{})
 	respCh = make(chan struct{})
 	go initScreenRoutine()
@@ -69,6 +66,7 @@ func firstRun() {
 	a.topWindow.Resize(fyne.NewSize(float32(ScreenWidth)*topFit, float32(ScreenHeight)*topFit))
 	a.newLayout()
 	a.topWindow.CenterOnScreen()
+	a.topWindow.Show()
 	respCh <- struct{}{}
 }
 
@@ -103,8 +101,8 @@ func initScreenRoutine() {
 	w.SetContent(content)
 	time.Sleep(time.Second * 3)
 
-	ScreenWidth = int(w.Canvas().Size().Width)
-	ScreenHeight = int(w.Canvas().Size().Height)
+	ScreenWidth = int(w.Canvas().Size().Width * fyne.CurrentApp().Settings().Scale())
+	ScreenHeight = int(w.Canvas().Size().Height * fyne.CurrentApp().Settings().Scale())
 	initCh <- struct{}{}
 	<-respCh
 }

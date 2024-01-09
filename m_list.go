@@ -64,7 +64,7 @@ func GetListImageAt(p *Photo) *canvas.Image {
 	return img
 }
 
-const downscaleFactor float32 = 1.0
+const downscaleFactor float32 = 0.75
 
 // screen normalization factor
 func normFactor(m image.Image) float32 {
