@@ -3,11 +3,11 @@ package main
 import (
 	"image"
 	"io"
-	"log"
 	"os"
 	"time"
 
 	"fyne.io/fyne/v2"
+	"github.com/disintegration/imaging"
 	"github.com/tajtiattila/metadata/exif"
 )
 
@@ -48,46 +48,75 @@ func (p *Photo) GetPhotoProperties(URI fyne.URI) error {
 	return nil
 }
 
-// update EXIF dates in file
-func UpdateExif(src, dst fyne.URI, dateTime string) error {
-	srcFile, err := os.Open(src.Path())
+// Save updated image - aply new exif data and crop
+func SaveUpdatedImage(srcURI, dstURU fyne.URI, dateTime string, cropRect image.Rectangle) error {
+	srcFile, err := os.Open(srcURI.Path())
 	if err != nil {
 		return err
 	}
 	defer srcFile.Close()
-	// Decode the existing EXIF metadata
-	exifData, err := exif.Decode(srcFile)
-	if err != nil && err != exif.NotFound {
+	dstFile, err := os.Create(dstURU.Path())
+	if err != nil {
 		return err
 	}
-
-	// If no existing EXIF data, create a new instance
-	if err == exif.NotFound {
-		srcFile.Seek(0, io.SeekStart)
-		c, _, err := image.DecodeConfig(srcFile)
-		if err != nil {
-			log.Fatal("image.DecodeConfig error:", err)
-		}
-		exifData = exif.New(c.Width, c.Height)
-	}
-
-	newDate, _ := time.Parse(ListDateFormat, dateTime)
-	exifData.SetDateTime(newDate)
-
-	// Save the modified EXIF data
-	dstFile, err := os.Create(dst.Path())
+	defer dstFile.Close()
+	tmpFile, err := os.CreateTemp("", "*")
 	if err != nil {
 		return err
 	}
 	defer dstFile.Close()
 
-	srcFile.Seek(0, io.SeekStart)
-	err = exif.Copy(dstFile, srcFile, exifData)
+	exifData, err := getExif(srcFile)
 	if err != nil {
 		return err
 	}
+	newDate := time.Now()
+	if dateTime != "" {
+		newDate, _ = time.Parse(ListDateFormat, dateTime)
+	}
+	exifData.SetDateTime(newDate)
 
-	return nil
+	if cropRect.Empty() {
+		return exif.Copy(dstFile, srcFile, exifData)
+
+	}
+	err = cropStreamImage(tmpFile, srcFile, cropRect)
+	if err != nil {
+		return err
+	}
+	tmpFile.Seek(0, io.SeekStart)
+	return exif.Copy(dstFile, tmpFile, exifData)
+}
+
+func cropStreamImage(dst io.Writer, src io.Reader, crop image.Rectangle) error {
+	srcImg, err := imaging.Decode(src, imaging.AutoOrientation(true))
+	if err != nil {
+		return err
+	}
+	dstImg := imaging.Crop(srcImg, crop)
+	return imaging.Encode(dst, dstImg, imaging.JPEG, imaging.JPEGQuality(92))
+
+}
+
+func getExif(src io.ReadSeeker) (*exif.Exif, error) {
+	defer src.Seek(0, io.SeekStart)
+	// Decode the existing EXIF metadata
+	src.Seek(0, io.SeekStart)
+	exifData, err := exif.Decode(src)
+	if err != nil && err != exif.NotFound {
+		return nil, err
+	}
+
+	// If no existing EXIF data, create a new instance
+	if err == exif.NotFound {
+		src.Seek(0, io.SeekStart)
+		c, _, err := image.DecodeConfig(src)
+		if err != nil {
+			return nil, err
+		}
+		exifData = exif.New(c.Width, c.Height)
+	}
+	return exifData, nil
 }
 
 // Convert list date format to display date

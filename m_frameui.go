@@ -386,10 +386,12 @@ type FrameItem struct {
 	Ending  *canvas.Rectangle
 }
 
+var DefaultTranslucency = 0.75
+
 // NewFrameItem creates a new FrameItem
 func NewFrameItem(listPos int, simpleMode bool) *FrameItem {
 	item := &FrameItem{}
-	item.Img = GetListImageAt(listPos)
+	item.Img = GetListImageAt(list[listPos])
 	item.Label = fmt.Sprint(list[listPos].fileURI.Name())
 	item.Button = widget.NewButton("", func() { toggleDrop(listPos, item) })
 	item.Ending = &canvas.Rectangle{FillColor: color.Transparent,
@@ -400,7 +402,10 @@ func NewFrameItem(listPos int, simpleMode bool) *FrameItem {
 	}
 	if list[listPos].Drop {
 		item.Button.SetText("DROPPED")
-		item.Img.Translucency = 0.8
+		item.Img.Translucency = DefaultTranslucency
+	}
+	if !list[listPos].CropRectangle.Empty() {
+		list[listPos].fadeByCrop(item.Img)
 	}
 	topLabel := widget.NewLabelWithStyle(item.Label, fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	topLabel.Truncation = fyne.TextTruncateEllipsis
@@ -466,7 +471,7 @@ func toggleDrop(pos int, item *FrameItem) {
 	list[pos].Drop = !list[pos].Drop
 	if list[pos].Drop {
 		item.Button.SetText("DROPPED")
-		item.Img.Translucency = 0.8
+		item.Img.Translucency = DefaultTranslucency
 	} else {
 		item.Button.SetText("")
 		item.Img.Translucency = 0

@@ -47,7 +47,8 @@ func standardRun() {
 	a.topWindow.SetOnClosed(a.saveState)
 	a.topWindow.SetMaster()
 	a.newPhotoList()
-	a.topWindow.Resize(fyne.NewSize(float32(ScreenWidth)*0.6, float32(ScreenHeight)*0.6))
+	topFit := downscaleFactor / fyne.CurrentApp().Settings().Scale()
+	a.topWindow.Resize(fyne.NewSize(float32(ScreenWidth)*topFit, float32(ScreenHeight)*topFit))
 	a.newLayout()
 	a.topWindow.CenterOnScreen()
 	a.topWindow.Show()
@@ -64,7 +65,8 @@ func firstRun() {
 	go initScreenRoutine()
 	<-initCh
 	a.newPhotoList()
-	a.topWindow.Resize(fyne.NewSize(float32(ScreenWidth)*0.6, float32(ScreenHeight)*0.6))
+	topFit := downscaleFactor / fyne.CurrentApp().Settings().Scale()
+	a.topWindow.Resize(fyne.NewSize(float32(ScreenWidth)*topFit, float32(ScreenHeight)*topFit))
 	a.newLayout()
 	a.topWindow.CenterOnScreen()
 	respCh <- struct{}{}

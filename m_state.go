@@ -9,6 +9,7 @@ import (
 )
 
 type State struct {
+	Version         string            `json:"version"`
 	Theme           string            `json:"theme"`
 	Scale           float32           `json:"scale"`
 	Color           string            `json:"color"`
@@ -35,7 +36,7 @@ func (a *App) saveState() {
 	}
 	stateList := map[string]*Photo{}
 	for _, photo := range list {
-		if photo.Drop || photo.DateUsed != UseExifDate {
+		if photo.Drop || photo.DateUsed != UseExifDate || !photo.CropRectangle.Empty() {
 			stateList[photo.fileURI.Name()] = photo
 		}
 	}
@@ -50,17 +51,16 @@ func (a *App) loadState() {
 	ScreenHeight = a.Preferences().IntWithFallback("screen_height", 0)
 	if state := a.Preferences().String("state"); state != "" {
 		if err := json.Unmarshal([]byte(state), &a.state); err == nil {
-			// if exists, err := storage.Exists(rootURI); exists && err == nil {
 			if rootURI, err = storage.ListerForURI(storage.NewFileURI(a.state.Folder)); err == nil {
 				return
 			}
-			// }
 		}
 	}
 	a.defaultState()
 }
 
 func (a *App) defaultState() {
+	a.state.Version = a.Metadata().Version
 	a.state.Theme = DefaultTheme
 	a.state.Scale = DefaultScale
 	a.state.Color = theme.ColorOrange
