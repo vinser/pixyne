@@ -82,6 +82,9 @@ func (a *App) hotkeysDialog() {
 // open photo folder dialog
 func (a *App) openFolderDialog() {
 	d := dialog.NewFolderOpen(func(list fyne.ListableURI, err error) {
+		frame.ShowProgress()
+		defer frame.HideProgress()
+		frame.StatusText.Set("")
 		if err != nil {
 			dialog.ShowError(err, a.topWindow)
 			return
@@ -121,8 +124,12 @@ func (a *App) savePhotoListDialog() {
 		content,
 		func(b bool) {
 			if b {
+				frame.ShowProgress()
+				defer frame.HideProgress()
+				frame.StatusText.Set("")
 				a.SavePhotoList(renameFiles)
 				a.defaultState()
+				a.topWindowTitle.Set(a.state.Folder)
 				a.newPhotoList()
 				a.newLayout()
 			}
@@ -146,10 +153,13 @@ func (a *App) settingsDialog() {
 	d := dialog.NewCustom("Settings", "Ok", settingsForm, a.topWindow)
 	d.SetOnClosed(func() {
 		frame.ShowProgress()
+		defer frame.HideProgress()
+		if !a.frameView.Hidden {
+			a.showFrameToolbar()
+		}
 		a.topWindow.Content().Refresh()
 		frame.At(a.state.FramePos)
 		frame.ItemEndingAt(frame.ItemPos)
-		frame.HideProgress()
 	})
 	d.Show()
 }
