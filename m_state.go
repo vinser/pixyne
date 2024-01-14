@@ -9,21 +9,21 @@ import (
 )
 
 type State struct {
-	Version         string            `json:"version"`
-	Theme           string            `json:"theme"`
-	Scale           float32           `json:"scale"`
-	Color           string            `json:"color"`
-	Simple          bool              `json:"simple_mode"`
-	Folder          string            `json:"folder"`
-	FramePos        int               `json:"frame_pos"`
-	FrameSize       int               `json:"frame_size"`
-	ListOrderColumn int               `json:"list_order_column"`
-	ListOrder       order             `json:"list_order"`
-	List            map[string]*Photo `json:"list"`
+	Version           string            `json:"version"`
+	Theme             string            `json:"theme"`
+	Scale             float32           `json:"scale"`
+	Color             string            `json:"color"`
+	Simple            bool              `json:"simple_mode"`
+	DisplayDateFormat string            `json:"display_date_format"`
+	Folder            string            `json:"folder"`
+	FramePos          int               `json:"frame_pos"`
+	FrameSize         int               `json:"frame_size"`
+	ListOrderColumn   int               `json:"list_order_column"`
+	ListOrder         order             `json:"list_order"`
+	List              map[string]*Photo `json:"list"`
 }
 
 func (a *App) saveState() {
-	a.Preferences().SetString("display_date_format", DisplayDateFormat)
 	a.Preferences().SetInt("screen_width", ScreenWidth)
 	a.Preferences().SetInt("screen_height", ScreenHeight)
 	a.state.Folder = rootURI.Path()
@@ -46,7 +46,6 @@ func (a *App) saveState() {
 }
 
 func (a *App) loadState() {
-	DisplayDateFormat = a.Preferences().StringWithFallback("display_date_format", DefaultDisplayDateFormat)
 	ScreenWidth = a.Preferences().IntWithFallback("screen_width", 0)
 	ScreenHeight = a.Preferences().IntWithFallback("screen_height", 0)
 	if state := a.Preferences().String("state"); state != "" {
@@ -56,15 +55,18 @@ func (a *App) loadState() {
 			}
 		}
 	}
-	a.defaultState()
+	a.defaultState(true)
 }
 
-func (a *App) defaultState() {
+func (a *App) defaultState(init bool) {
 	a.state.Version = a.Metadata().Version
-	a.state.Theme = DefaultTheme
-	a.state.Scale = DefaultScale
-	a.state.Color = theme.ColorOrange
-	a.state.Simple = true
+	if init {
+		a.state.Theme = DefaultTheme
+		a.state.Scale = DefaultScale
+		a.state.Color = theme.ColorOrange
+		a.state.Simple = true
+		a.state.DisplayDateFormat = DefaultDisplayDateFormat
+	}
 	a.state.List = map[string]*Photo{}
 	a.state.FramePos = DefaultListPos
 	a.state.FrameSize = DefaultFrameSize

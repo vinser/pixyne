@@ -15,8 +15,6 @@ const DefaultDisplayDateFormat = "02.01.2006 15:04:05"
 const ListDateFormat = "2006.01.02 15:04:05"
 const FileNameDateFormat = "20060102_150405"
 
-var DisplayDateFormat string = DefaultDisplayDateFormat
-
 // get photo properties (width, height, file size and date, exif date) from file
 func (p *Photo) GetPhotoProperties(URI fyne.URI) error {
 	f, err := os.Open(URI.Path())
@@ -121,7 +119,7 @@ func getExif(src io.ReadSeeker) (*exif.Exif, error) {
 
 // Convert list date format to display date
 func listDateToDisplayDate(listDate string) string {
-	return convertDate(ListDateFormat, DisplayDateFormat, listDate)
+	return convertDate(ListDateFormat, a.state.DisplayDateFormat, listDate)
 }
 
 // Convert list date format to file name date
@@ -131,7 +129,7 @@ func listDateToFileNameDate(listDate string) string {
 
 // Convert display date to list date format
 func displayDateToListDate(displayDate string) string {
-	return convertDate(DisplayDateFormat, ListDateFormat, displayDate)
+	return convertDate(a.state.DisplayDateFormat, ListDateFormat, displayDate)
 }
 
 // Convert a date from one string format to another string format.

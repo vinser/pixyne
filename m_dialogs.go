@@ -96,7 +96,7 @@ func (a *App) openFolderDialog() {
 			dialog.ShowError(errors.New("only local files are supported"), a.topWindow)
 			return
 		}
-		a.defaultState()
+		a.defaultState(false)
 		rootURI = list
 		a.topWindowTitle.Set(rootURI.Path())
 		a.newPhotoList()
@@ -128,7 +128,7 @@ func (a *App) savePhotoListDialog() {
 				defer frame.HideProgress()
 				frame.StatusText.Set("")
 				a.SavePhotoList(renameFiles)
-				a.defaultState()
+				a.defaultState(false)
 				a.topWindowTitle.Set(a.state.Folder)
 				a.newPhotoList()
 				a.newLayout()

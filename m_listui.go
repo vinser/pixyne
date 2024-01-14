@@ -42,14 +42,14 @@ func (a *App) newListView() *fyne.Container {
 		{Name: "Size MB", Sortable: true},
 	}
 
-	a.listColumns[0].Width = columnWidth(a.listColumns[0].Name, DisplayDateFormat, FileNameDateFormat+".000")
-	a.listColumns[1].Width = columnWidth(a.listColumns[2].Name, DisplayDateFormat)
-	a.listColumns[2].Width = columnWidth(a.listColumns[3].Name, DisplayDateFormat)
-	a.listColumns[3].Width = columnWidth(a.listColumns[4].Name, DisplayDateFormat)
-	a.listColumns[4].Width = columnWidth(a.listColumns[1].Name)
-	a.listColumns[5].Width = columnWidth(a.listColumns[1].Name)
-	a.listColumns[6].Width = columnWidth(a.listColumns[5].Name, "0000x0000")
-	a.listColumns[7].Width = columnWidth(a.listColumns[6].Name, "999.9")
+	a.listColumns[0].Width = columnWidth(a.listColumns[0].Name, a.state.DisplayDateFormat, FileNameDateFormat+".000")
+	a.listColumns[1].Width = columnWidth(a.listColumns[1].Name, a.state.DisplayDateFormat)
+	a.listColumns[2].Width = columnWidth(a.listColumns[2].Name, a.state.DisplayDateFormat)
+	a.listColumns[3].Width = columnWidth(a.listColumns[3].Name, a.state.DisplayDateFormat)
+	a.listColumns[4].Width = columnWidth(a.listColumns[4].Name)
+	a.listColumns[5].Width = columnWidth(a.listColumns[5].Name)
+	a.listColumns[6].Width = columnWidth(a.listColumns[6].Name, "0000x0000")
+	a.listColumns[7].Width = columnWidth(a.listColumns[7].Name, "999.9")
 	for i := 0; i < len(a.listColumns); i++ {
 		if a.listColumns[i].Sortable && a.state.ListOrderColumn == i {
 			a.listColumns[i].Order = a.state.ListOrder
@@ -86,7 +86,7 @@ func (a *App) dataLength() (rows int, cols int) {
 }
 
 func (a *App) dataCreate() fyne.CanvasObject {
-	data := widget.NewLabel(DisplayDateFormat)
+	data := widget.NewLabel(a.state.DisplayDateFormat)
 	data.Truncation = fyne.TextTruncateEllipsis
 	return data
 }

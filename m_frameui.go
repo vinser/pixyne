@@ -426,7 +426,7 @@ func newDateInput(listPos int) *fyne.Container {
 	d := listDateToDisplayDate(p.Dates[p.DateUsed])
 
 	eDate := widget.NewEntry()
-	eDate.Validator = validation.NewTime(DisplayDateFormat)
+	eDate.Validator = validation.NewTime(a.state.DisplayDateFormat)
 	eDate.SetText(d)
 	eDate.OnChanged = func(e string) {
 		p.Dates[p.DateUsed] = displayDateToListDate(e)

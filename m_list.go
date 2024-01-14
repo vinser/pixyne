@@ -135,7 +135,7 @@ func (a *App) newPhotoList() {
 func (a *App) SavePhotoList(rename bool) {
 	modified := false
 	for _, p := range list {
-		if p.Drop {
+		if p.Drop || p.DateUsed != UseExifDate || !p.CropRectangle.Empty() {
 			modified = true
 			break
 		}

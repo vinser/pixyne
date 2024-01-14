@@ -145,24 +145,25 @@ func (a *App) toggleFullScreen() {
 		a.topWindow.SetFullScreen(true)
 		a.actToggleFullScreen.SetIcon(theme.ViewRestoreIcon())
 	}
+	a.showFrameToolbar() // TODO: remove this after fix crop
 	a.toolBar.Refresh()
 }
 
 func (a *App) showFrameToolbar() {
 	a.toolBar.Items = []widget.ToolbarItem{}
-	a.toolBar.Prepend(a.actAbout)
-	a.toolBar.Prepend(a.actSettings)
-	a.toolBar.Prepend(widget.NewToolbarSeparator())
-	a.toolBar.Prepend(a.actToggleFullScreen)
-	a.toolBar.Prepend(a.actToggleView)
-	a.toolBar.Prepend(widget.NewToolbarSeparator())
-	a.toolBar.Prepend(widget.NewToolbarSpacer())
-	if !a.state.Simple {
-		a.toolBar.Prepend(widget.NewToolbarSeparator())
-		a.toolBar.Prepend(a.actCropPhoto)
-	}
-	a.toolBar.Prepend(widget.NewToolbarSeparator())
 	if len(list) > 0 {
+		a.toolBar.Prepend(a.actAbout)
+		a.toolBar.Prepend(a.actSettings)
+		a.toolBar.Prepend(widget.NewToolbarSeparator())
+		a.toolBar.Prepend(a.actToggleFullScreen)
+		a.toolBar.Prepend(a.actToggleView)
+		a.toolBar.Prepend(widget.NewToolbarSeparator())
+		a.toolBar.Prepend(widget.NewToolbarSpacer())
+		if !a.state.Simple && !a.topWindow.FullScreen() {
+			a.toolBar.Prepend(widget.NewToolbarSeparator())
+			a.toolBar.Prepend(a.actCropPhoto)
+		}
+		a.toolBar.Prepend(widget.NewToolbarSeparator())
 		if a.state.FrameSize < MaxFrameSize && a.state.FrameSize < len(list) {
 			a.toolBar.Prepend(a.actAddPhoto)
 		} else {
