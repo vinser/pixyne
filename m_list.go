@@ -20,7 +20,7 @@ const (
 	BackupDirName = "backup"
 )
 
-var ScreenWidth, ScreenHeight int
+var ScreenWidth, ScreenHeight float32
 
 // File date to use
 const (
@@ -53,7 +53,7 @@ func GetListImageAt(p *Photo) *canvas.Image {
 	filter := imaging.Box
 	nf := normFactor(m)
 	if nf > 0 {
-		m = imaging.Resize(m, int(float32(ScreenWidth)*nf), 0, filter)
+		m = imaging.Resize(m, int(ScreenWidth*nf), 0, filter)
 	}
 	img := canvas.NewImageFromImage(m)
 	img.FillMode = canvas.ImageFillContain
@@ -68,8 +68,8 @@ const downscaleFactor float32 = 0.75
 
 // screen normalization factor
 func normFactor(m image.Image) float32 {
-	scaleDx := float32(ScreenWidth) / float32(m.Bounds().Dx())
-	scaleDy := float32(ScreenHeight) / float32(m.Bounds().Dy())
+	scaleDx := ScreenWidth / float32(m.Bounds().Dx())
+	scaleDy := ScreenHeight / float32(m.Bounds().Dy())
 	if scaleDx <= scaleDy {
 		if scaleDx < 1 {
 			return scaleDx
@@ -156,12 +156,11 @@ func (a *App) SavePhotoList(rename bool) {
 		p.fileURI = dst
 	}
 	for _, p := range list {
+		src = p.fileURI
 		switch {
 		case p.Drop:
-			continue
 		case p.DateUsed != UseExifDate || !p.CropRectangle.Empty():
-			src = p.fileURI
-			if rename {
+			if rename && !isDateSimilarToFileName(p) {
 				dst, _ = storage.Child(rootURI, listDateToFileNameDate(p.Dates[p.DateUsed])+p.fileURI.Extension())
 			} else {
 				dst, _ = storage.Child(rootURI, p.fileURI.Name())
@@ -174,17 +173,14 @@ func (a *App) SavePhotoList(rename bool) {
 			if err != nil {
 				dialog.ShowError(err, a.topWindow)
 			}
-			continue
 		case rename:
-			src = p.fileURI
-			dst, _ = storage.Child(rootURI, listDateToFileNameDate(p.Dates[p.DateUsed])+p.fileURI.Extension())
-			if p.fileURI.Name() == dst.Name() {
-				os.Rename(src.Path(), dst.Path())
-			} else {
+			if !isDateSimilarToFileName(p) {
+				dst, _ = storage.Child(rootURI, listDateToFileNameDate(p.Dates[UseExifDate])+p.fileURI.Extension())
 				storage.Copy(src, dst)
+				break
 			}
+			fallthrough
 		default:
-			src = p.fileURI
 			dst, _ = storage.Child(rootURI, p.fileURI.Name())
 			os.Rename(src.Path(), dst.Path())
 		}
@@ -203,4 +199,30 @@ func makeChildFolder(name string) (fyne.URI, error) {
 		}
 	}
 	return URI, nil
+}
+
+func isDateSimilarToFileName(p *Photo) bool {
+	similar := func(a, b time.Time) bool {
+		diff := a.Sub(b)
+		if diff < 0 {
+			diff = -diff
+		}
+		return diff < time.Second*2
+	}
+	nameDate, err := time.Parse(FileNameDateFormat, strings.TrimSuffix(p.fileURI.Name(), p.fileURI.Extension()))
+	if err != nil {
+		return false
+	}
+	switch p.DateUsed {
+	case UseExifDate:
+		exifDate, _ := time.Parse(ListDateFormat, p.Dates[UseExifDate])
+		return similar(nameDate, exifDate)
+	case UseFileDate:
+		fileDate, _ := time.Parse(ListDateFormat, p.Dates[UseFileDate])
+		return similar(nameDate, fileDate)
+	case UseEnteredDate:
+		enteredDate, _ := time.Parse(ListDateFormat, p.Dates[UseEnteredDate])
+		return similar(nameDate, enteredDate)
+	}
+	return true
 }
