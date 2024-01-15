@@ -159,7 +159,7 @@ func (a *App) settingsDialog() {
 		}
 		a.topWindow.Content().Refresh()
 		frame.At(a.state.FramePos)
-		frame.ItemEndingAt(frame.ItemPos)
+		frame.ItemEndingAt(a.state.ItemPos)
 	})
 	d.Show()
 }

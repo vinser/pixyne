@@ -120,7 +120,7 @@ func (a *App) toggleView() {
 		a.actToggleView.SetIcon(theme.GridIcon())
 	}
 	a.toolBar.Refresh()
-	frame.ItemEndingAt(frame.ItemPos)
+	frame.ItemEndingAt(a.state.ItemPos)
 }
 
 func (a *App) syncListViewScroll() {

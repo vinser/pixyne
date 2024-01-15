@@ -3,6 +3,7 @@ package main
 import (
 	"image"
 	"image/color"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -27,11 +28,11 @@ func (a *App) newCropToolbar() {
 }
 
 func (a *App) doCropDialog(dstAspect float32) {
-	p := list[a.state.FramePos+frame.ItemPos]
+	p := list[a.state.FramePos+a.state.ItemPos]
 	w := a.topWindow
-	mi := frame.Items[frame.ItemPos].Img
+	mi := frame.Items[a.state.ItemPos].Img
 	m := GetListImageAt(p)
-	if dstAspect == 0 {
+	if dstAspect == 0 { // clear crop
 		p.CropRectangle = image.Rect(0, 0, 0, 0)
 		mi.Image = m.Image
 		mi.Refresh()
@@ -39,16 +40,16 @@ func (a *App) doCropDialog(dstAspect float32) {
 		a.toolBar.Show()
 		return
 	}
-	scaleFactor := a.Settings().Scale()
-	fitFactor := float32(ScreenHeight) / float32(m.Image.Bounds().Dy()) * downscaleFactor / scaleFactor
-	img := canvas.NewImageFromImage(imaging.Resize(m.Image, 0, int(float32(m.Image.Bounds().Dy())*fitFactor+0.5), imaging.Box))
+	sc := a.topWindow.Canvas().Scale()
+	dy := int(w.Canvas().Size().Height * sc * downscaleFactor)
+	img := canvas.NewImageFromImage(imaging.Resize(m.Image, 0, dy, imaging.Box))
 	img.FillMode = canvas.ImageFillOriginal
 	img.ScaleMode = canvas.ImageScaleFastest
 	border := canvas.NewRectangle(color.Transparent)
 	border.StrokeColor = theme.PrimaryColor()
 	border.StrokeWidth = 5
 	center := container.NewWithoutLayout(img, border)
-	imgSize := fyne.NewSize(float32(img.Image.Bounds().Dx())/scaleFactor, float32(img.Image.Bounds().Dy())/scaleFactor)
+	imgSize := fyne.NewSize(float32(img.Image.Bounds().Dx())/sc, float32(img.Image.Bounds().Dy())/sc)
 	img.Move(fyne.NewPos(0, 0))
 	img.Resize(imgSize)
 	var content fyne.CanvasObject
@@ -79,9 +80,6 @@ func (a *App) doCropDialog(dstAspect float32) {
 	}
 
 	srcAspect := img.Aspect()
-	// log.Print(p.width, p.height)
-	// log.Print(imgSize.Width, imgSize.Height)
-	// log.Print(srcAspect, dstAspect)
 	if dstAspect < 0 {
 		posTL = fyne.NewPos(0, 0)
 		posBR = fyne.NewPos(imgSize.Width, imgSize.Height)
@@ -120,12 +118,6 @@ func (a *App) doCropDialog(dstAspect float32) {
 			posBR.X = float32(v)
 			refreshBorder()
 		}
-
-		top := container.NewVBox(rightEdge)
-		bottom := container.NewVBox(leftEdge)
-		right := container.NewStack(topEdge)
-		left := container.NewStack(bottomEdge)
-		content = container.NewBorder(top, bottom, left, right, center)
 	} else {
 		if dstAspect <= srcAspect {
 			posTL = fyne.NewPos(0, 0)
@@ -180,17 +172,16 @@ func (a *App) doCropDialog(dstAspect float32) {
 			refreshBorder()
 			refreshSliders()
 		}
-
-		top := container.NewVBox(rightEdge)
-		bottom := container.NewVBox(leftEdge)
-		right := container.NewStack(topEdge)
-		left := container.NewStack(bottomEdge)
-		content = container.NewBorder(top, bottom, left, right, center)
 	}
+	top := container.NewVBox(rightEdge)
+	bottom := container.NewVBox(leftEdge)
+	right := container.NewStack(topEdge)
+	left := container.NewStack(bottomEdge)
+	content = container.NewBorder(top, bottom, left, right, center)
 
 	dlg := dialog.NewCustomConfirm("Crop image", "Crop", "Cancel", content, func(b bool) {
 		if b {
-			factor := float32(p.height) / float32(m.Image.Bounds().Dy()) * scaleFactor / fitFactor
+			factor := float32(p.height) / float32(img.Image.Bounds().Dy()) * sc
 			posTL.X *= factor
 			posTL.Y *= factor
 			posBR.X *= factor
@@ -201,18 +192,20 @@ func (a *App) doCropDialog(dstAspect float32) {
 			mi.Refresh()
 			a.cropToolbar.Hide()
 			a.toolBar.Show()
+			w.SetFixedSize(false)
 		}
 	}, w)
-	jolt(w)
 	dlg.Show()
+	jolt(w) // TODO: remove this workaround after fix dialog widgets malfunctioning
+	w.SetFixedSize(true)
 }
 
-// Attempt workaround for sliders malfunctioning
-const joltAmplitude = 5.0
+// Workaround for dialog malfunctioning
+const joltAmplitude = 1.0
 
 func jolt(w fyne.Window) {
-	s := w.Content().Size().AddWidthHeight(joltAmplitude, joltAmplitude)
-	w.Resize(s)
-	s = w.Content().Size().AddWidthHeight(-joltAmplitude, -joltAmplitude)
+	s := w.Content().Size()
+	w.Resize(s.AddWidthHeight(-joltAmplitude, -joltAmplitude))
+	time.Sleep(10 * time.Millisecond)
 	w.Resize(s)
 }

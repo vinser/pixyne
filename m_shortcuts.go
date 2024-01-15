@@ -22,7 +22,7 @@ func (a *App) Shortcuts() {
 		{"Next frame", fyne.KeyPageDown, func(s fyne.Shortcut) { frame.Next() }},
 		{"First photo", fyne.KeyHome, func(s fyne.Shortcut) { frame.First() }},
 		{"Last photo", fyne.KeyEnd, func(s fyne.Shortcut) { frame.Last() }},
-		{"Drop/Undrop photo", fyne.KeyDelete, func(s fyne.Shortcut) { toggleDrop(a.state.FramePos+frame.ItemPos, frame.Items[frame.ItemPos]) }},
+		{"Drop/Undrop photo", fyne.KeyDelete, func(s fyne.Shortcut) { toggleDrop(a.state.FramePos+a.state.ItemPos, frame.Items[a.state.ItemPos]) }},
 		{"Open new folder", fyne.KeyO, func(s fyne.Shortcut) { a.openFolderDialog() }},
 		{"Save result", fyne.KeyS, func(s fyne.Shortcut) { a.savePhotoListDialog() }},
 		{"Exit", fyne.KeyQ, func(s fyne.Shortcut) { a.topWindow.Close() }},

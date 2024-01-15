@@ -164,7 +164,7 @@ func (a *App) headerUpdate(id widget.TableCellID, o fyne.CanvasObject) {
 			frame.ShowProgress()
 			defer frame.HideProgress()
 			a.state.FramePos = id.Row
-			frame.ItemPos = 0
+			a.state.ItemPos = 0
 			a.toggleView()
 		}
 		header.Refresh()

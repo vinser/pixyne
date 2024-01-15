@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"os"
 
+	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/theme"
 )
 
 type State struct {
 	Version           string            `json:"version"`
+	WindowSize        fyne.Size         `json:"window_size"`
 	Theme             string            `json:"theme"`
 	Scale             float32           `json:"scale"`
 	Color             string            `json:"color"`
@@ -18,14 +20,14 @@ type State struct {
 	Folder            string            `json:"folder"`
 	FramePos          int               `json:"frame_pos"`
 	FrameSize         int               `json:"frame_size"`
+	ItemPos           int               `json:"item_pos"`
 	ListOrderColumn   int               `json:"list_order_column"`
 	ListOrder         order             `json:"list_order"`
 	List              map[string]*Photo `json:"list"`
 }
 
 func (a *App) saveState() {
-	a.Preferences().SetInt("screen_width", ScreenWidth)
-	a.Preferences().SetInt("screen_height", ScreenHeight)
+	a.state.WindowSize = a.topWindow.Canvas().Size()
 	a.state.Folder = rootURI.Path()
 	for i, v := range a.listColumns {
 		if v.Order != natOrder {
@@ -46,8 +48,6 @@ func (a *App) saveState() {
 }
 
 func (a *App) loadState() {
-	ScreenWidth = a.Preferences().IntWithFallback("screen_width", 0)
-	ScreenHeight = a.Preferences().IntWithFallback("screen_height", 0)
 	if state := a.Preferences().String("state"); state != "" {
 		if err := json.Unmarshal([]byte(state), &a.state); err == nil {
 			if rootURI, err = storage.ListerForURI(storage.NewFileURI(a.state.Folder)); err == nil {
@@ -61,6 +61,7 @@ func (a *App) loadState() {
 func (a *App) defaultState(init bool) {
 	a.state.Version = a.Metadata().Version
 	if init {
+		a.state.WindowSize = fyne.NewSize(1280, 720)
 		a.state.Theme = DefaultTheme
 		a.state.Scale = DefaultScale
 		a.state.Color = theme.ColorOrange
@@ -70,6 +71,7 @@ func (a *App) defaultState(init bool) {
 	a.state.List = map[string]*Photo{}
 	a.state.FramePos = DefaultListPos
 	a.state.FrameSize = DefaultFrameSize
+	a.state.ItemPos = DefaultItemPos
 	a.state.ListOrderColumn = DefaultListOrderColumn
 	a.state.ListOrder = DefaultListOrder
 	home, _ := os.UserHomeDir()
