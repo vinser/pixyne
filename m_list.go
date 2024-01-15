@@ -10,8 +10,12 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/storage"
+	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/widget"
 	"github.com/disintegration/imaging"
 	// "github.com/DmitriyVTitov/size"
 )
@@ -101,13 +105,35 @@ func (a *App) newPhotoList() {
 		}
 	}
 	if len(photos) > 0 {
-		// progress.TextFormatter = func() string {
-		// 	return fmt.Sprintf("processing %d of %d files", int(progress.Value), int(progress.Max))
-		// }
-		// progress.Min = 0
-		// progress.Max = float64(len(photos))
-		// for i, p := range photos {
-		for _, p := range photos {
+		drv := a.Driver()
+		dd, ok := drv.(desktop.Driver)
+		if !ok {
+			log.Fatal("App can run only on desktops!!!")
+		}
+		w := dd.CreateSplashWindow()
+		defer w.Close()
+		var logo *canvas.Image
+		if a.state.Theme == "dark" {
+			logo = canvas.NewImageFromResource(appIconDark)
+		} else {
+			logo = canvas.NewImageFromResource(appIconLight)
+		}
+		logo.SetMinSize(fyne.NewSquareSize(100))
+		text := canvas.NewText("Reading folder "+rootURI.Path(), theme.PrimaryColor())
+		text.TextSize = theme.TextSize() * 1.3
+		text.Alignment = fyne.TextAlignCenter
+		progress := widget.NewProgressBar()
+		progress.TextFormatter = func() string {
+			return fmt.Sprintf("processing %d of %d files", int(progress.Value), int(progress.Max))
+		}
+		progress.Min = 0
+		progress.Max = float64(len(photos))
+		content := container.NewBorder(container.NewCenter(logo), progress, nil, nil, text)
+		w.SetContent(content)
+		w.SetPadded(true)
+		w.Resize(fyne.NewSize(600, 100))
+		w.Show()
+		for i, p := range photos {
 			p.GetPhotoProperties(p.fileURI)
 			if len(p.Dates[UseExifDate]) != len(ListDateFormat) {
 				p.DateUsed = UseFileDate
@@ -118,7 +144,7 @@ func (a *App) newPhotoList() {
 				p.Dates = s.Dates
 				p.CropRectangle = s.CropRectangle
 			}
-			// progress.SetValue(float64(i + 1))
+			progress.SetValue(float64(i + 1))
 		}
 	}
 	list = photos
@@ -129,7 +155,7 @@ func (a *App) newPhotoList() {
 		a.state.FrameSize = len(list)
 	}
 	sortList(a.state.ListOrderColumn, a.state.ListOrder)
-	time.Sleep(1*time.Second - time.Since(start))
+	time.Sleep(2*time.Second - time.Since(start))
 }
 
 func (a *App) SavePhotoList(rename bool) {

@@ -29,9 +29,11 @@ func main() {
 	a.topWindowTitle.Set(rootURI.Path())
 	a.topWindow.SetOnClosed(a.saveState)
 	a.topWindow.SetMaster()
-	a.newPhotoList()
 	a.topWindow.Resize(a.state.WindowSize)
-	a.newLayout()
+	go func() {
+		a.newPhotoList()
+		a.newLayout()
+	}()
 	a.topWindow.CenterOnScreen()
 	a.topWindow.Show()
 	a.Run()
