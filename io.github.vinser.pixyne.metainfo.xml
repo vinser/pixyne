@@ -33,19 +33,20 @@
     <p>Pixyne application has a simple and intuitive interface, but there are some non-obvious things:</p>
     <p> - With a click on photo you can mark to drop it in the trash.</p>
     <p> - When you are in a list view, clicking on a row button opens the corresponding photo.</p>
-    <p> - You may also set or correct the EXIF shooting date to the file date or to a manually entered date.</p>
+    <p> - In advanced mode you may set or correct the EXIF shooting date and crop photo.</p>
+    <p> - Pixyne automaticaly stores the current state of the folder so you can undo changes at any time. This is useful when working with a large number of photos and when you need to close the application in order to continue working later.</p>
+    <p> - Made changes will not actually be applied until you save.</p>
     <p> - When you save changes, you can change all file names to EXIF shooting date format.</p>
-    <p> - Made changes will not actually be applied until you save. Pixyne automaticaly stores the current state of the folder so you can undo changes at any time. This is useful when working with a large number of photos and when you need to close the application in order to continue working later.</p>
   </description>
   
   <launchable type="desktop-id">io.github.vinser.pixyne.desktop</launchable>
   <screenshots>
     <screenshot type="default">
-      <image>https://raw.githubusercontent.com/vinser/pixyne/v1.4.1/docs/pixyneapp.png</image>
+      <image>https://raw.githubusercontent.com/vinser/pixyne/v1.5.0/docs/pixyneapp.png</image>
       <caption>Frame View</caption>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/vinser/pixyne/v1.4.1/docs/pixyneapp2.png</image>
+      <image>https://raw.githubusercontent.com/vinser/pixyne/v1.5.0/docs/pixyneapp2.png</image>
       <caption>List View</caption>
     </screenshot>
   </screenshots>
@@ -56,11 +57,11 @@
   <content_rating type="oars-1.1" />  
   
   <releases>
-    <release version="1.4.1" date="2023-12-30" type="stable">
+    <release version="1.5.0" date="2024-01-16" type="stable">
       <description>
-        <p>Fixed errors with one photo in folder</p>
+        <p>New features, changes and fixes in 1.5.0</p>
       </description>
-      <url type="details">https://github.com/vinser/pixyne/releases/tag/v1.4.1</url>
+      <url type="details">https://github.com/vinser/pixyne/releases/tag/v1.5.0</url>
     </release>
     <release version="1.4.0" date="2023-12-28" type="stable">
       <description>
