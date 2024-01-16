@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"image"
 	"log"
 	"os"
 	"strings"
@@ -9,18 +10,21 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/storage"
+	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/widget"
 	"github.com/disintegration/imaging"
 	// "github.com/DmitriyVTitov/size"
 )
 
 const (
-	BackupDirName = "originals"
-	DropDirName   = "dropped"
+	BackupDirName = "backup"
 )
 
-var ScreenWidth, ScreenHeight int
+var ScreenWidth, ScreenHeight float32
 
 // File date to use
 const (
@@ -31,36 +35,29 @@ const (
 
 // Photo
 type Photo struct {
-	id       int
-	fileURI  fyne.URI
-	width    int
-	height   int
-	byteSize int64
-	Drop     bool      `json:"drop"`
-	Dates    [3]string `json:"dates"`
-	DateUsed int       `json:"date_used"`
+	id            int
+	fileURI       fyne.URI
+	width         int
+	height        int
+	byteSize      int64
+	Drop          bool            `json:"drop"`
+	Dates         [3]string       `json:"dates"`
+	DateUsed      int             `json:"date_used"`
+	CropRectangle image.Rectangle `json:"crop_rectangle"`
 }
 
 // get canvas image from file
-func GetListImageAt(pos int) *canvas.Image {
-	frame.StatusText.Set(fmt.Sprintf("Loading...%s - %.2f MB", list[pos].fileURI.Name(), float64(list[pos].byteSize)/1024./1024.))
-	m, err := imaging.Open(list[pos].fileURI.Path(), imaging.AutoOrientation(true))
+func GetListImageAt(p *Photo) *canvas.Image {
+	frame.StatusText.Set(fmt.Sprintf("Loading...%s - %.2f MB", p.fileURI.Name(), float64(p.byteSize)/1024./1024.))
+	m, err := imaging.Open(p.fileURI.Path(), imaging.AutoOrientation(true))
 	if err != nil {
 		log.Fatal(err)
 	}
 	// bytesBefore := float64(size.Of(m)) / 1024. / 1024.
 	filter := imaging.Box
-	scaleDx := float64(ScreenWidth) / float64(m.Bounds().Dx())
-	scaleDy := float64(ScreenHeight) / float64(m.Bounds().Dy())
-	if scaleDx <= scaleDy {
-		if scaleDx < 1 {
-			m = imaging.Resize(m, int(float64(m.Bounds().Dx())*scaleDx), 0, filter)
-		}
-
-	} else {
-		if scaleDy < 1 {
-			m = imaging.Resize(m, 0, int(float64(m.Bounds().Dy())*scaleDy), filter)
-		}
+	nf := normFactor(m)
+	if nf > 0 {
+		m = imaging.Resize(m, int(ScreenWidth*nf), 0, filter)
 	}
 	img := canvas.NewImageFromImage(m)
 	img.FillMode = canvas.ImageFillContain
@@ -69,6 +66,24 @@ func GetListImageAt(pos int) *canvas.Image {
 	// log.Printf("%s scaleDx %f scaleDy %f (%.2f MB)->(%.2f MB)", path.Base(list[pos].fileURI.Name()), scaleDx, scaleDy, bytesBefore, bytesAfter)
 
 	return img
+}
+
+const downscaleFactor float32 = 0.75
+
+// screen normalization factor
+func normFactor(m image.Image) float32 {
+	scaleDx := ScreenWidth / float32(m.Bounds().Dx())
+	scaleDy := ScreenHeight / float32(m.Bounds().Dy())
+	if scaleDx <= scaleDy {
+		if scaleDx < 1 {
+			return scaleDx
+		}
+	} else {
+		if scaleDy < 1 {
+			return scaleDy
+		}
+	}
+	return -1
 }
 
 // create new PhotoList object for the folder
@@ -90,13 +105,35 @@ func (a *App) newPhotoList() {
 		}
 	}
 	if len(photos) > 0 {
-		// progress.TextFormatter = func() string {
-		// 	return fmt.Sprintf("processing %d of %d files", int(progress.Value), int(progress.Max))
-		// }
-		// progress.Min = 0
-		// progress.Max = float64(len(photos))
-		// for i, p := range photos {
-		for _, p := range photos {
+		drv := a.Driver()
+		dd, ok := drv.(desktop.Driver)
+		if !ok {
+			log.Fatal("App can run only on desktops!!!")
+		}
+		w := dd.CreateSplashWindow()
+		defer w.Close()
+		var logo *canvas.Image
+		if a.state.Theme == "dark" {
+			logo = canvas.NewImageFromResource(appIconDark)
+		} else {
+			logo = canvas.NewImageFromResource(appIconLight)
+		}
+		logo.SetMinSize(fyne.NewSquareSize(100))
+		text := canvas.NewText("Reading folder "+rootURI.Path(), theme.PrimaryColor())
+		text.TextSize = theme.TextSize() * 1.3
+		text.Alignment = fyne.TextAlignCenter
+		progress := widget.NewProgressBar()
+		progress.TextFormatter = func() string {
+			return fmt.Sprintf("processing %d of %d files", int(progress.Value), int(progress.Max))
+		}
+		progress.Min = 0
+		progress.Max = float64(len(photos))
+		content := container.NewBorder(container.NewCenter(logo), progress, nil, nil, text)
+		w.SetContent(content)
+		w.SetPadded(true)
+		w.Resize(fyne.NewSize(600, 100))
+		w.Show()
+		for i, p := range photos {
 			p.GetPhotoProperties(p.fileURI)
 			if len(p.Dates[UseExifDate]) != len(ListDateFormat) {
 				p.DateUsed = UseFileDate
@@ -105,8 +142,9 @@ func (a *App) newPhotoList() {
 				p.Drop = s.Drop
 				p.DateUsed = s.DateUsed
 				p.Dates = s.Dates
+				p.CropRectangle = s.CropRectangle
 			}
-			// progress.SetValue(float64(i + 1))
+			progress.SetValue(float64(i + 1))
 		}
 	}
 	list = photos
@@ -117,90 +155,100 @@ func (a *App) newPhotoList() {
 		a.state.FrameSize = len(list)
 	}
 	sortList(a.state.ListOrderColumn, a.state.ListOrder)
-	time.Sleep(1*time.Second - time.Since(start))
+	time.Sleep(2*time.Second - time.Since(start))
 }
 
 func (a *App) SavePhotoList(rename bool) {
-	backupURI, err := makeBackupDir()
-	if err != nil {
-		dialog.ShowError(err, a.topWindow)
+	modified := false
+	for _, p := range list {
+		if p.Drop || p.DateUsed != UseExifDate || !p.CropRectangle.Empty() {
+			modified = true
+			break
+		}
+	}
+	if !modified && !rename {
 		return
 	}
-	dropURI, err := makeDropDir()
+	backupURI, err := makeChildFolder(BackupDirName)
 	if err != nil {
 		dialog.ShowError(err, a.topWindow)
 		return
 	}
 	var src, dst fyne.URI
 	for _, p := range list {
-		switch {
-		case p.Drop:
-			src = p.fileURI
-			dst, _ = storage.Child(dropURI, p.fileURI.Name())
-			os.Rename(src.Path(), dst.Path())
-		default:
-			src = p.fileURI
-			dst, _ = storage.Child(backupURI, p.fileURI.Name())
-			os.Rename(src.Path(), dst.Path())
-		}
+		src = p.fileURI
+		dst, _ = storage.Child(backupURI, p.fileURI.Name())
+		os.Rename(src.Path(), dst.Path())
 		p.fileURI = dst
 	}
 	for _, p := range list {
+		src = p.fileURI
 		switch {
 		case p.Drop:
-			continue
-		case p.DateUsed != UseExifDate:
-			src = p.fileURI
-			if rename {
+		case p.DateUsed != UseExifDate || !p.CropRectangle.Empty():
+			if rename && !isDateSimilarToFileName(p) {
 				dst, _ = storage.Child(rootURI, listDateToFileNameDate(p.Dates[p.DateUsed])+p.fileURI.Extension())
 			} else {
 				dst, _ = storage.Child(rootURI, p.fileURI.Name())
 			}
-			err = UpdateExif(src, dst, p.Dates[p.DateUsed])
+			dateTime := ""
+			if p.DateUsed != UseExifDate {
+				dateTime = p.Dates[p.DateUsed]
+			}
+			err = SaveUpdatedImage(src, dst, dateTime, p.CropRectangle)
 			if err != nil {
 				dialog.ShowError(err, a.topWindow)
 			}
-			continue
 		case rename:
-			src = p.fileURI
-			dst, _ = storage.Child(rootURI, listDateToFileNameDate(p.Dates[p.DateUsed])+p.fileURI.Extension())
-			if p.fileURI.Name() == dst.Name() {
-				os.Rename(src.Path(), dst.Path())
-			} else {
+			if !isDateSimilarToFileName(p) {
+				dst, _ = storage.Child(rootURI, listDateToFileNameDate(p.Dates[UseExifDate])+p.fileURI.Extension())
 				storage.Copy(src, dst)
+				break
 			}
+			fallthrough
 		default:
-			src = p.fileURI
 			dst, _ = storage.Child(rootURI, p.fileURI.Name())
 			os.Rename(src.Path(), dst.Path())
 		}
-		p.fileURI = dst
 	}
 }
 
-func makeBackupDir() (fyne.URI, error) {
-	return makeSubfolder(BackupDirName)
-}
-
-func makeDropDir() (fyne.URI, error) {
-	for _, p := range list {
-		if p.Drop {
-			return makeSubfolder(DropDirName)
-		}
-	}
-	return nil, nil
-}
-
-func makeSubfolder(name string) (fyne.URI, error) {
+func makeChildFolder(name string) (fyne.URI, error) {
 	URI, _ := storage.Child(rootURI, name)
-	yes, err := storage.Exists(URI)
+	exists, err := storage.Exists(URI)
 	if err != nil {
 		return nil, err
 	}
-	if !yes {
+	if !exists {
 		if err := storage.CreateListable(URI); err != nil {
 			return nil, err
 		}
 	}
 	return URI, nil
+}
+
+func isDateSimilarToFileName(p *Photo) bool {
+	similar := func(a, b time.Time) bool {
+		diff := a.Sub(b)
+		if diff < 0 {
+			diff = -diff
+		}
+		return diff < time.Second*2
+	}
+	nameDate, err := time.Parse(FileNameDateFormat, strings.TrimSuffix(p.fileURI.Name(), p.fileURI.Extension()))
+	if err != nil {
+		return false
+	}
+	switch p.DateUsed {
+	case UseExifDate:
+		exifDate, _ := time.Parse(ListDateFormat, p.Dates[UseExifDate])
+		return similar(nameDate, exifDate)
+	case UseFileDate:
+		fileDate, _ := time.Parse(ListDateFormat, p.Dates[UseFileDate])
+		return similar(nameDate, fileDate)
+	case UseEnteredDate:
+		enteredDate, _ := time.Parse(ListDateFormat, p.Dates[UseEnteredDate])
+		return similar(nameDate, enteredDate)
+	}
+	return true
 }

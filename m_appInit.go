@@ -8,7 +8,7 @@ import (
 // In the case where the application was built bypassing the fyne command and using the standard go command
 func init() {
 	app.SetMetadata(fyne.AppMetadata{
-		ID:      "com.github.vinser.pixyne",
+		ID:      "io.github.vinser.pixyne",
 		Name:    "Pixyne",
 		Version: "selfcrafted",
 	})

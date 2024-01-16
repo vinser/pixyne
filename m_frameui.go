@@ -18,6 +18,7 @@ import (
 const (
 	DefaultListPos   = 0
 	DefaultFrameSize = 3
+	DefaultItemPos   = 0
 	MinFrameSize     = 1
 	MaxFrameSize     = 6
 	MaxFrameColumn   = 3
@@ -78,9 +79,9 @@ func shapeFame(shape Shape) (cols, size int) {
 
 // Choice tab frame - rows with photos
 type Frame struct {
-	Content    *fyne.Container
-	Cols       int
-	ItemPos    int
+	Content *fyne.Container
+	Cols    int
+	// ItemPos    int
 	Items      []*FrameItem
 	Buttons    []*widget.Button
 	Status     *fyne.Container
@@ -102,7 +103,7 @@ func (a *App) newFrame() {
 	frame.Content = container.NewGridWithColumns(frame.Cols)
 	frame.Items = make([]*FrameItem, a.state.FrameSize)
 	frame.At(a.state.FramePos)
-	frame.ItemEndingAt(1)
+	frame.ItemEndingAt(a.state.ItemPos)
 }
 
 func (f *Frame) NewStatusInfo() {
@@ -110,7 +111,7 @@ func (f *Frame) NewStatusInfo() {
 	if len(list) == 0 {
 		f.StatusText.Set("")
 	} else {
-		f.StatusText.Set(fmt.Sprintf("%d/%d", a.state.FramePos+frame.ItemPos+1, len(list)))
+		f.StatusText.Set(fmt.Sprintf("%d/%d", a.state.FramePos+a.state.ItemPos+1, len(list)))
 	}
 	label := widget.NewLabelWithData(f.StatusText)
 	label.Alignment = fyne.TextAlignCenter
@@ -128,7 +129,7 @@ func (f *Frame) HideProgress() {
 	if len(list) == 0 {
 		f.StatusText.Set("")
 	} else {
-		f.StatusText.Set(fmt.Sprintf("%d/%d", a.state.FramePos+frame.ItemPos+1, len(list)))
+		f.StatusText.Set(fmt.Sprintf("%d/%d", a.state.FramePos+a.state.ItemPos+1, len(list)))
 	}
 	f.Status.Objects[1].(*widget.ProgressBarInfinite).Hide()
 	f.EnableButtons()
@@ -206,8 +207,8 @@ func (f *Frame) Next() {
 func (f *Frame) PrevItem() {
 	f.ShowProgress()
 	defer f.HideProgress()
-	if f.ItemPos > 0 {
-		f.ItemEndingAt(f.ItemPos - 1)
+	if a.state.ItemPos > 0 {
+		f.ItemEndingAt(a.state.ItemPos - 1)
 		f.Content.Refresh()
 		return
 	}
@@ -228,8 +229,8 @@ func (f *Frame) PrevItem() {
 func (f *Frame) NextItem() {
 	f.ShowProgress()
 	defer f.HideProgress()
-	if f.ItemPos < a.state.FrameSize-1 {
-		f.ItemEndingAt(f.ItemPos + 1)
+	if a.state.ItemPos < a.state.FrameSize-1 {
+		f.ItemEndingAt(a.state.ItemPos + 1)
 		f.Content.Refresh()
 		return
 	}
@@ -357,25 +358,25 @@ func (f *Frame) updateFrameScrollButtons() {
 		f.Buttons[nextFrameBtn].Disable()
 		f.Buttons[lastPhotoBtn].Disable()
 	}
-	if frame.ItemPos == 0 {
+	if a.state.ItemPos == 0 && a.state.FramePos == 0 {
 		f.Buttons[prevPhotoBtn].Disable()
 	}
-	if frame.ItemPos == a.state.FrameSize-1 && a.state.FramePos+a.state.FrameSize == len(list) {
+	if a.state.ItemPos == a.state.FrameSize-1 && a.state.FramePos+a.state.FrameSize == len(list) {
 		f.Buttons[nextPhotoBtn].Disable()
 	}
 }
 
 func (f *Frame) ItemEndingAt(pos int) {
 	if pos >= a.state.FrameSize {
-		f.ItemPos = a.state.FrameSize - 1
+		a.state.ItemPos = a.state.FrameSize - 1
 	} else {
-		f.ItemPos = pos
+		a.state.ItemPos = pos
 	}
 	for i := 0; i < a.state.FrameSize; i++ {
 		f.Items[i].Ending.StrokeWidth = 0
 	}
-	f.Items[f.ItemPos].Ending.StrokeWidth = 5
-	f.Items[f.ItemPos].Content.Refresh()
+	f.Items[a.state.ItemPos].Ending.StrokeWidth = 5
+	f.Items[a.state.ItemPos].Content.Refresh()
 }
 
 type FrameItem struct {
@@ -386,10 +387,12 @@ type FrameItem struct {
 	Ending  *canvas.Rectangle
 }
 
+var DefaultTranslucency = 0.75
+
 // NewFrameItem creates a new FrameItem
 func NewFrameItem(listPos int, simpleMode bool) *FrameItem {
 	item := &FrameItem{}
-	item.Img = GetListImageAt(listPos)
+	item.Img = GetListImageAt(list[listPos])
 	item.Label = fmt.Sprint(list[listPos].fileURI.Name())
 	item.Button = widget.NewButton("", func() { toggleDrop(listPos, item) })
 	item.Ending = &canvas.Rectangle{FillColor: color.Transparent,
@@ -400,7 +403,10 @@ func NewFrameItem(listPos int, simpleMode bool) *FrameItem {
 	}
 	if list[listPos].Drop {
 		item.Button.SetText("DROPPED")
-		item.Img.Translucency = 0.8
+		item.Img.Translucency = DefaultTranslucency
+	}
+	if !list[listPos].CropRectangle.Empty() {
+		list[listPos].fadeByCrop(item.Img)
 	}
 	topLabel := widget.NewLabelWithStyle(item.Label, fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	topLabel.Truncation = fyne.TextTruncateEllipsis
@@ -421,7 +427,7 @@ func newDateInput(listPos int) *fyne.Container {
 	d := listDateToDisplayDate(p.Dates[p.DateUsed])
 
 	eDate := widget.NewEntry()
-	eDate.Validator = validation.NewTime(DisplayDateFormat)
+	eDate.Validator = validation.NewTime(a.state.DisplayDateFormat)
 	eDate.SetText(d)
 	eDate.OnChanged = func(e string) {
 		p.Dates[p.DateUsed] = displayDateToListDate(e)
@@ -466,7 +472,7 @@ func toggleDrop(pos int, item *FrameItem) {
 	list[pos].Drop = !list[pos].Drop
 	if list[pos].Drop {
 		item.Button.SetText("DROPPED")
-		item.Img.Translucency = 0.8
+		item.Img.Translucency = DefaultTranslucency
 	} else {
 		item.Button.SetText("")
 		item.Img.Translucency = 0

@@ -4,27 +4,30 @@ import (
 	"encoding/json"
 	"os"
 
+	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/theme"
 )
 
 type State struct {
-	Theme           string            `json:"theme"`
-	Scale           float32           `json:"scale"`
-	Color           string            `json:"color"`
-	Simple          bool              `json:"simple_mode"`
-	Folder          string            `json:"folder"`
-	FramePos        int               `json:"frame_pos"`
-	FrameSize       int               `json:"frame_size"`
-	ListOrderColumn int               `json:"list_order_column"`
-	ListOrder       order             `json:"list_order"`
-	List            map[string]*Photo `json:"list"`
+	Version           string            `json:"version"`
+	WindowSize        fyne.Size         `json:"window_size"`
+	Theme             string            `json:"theme"`
+	Scale             float32           `json:"scale"`
+	Color             string            `json:"color"`
+	Simple            bool              `json:"simple_mode"`
+	DisplayDateFormat string            `json:"display_date_format"`
+	Folder            string            `json:"folder"`
+	FramePos          int               `json:"frame_pos"`
+	FrameSize         int               `json:"frame_size"`
+	ItemPos           int               `json:"item_pos"`
+	ListOrderColumn   int               `json:"list_order_column"`
+	ListOrder         order             `json:"list_order"`
+	List              map[string]*Photo `json:"list"`
 }
 
 func (a *App) saveState() {
-	a.Preferences().SetString("display_date_format", DisplayDateFormat)
-	a.Preferences().SetInt("screen_width", ScreenWidth)
-	a.Preferences().SetInt("screen_height", ScreenHeight)
+	a.state.WindowSize = a.topWindow.Canvas().Size()
 	a.state.Folder = rootURI.Path()
 	for i, v := range a.listColumns {
 		if v.Order != natOrder {
@@ -35,7 +38,7 @@ func (a *App) saveState() {
 	}
 	stateList := map[string]*Photo{}
 	for _, photo := range list {
-		if photo.Drop || photo.DateUsed != UseExifDate {
+		if photo.Drop || photo.DateUsed != UseExifDate || !photo.CropRectangle.Empty() {
 			stateList[photo.fileURI.Name()] = photo
 		}
 	}
@@ -45,29 +48,30 @@ func (a *App) saveState() {
 }
 
 func (a *App) loadState() {
-	DisplayDateFormat = a.Preferences().StringWithFallback("display_date_format", DefaultDisplayDateFormat)
-	ScreenWidth = a.Preferences().IntWithFallback("screen_width", 0)
-	ScreenHeight = a.Preferences().IntWithFallback("screen_height", 0)
 	if state := a.Preferences().String("state"); state != "" {
 		if err := json.Unmarshal([]byte(state), &a.state); err == nil {
-			// if exists, err := storage.Exists(rootURI); exists && err == nil {
 			if rootURI, err = storage.ListerForURI(storage.NewFileURI(a.state.Folder)); err == nil {
 				return
 			}
-			// }
 		}
 	}
-	a.defaultState()
+	a.defaultState(true)
 }
 
-func (a *App) defaultState() {
-	a.state.Theme = DefaultTheme
-	a.state.Scale = DefaultScale
-	a.state.Color = theme.ColorOrange
-	a.state.Simple = true
+func (a *App) defaultState(init bool) {
+	a.state.Version = a.Metadata().Version
+	if init {
+		a.state.WindowSize = fyne.NewSize(1280, 720)
+		a.state.Theme = DefaultTheme
+		a.state.Scale = DefaultScale
+		a.state.Color = theme.ColorOrange
+		a.state.Simple = true
+		a.state.DisplayDateFormat = DefaultDisplayDateFormat
+	}
 	a.state.List = map[string]*Photo{}
 	a.state.FramePos = DefaultListPos
 	a.state.FrameSize = DefaultFrameSize
+	a.state.ItemPos = DefaultItemPos
 	a.state.ListOrderColumn = DefaultListOrderColumn
 	a.state.ListOrder = DefaultListOrder
 	home, _ := os.UserHomeDir()

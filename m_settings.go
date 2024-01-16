@@ -193,7 +193,7 @@ func (s *Settings) datesRow(a *App) *fyne.Container {
 	for k, v := range toFormat {
 		byFormat[v] = k
 	}
-	display := widget.NewLabel(time.Now().Format(DisplayDateFormat))
+	display := widget.NewLabel(time.Now().Format(a.state.DisplayDateFormat))
 	label := widget.NewLabel("Sample:")
 	label.Alignment = fyne.TextAlignTrailing
 	options := []string{}
@@ -201,10 +201,10 @@ func (s *Settings) datesRow(a *App) *fyne.Container {
 		options = append(options, k)
 	}
 	choice := widget.NewSelectEntry(options)
-	choice.SetText(byFormat[DisplayDateFormat])
+	choice.SetText(byFormat[a.state.DisplayDateFormat])
 	choice.OnChanged = func(s string) {
-		DisplayDateFormat = toFormat[s]
-		display.SetText(time.Now().Format(DisplayDateFormat))
+		a.state.DisplayDateFormat = toFormat[s]
+		display.SetText(time.Now().Format(a.state.DisplayDateFormat))
 	}
 	return container.NewGridWithColumns(3, choice, label, display)
 }

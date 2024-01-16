@@ -33,21 +33,23 @@ type ListColumn struct {
 func (a *App) newListView() *fyne.Container {
 	a.listColumns = []*ListColumn{
 		{Name: "File name", Sortable: true},
-		{Name: "Dropped"},
 		{Name: "Exif date", Sortable: true},
 		{Name: "File date", Sortable: true},
 		{Name: "Entered date", Sortable: true},
+		{Name: "Dropped"},
+		{Name: "Cropped"},
 		{Name: "Width x Height"},
 		{Name: "Size MB", Sortable: true},
 	}
 
-	a.listColumns[0].Width = columnWidth(a.listColumns[0].Name, DisplayDateFormat, FileNameDateFormat+".000")
-	a.listColumns[1].Width = columnWidth(a.listColumns[1].Name)
-	a.listColumns[2].Width = columnWidth(a.listColumns[2].Name, DisplayDateFormat)
-	a.listColumns[3].Width = columnWidth(a.listColumns[3].Name, DisplayDateFormat)
-	a.listColumns[4].Width = columnWidth(a.listColumns[4].Name, DisplayDateFormat)
-	a.listColumns[5].Width = columnWidth(a.listColumns[5].Name, "0000x0000")
-	a.listColumns[6].Width = columnWidth(a.listColumns[6].Name, "999.9")
+	a.listColumns[0].Width = columnWidth(a.listColumns[0].Name, a.state.DisplayDateFormat, FileNameDateFormat+".000")
+	a.listColumns[1].Width = columnWidth(a.listColumns[1].Name, a.state.DisplayDateFormat)
+	a.listColumns[2].Width = columnWidth(a.listColumns[2].Name, a.state.DisplayDateFormat)
+	a.listColumns[3].Width = columnWidth(a.listColumns[3].Name, a.state.DisplayDateFormat)
+	a.listColumns[4].Width = columnWidth(a.listColumns[4].Name)
+	a.listColumns[5].Width = columnWidth(a.listColumns[5].Name)
+	a.listColumns[6].Width = columnWidth(a.listColumns[6].Name, "0000x0000")
+	a.listColumns[7].Width = columnWidth(a.listColumns[7].Name, "999.9")
 	for i := 0; i < len(a.listColumns); i++ {
 		if a.listColumns[i].Sortable && a.state.ListOrderColumn == i {
 			a.listColumns[i].Order = a.state.ListOrder
@@ -84,7 +86,7 @@ func (a *App) dataLength() (rows int, cols int) {
 }
 
 func (a *App) dataCreate() fyne.CanvasObject {
-	data := widget.NewLabel(DisplayDateFormat)
+	data := widget.NewLabel(a.state.DisplayDateFormat)
 	data.Truncation = fyne.TextTruncateEllipsis
 	return data
 }
@@ -101,7 +103,15 @@ func (a *App) dataUpdate(id widget.TableCellID, o fyne.CanvasObject) {
 		text = photo.fileURI.Name()
 		data.TextStyle.Bold = false
 		data.Alignment = fyne.TextAlignLeading
-	case 1:
+	case 1, 2, 3:
+		text = listDateToDisplayDate(photo.Dates[id.Col-1])
+		if id.Col-1 == photo.DateUsed {
+			data.TextStyle.Bold = true
+		} else {
+			data.TextStyle.Bold = false
+		}
+		data.Alignment = fyne.TextAlignLeading
+	case 4:
 		if photo.Drop {
 			text = "Yes"
 		} else {
@@ -109,23 +119,23 @@ func (a *App) dataUpdate(id widget.TableCellID, o fyne.CanvasObject) {
 		}
 		data.TextStyle.Bold = true
 		data.Alignment = fyne.TextAlignCenter
-	case 2, 3, 4:
-		text = listDateToDisplayDate(photo.Dates[id.Col-2])
-		if id.Col-2 == photo.DateUsed {
-			data.TextStyle.Bold = true
-		} else {
-			data.TextStyle.Bold = false
-		}
-		data.Alignment = fyne.TextAlignLeading
 	case 5:
+		if !photo.CropRectangle.Empty() {
+			text = "Yes"
+		} else {
+			text = ""
+		}
+		data.TextStyle.Bold = true
+		data.Alignment = fyne.TextAlignCenter
+	case 6:
 		text = fmt.Sprintf("%dx%d", photo.width, photo.height)
 		data.TextStyle.Bold = false
 		data.Alignment = fyne.TextAlignLeading
-	case 6:
+	case 7:
 		text = fmt.Sprintf("%.1f", float64(photo.byteSize)/1000000.0)
 		data.TextStyle.Bold = false
 		data.Alignment = fyne.TextAlignTrailing
-	case 7:
+	case 8:
 		text = " "
 		data.TextStyle.Bold = false
 		data.Alignment = fyne.TextAlignLeading
@@ -154,7 +164,7 @@ func (a *App) headerUpdate(id widget.TableCellID, o fyne.CanvasObject) {
 			frame.ShowProgress()
 			defer frame.HideProgress()
 			a.state.FramePos = id.Row
-			frame.ItemPos = 0
+			a.state.ItemPos = 0
 			a.toggleView()
 		}
 		header.Refresh()
@@ -218,22 +228,22 @@ func sortList(column int, order order) {
 				return a.fileURI.Name() < b.fileURI.Name()
 			}
 			return a.fileURI.Name() > b.fileURI.Name()
-		case 2:
+		case 1:
 			if order == ascOrder {
 				return a.Dates[UseExifDate] < b.Dates[UseExifDate]
 			}
 			return a.Dates[UseExifDate] > b.Dates[UseExifDate]
-		case 3:
+		case 2:
 			if order == ascOrder {
 				return a.Dates[UseFileDate] < b.Dates[UseFileDate]
 			}
 			return a.Dates[UseFileDate] > b.Dates[UseFileDate]
-		case 4:
+		case 3:
 			if order == ascOrder {
 				return a.Dates[UseEnteredDate] < b.Dates[UseEnteredDate]
 			}
 			return a.Dates[UseEnteredDate] > b.Dates[UseEnteredDate]
-		case 6:
+		case 7:
 			if order == ascOrder {
 				return a.byteSize < b.byteSize
 			}
