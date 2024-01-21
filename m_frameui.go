@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"image/color"
+	"runtime/debug"
+	"sync"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -139,9 +141,15 @@ func (f *Frame) At(pos int) {
 		return
 	}
 	f.Content.RemoveAll()
+	var wg sync.WaitGroup
 	for i := 0; i < a.state.FrameSize; i++ {
-		f.Items[i] = NewFrameItem(pos+i, a.state.Simple)
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			f.Items[i] = NewFrameItem(pos+i, a.state.Simple)
+		}(i)
 	}
+	wg.Wait()
 	for i := 0; i < a.state.FrameSize; i++ {
 		f.Content.Add(f.Items[i].Content)
 	}
@@ -419,6 +427,7 @@ func NewFrameItem(listPos int, simpleMode bool) *FrameItem {
 	} else {
 		item.Content = container.NewBorder(topLabel, newDateInput(listPos), nil, nil, centerStack)
 	}
+	debug.FreeOSMemory() // keeps app slim
 	return item
 }
 func newDateInput(listPos int) *fyne.Container {
