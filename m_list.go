@@ -48,7 +48,7 @@ type Photo struct {
 
 // get canvas image from file
 func GetListImageAt(p *Photo) *canvas.Image {
-	frame.StatusText.Set(fmt.Sprintf("Loading...%s - %.2f MB", p.fileURI.Name(), float64(p.byteSize)/1024./1024.))
+	// frame.StatusText.Set(fmt.Sprintf("Loading...%s - %.2f MB", p.fileURI.Name(), float64(p.byteSize)/1024./1024.))
 	m, err := imaging.Open(p.fileURI.Path(), imaging.AutoOrientation(true))
 	if err != nil {
 		log.Fatal(err)
@@ -72,8 +72,12 @@ const downscaleFactor float32 = 0.75
 
 // screen normalization factor
 func normFactor(m image.Image) float32 {
-	scaleDx := ScreenWidth / float32(m.Bounds().Dx())
-	scaleDy := ScreenHeight / float32(m.Bounds().Dy())
+	rowNum := 1
+	if a.state.FrameSize > 3 {
+		rowNum = 2
+	}
+	scaleDx := ScreenWidth / float32(m.Bounds().Dx()) / float32(rowNum)
+	scaleDy := ScreenHeight / float32(m.Bounds().Dy()) / float32(rowNum)
 	if scaleDx <= scaleDy {
 		if scaleDx < 1 {
 			return scaleDx
