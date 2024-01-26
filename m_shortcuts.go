@@ -11,7 +11,7 @@ type ShortCutInfo struct {
 	handle  func(fyne.Shortcut)
 }
 
-func (a *App) Shortcuts() {
+func (a *App) newShortcuts() {
 	// Control shortcuts
 	a.ControlShortCuts = []ShortCutInfo{
 		{"Zoom frame", fyne.KeyPlus, func(s fyne.Shortcut) { frame.AddItem() }},
@@ -27,10 +27,6 @@ func (a *App) Shortcuts() {
 		{"Save result", fyne.KeyS, func(s fyne.Shortcut) { a.savePhotoListDialog() }},
 		{"Exit", fyne.KeyQ, func(s fyne.Shortcut) { a.topWindow.Close() }},
 	}
-	for _, v := range a.ControlShortCuts {
-		sc := &desktop.CustomShortcut{KeyName: v.KeyName, Modifier: fyne.KeyModifierControl}
-		a.topWindow.Canvas().AddShortcut(sc, v.handle)
-	}
 	// Alt shortcuts
 	a.AltShortCuts = []ShortCutInfo{
 		{"Toggle view", fyne.KeyV, func(s fyne.Shortcut) { a.toggleView() }},
@@ -40,9 +36,26 @@ func (a *App) Shortcuts() {
 		{"Hotkeys", fyne.KeyK, func(s fyne.Shortcut) { a.hotkeysDialog() }},
 		{"Mode simple/advanced", fyne.KeyM, func(s fyne.Shortcut) { a.toggleMode() }},
 	}
+}
+
+func (a *App) enableShortcuts() {
+	for _, v := range a.ControlShortCuts {
+		sc := &desktop.CustomShortcut{KeyName: v.KeyName, Modifier: fyne.KeyModifierControl}
+		a.topWindow.Canvas().AddShortcut(sc, v.handle)
+	}
 	for _, v := range a.AltShortCuts {
 		sc := &desktop.CustomShortcut{KeyName: v.KeyName, Modifier: fyne.KeyModifierAlt}
 		a.topWindow.Canvas().AddShortcut(sc, v.handle)
 	}
+}
 
+func (a *App) disableShortcuts() {
+	for _, v := range a.ControlShortCuts {
+		sc := &desktop.CustomShortcut{KeyName: v.KeyName, Modifier: fyne.KeyModifierControl}
+		a.topWindow.Canvas().RemoveShortcut(sc)
+	}
+	for _, v := range a.AltShortCuts {
+		sc := &desktop.CustomShortcut{KeyName: v.KeyName, Modifier: fyne.KeyModifierAlt}
+		a.topWindow.Canvas().RemoveShortcut(sc)
+	}
 }
