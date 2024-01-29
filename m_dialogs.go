@@ -22,7 +22,8 @@ func (a *App) aboutDialog() {
 		logo = canvas.NewImageFromResource(appIconLight)
 	}
 	logo.FillMode = canvas.ImageFillOriginal
-	logoRow := container.NewGridWithColumns(8, logo)
+	// logoRow := container.NewGridWithColumns(8, logo)
+	logoRow := container.NewBorder(nil, nil, logo, nil)
 	infoRow := widget.NewRichTextFromMarkdown(`
 ## Pixyne - photo picker
 ---
