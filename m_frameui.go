@@ -409,13 +409,17 @@ func NewFrameItem(listPos int, simpleMode bool) *FrameItem {
 		StrokeWidth:  0,
 		CornerRadius: 0,
 	}
-	if list[listPos].Drop {
+	if list[listPos].isDroped() {
 		item.Button.SetText("DROPPED")
 		item.Img.Translucency = DefaultTranslucency
 	}
-	if !list[listPos].CropRectangle.Empty() {
+	if list[listPos].isCropped() {
 		list[listPos].fadeByCrop(item.Img)
 	}
+	if list[listPos].isAjusted() {
+		list[listPos].adjustByFilters(item.Img)
+	}
+
 	topLabel := widget.NewLabelWithStyle(item.Label, fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	topLabel.Truncation = fyne.TextTruncateEllipsis
 	centerStack := container.NewStack()

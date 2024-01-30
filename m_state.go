@@ -38,13 +38,34 @@ func (a *App) saveState() {
 	}
 	stateList := map[string]*Photo{}
 	for _, photo := range list {
-		if photo.Drop || photo.DateUsed != UseExifDate || !photo.CropRectangle.Empty() {
+		if photo.isDroped() || photo.isDated() || photo.isCropped() || photo.isAjusted() {
 			stateList[photo.fileURI.Name()] = photo
 		}
 	}
 	a.state.List = stateList
 	bytes, _ := json.Marshal(a.state)
 	a.Preferences().SetString("state", string(bytes))
+}
+
+func (p *Photo) isDroped() bool {
+	return p.Drop
+}
+
+func (p *Photo) isDated() bool {
+	return p.DateUsed != UseExifDate
+}
+
+func (p *Photo) isAjusted() bool {
+	for i, v := range p.Adjust {
+		if v != adjustFiltersDict[i].zero {
+			return true
+		}
+	}
+	return false
+}
+
+func (p *Photo) isCropped() bool {
+	return !p.CropRectangle.Empty()
 }
 
 func (a *App) loadState() {

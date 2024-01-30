@@ -46,8 +46,8 @@ func (p *Photo) GetPhotoProperties(URI fyne.URI) error {
 	return nil
 }
 
-// Save updated image - aply new exif data and crop
-func SaveUpdatedImage(srcURI, dstURU fyne.URI, dateTime string, cropRect image.Rectangle) error {
+// Save updated image - aply if any new exif data, crop and ajusts
+func (p *Photo) SaveUpdatedImage(srcURI, dstURU fyne.URI) error {
 	srcFile, err := os.Open(srcURI.Path())
 	if err != nil {
 		return err
@@ -58,42 +58,43 @@ func SaveUpdatedImage(srcURI, dstURU fyne.URI, dateTime string, cropRect image.R
 		return err
 	}
 	defer dstFile.Close()
-	tmpFile, err := os.CreateTemp("", "*")
-	if err != nil {
-		return err
-	}
-	defer dstFile.Close()
-
 	exifData, err := getExif(srcFile)
 	if err != nil {
 		return err
 	}
-	newDate := time.Now()
-	if dateTime != "" {
-		newDate, _ = time.Parse(ListDateFormat, dateTime)
-	}
-	exifData.SetDateTime(newDate)
 
-	if cropRect.Empty() {
+	if p.isDated() {
+		newDate, _ := time.Parse(ListDateFormat, p.Dates[p.DateUsed])
+		exifData.SetDateTime(newDate)
+	}
+	if !p.isCropped() || !p.isAjusted() {
 		return exif.Copy(dstFile, srcFile, exifData)
-
 	}
-	err = cropStreamImage(tmpFile, srcFile, cropRect)
+
+	tmpFile, err := os.CreateTemp("", "*")
+	if err != nil {
+		return err
+	}
+	defer tmpFile.Close()
+
+	Img, err := imaging.Decode(srcFile, imaging.AutoOrientation(true))
+	if err != nil {
+		return err
+	}
+	if p.isCropped() {
+		Img = imaging.Crop(Img, p.CropRectangle)
+	}
+	for i, a := range p.Adjust {
+		if a != adjustFiltersDict[i].zero {
+			Img = adjustFiltersDict[i].adjust(Img, a)
+		}
+	}
+	err = imaging.Encode(tmpFile, Img, imaging.JPEG, imaging.JPEGQuality(92))
 	if err != nil {
 		return err
 	}
 	tmpFile.Seek(0, io.SeekStart)
 	return exif.Copy(dstFile, tmpFile, exifData)
-}
-
-func cropStreamImage(dst io.Writer, src io.Reader, crop image.Rectangle) error {
-	srcImg, err := imaging.Decode(src, imaging.AutoOrientation(true))
-	if err != nil {
-		return err
-	}
-	dstImg := imaging.Crop(srcImg, crop)
-	return imaging.Encode(dst, dstImg, imaging.JPEG, imaging.JPEGQuality(92))
-
 }
 
 func getExif(src io.ReadSeeker) (*exif.Exif, error) {
@@ -113,6 +114,7 @@ func getExif(src io.ReadSeeker) (*exif.Exif, error) {
 			return nil, err
 		}
 		exifData = exif.New(c.Width, c.Height)
+		exifData.SetDateTime(time.Now())
 	}
 	return exifData, nil
 }

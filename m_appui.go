@@ -42,14 +42,12 @@ type App struct {
 	actRemovePhoto      *widget.ToolbarAction
 	actToggleView       *widget.ToolbarAction
 	actToggleFullScreen *widget.ToolbarAction
-	actCropPhoto        *widget.ToolbarAction
-	actNoAction         *widget.ToolbarAction
+	// actCropPhoto        *widget.ToolbarAction
+	actAjustPhoto *widget.ToolbarAction
+	actNoAction   *widget.ToolbarAction
 
 	// Frame view
 	frameView *fyne.Container
-
-	// Frame crop toolbar
-	cropToolbar *fyne.Container
 
 	// List view
 	listView *fyne.Container
@@ -58,6 +56,11 @@ type App struct {
 	// List columns settings
 	listColumns []*ListColumn
 
+	// // Frame crop toolbar
+	// cropToolbar *fyne.Container
+
+	// Editor
+	editor *Editor
 	// Shortcuts
 	ControlShortCuts []ShortCutInfo
 	AltShortCuts     []ShortCutInfo
@@ -68,13 +71,14 @@ var a *App
 // make main window newLayout
 func (a *App) newLayout() {
 	a.newToolbar()
-	a.newCropToolbar()
+	// a.newCropToolbar()
 	a.newFrame()
 	a.showFrameToolbar()
 	a.frameView = frame.newFrameView()
 	a.listView = a.newListView()
 	a.listView.Hide()
-	a.topRow = container.NewStack(a.toolBar, container.NewGridWithColumns(3, widget.NewLabel(""), frame.Status), a.cropToolbar)
+	// a.topRow = container.NewStack(a.toolBar, container.NewGridWithColumns(3, widget.NewLabel(""), frame.Status), a.cropToolbar)
+	a.topRow = container.NewStack(a.toolBar, container.NewGridWithColumns(3, widget.NewLabel(""), frame.Status))
 	a.topWindow.SetContent(container.NewBorder(a.topRow, nil, nil, nil, container.NewStack(a.frameView, a.listView)))
 }
 
@@ -87,10 +91,11 @@ func (a *App) newToolbar() {
 	a.actRemovePhoto = widget.NewToolbarAction(theme.ContentRemoveIcon(), func() { frame.RemoveItem() })
 	a.actToggleView = widget.NewToolbarAction(theme.ListIcon(), a.toggleView)
 	a.actToggleFullScreen = widget.NewToolbarAction(theme.ViewFullScreenIcon(), a.toggleFullScreen)
-	a.actCropPhoto = widget.NewToolbarAction(theme.ContentCutIcon(), func() {
-		a.cropToolbar.Show()
-		a.toolBar.Hide()
-	})
+	// a.actCropPhoto = widget.NewToolbarAction(theme.ContentCutIcon(), func() {
+	// 	a.cropToolbar.Show()
+	// 	a.toolBar.Hide()
+	// })
+	a.actAjustPhoto = widget.NewToolbarAction(theme.NewThemedResource(iconAdjust), func() { a.editDialog() })
 	a.actNoAction = widget.NewToolbarAction(theme.NewThemedResource(iconBlank), func() {})
 
 	a.toolBar = widget.NewToolbar()
@@ -159,9 +164,11 @@ func (a *App) showFrameToolbar() {
 		a.toolBar.Prepend(a.actToggleView)
 		a.toolBar.Prepend(widget.NewToolbarSeparator())
 		a.toolBar.Prepend(widget.NewToolbarSpacer())
+		a.toolBar.Prepend(newFixedSpacer(widget.NewLabel("000/000").MinSize()))
 		if !a.state.Simple && !a.topWindow.FullScreen() {
 			a.toolBar.Prepend(widget.NewToolbarSeparator())
-			a.toolBar.Prepend(a.actCropPhoto)
+			a.toolBar.Prepend(a.actAjustPhoto)
+			// a.toolBar.Prepend(a.actCropPhoto)
 		}
 		a.toolBar.Prepend(widget.NewToolbarSeparator())
 		if a.state.FrameSize < MaxFrameSize && a.state.FrameSize < len(list) {

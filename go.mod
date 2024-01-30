@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	fyne.io/fyne/v2 v2.4.3
-	github.com/disintegration/imaging v1.6.2
+	github.com/disintegration/imaging v1.6.3-0.20201218193011-d40f48ce0f09
 )
 
 // replace fyne.io/fyne/v2 v2.3.4 => ../fyne

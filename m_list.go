@@ -44,6 +44,7 @@ type Photo struct {
 	Dates         [3]string       `json:"dates"`
 	DateUsed      int             `json:"date_used"`
 	CropRectangle image.Rectangle `json:"crop_rectangle"`
+	Adjust        []float64       `json:"adjust"`
 }
 
 // get canvas image from file
@@ -138,6 +139,10 @@ func (a *App) newPhotoList() {
 		w.Resize(fyne.NewSize(600, 100))
 		w.Show()
 		for i, p := range photos {
+			p.Adjust = make([]float64, len(adjustFiltersDict))
+			for k := range p.Adjust {
+				p.Adjust[k] = adjustFiltersDict[k].zero
+			}
 			p.GetPhotoProperties(p.fileURI)
 			if len(p.Dates[UseExifDate]) != len(ListDateFormat) {
 				p.DateUsed = UseFileDate
@@ -147,6 +152,7 @@ func (a *App) newPhotoList() {
 				p.DateUsed = s.DateUsed
 				p.Dates = s.Dates
 				p.CropRectangle = s.CropRectangle
+				p.Adjust = s.Adjust
 			}
 			progress.SetValue(float64(i + 1))
 		}
@@ -188,18 +194,14 @@ func (a *App) SavePhotoList(rename bool) {
 	for _, p := range list {
 		src = p.fileURI
 		switch {
-		case p.Drop:
-		case p.DateUsed != UseExifDate || !p.CropRectangle.Empty():
+		case p.isDroped():
+		case p.isDated() || p.isCropped() || p.isAjusted():
 			if rename && !isDateSimilarToFileName(p) {
 				dst, _ = storage.Child(rootURI, listDateToFileNameDate(p.Dates[p.DateUsed])+p.fileURI.Extension())
 			} else {
 				dst, _ = storage.Child(rootURI, p.fileURI.Name())
 			}
-			dateTime := ""
-			if p.DateUsed != UseExifDate {
-				dateTime = p.Dates[p.DateUsed]
-			}
-			err = SaveUpdatedImage(src, dst, dateTime, p.CropRectangle)
+			err = p.SaveUpdatedImage(src, dst)
 			if err != nil {
 				dialog.ShowError(err, a.topWindow)
 			}
