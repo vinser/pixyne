@@ -90,9 +90,9 @@ func (a *App) hotkeysDialog() {
 func (a *App) openFolderDialog() {
 	a.disableShortcuts()
 	d := dialog.NewFolderOpen(func(list fyne.ListableURI, err error) {
-		frame.ShowProgress()
-		defer frame.HideProgress()
-		frame.StatusText.Set("")
+		a.statusInfo.ShowProgress()
+		defer a.statusInfo.HideProgress()
+		a.statusInfo.text.Set("")
 		if err != nil {
 			dialog.ShowError(err, a.topWindow)
 			return
@@ -134,9 +134,9 @@ func (a *App) savePhotoListDialog() {
 		content,
 		func(b bool) {
 			if b {
-				frame.ShowProgress()
-				defer frame.HideProgress()
-				frame.StatusText.Set("")
+				a.statusInfo.ShowProgress()
+				defer a.statusInfo.HideProgress()
+				a.statusInfo.text.Set("")
 				a.SavePhotoList(renameFiles)
 				a.defaultState(false)
 				a.topWindowTitle.Set(a.state.Folder)
@@ -164,8 +164,8 @@ func (a *App) settingsDialog() {
 
 	d := dialog.NewCustom("Settings", "Ok", settingsForm, a.topWindow)
 	d.SetOnClosed(func() {
-		frame.ShowProgress()
-		defer frame.HideProgress()
+		a.statusInfo.ShowProgress()
+		defer a.statusInfo.HideProgress()
 		if len(list) > 0 {
 			if !a.frameView.Hidden {
 				a.showFrameToolbar()
@@ -193,7 +193,7 @@ func (a *App) approveResetAllDialog(parent *dialog.CustomDialog) {
 		),
 		func(b bool) {
 			if b {
-				frame.StatusText.Set("")
+				a.statusInfo.text.Set("")
 				a.defaultState(true)
 				a.topWindowTitle.Set(a.state.Folder)
 				a.newPhotoList()

@@ -42,9 +42,9 @@ type App struct {
 	actRemovePhoto      *widget.ToolbarAction
 	actToggleView       *widget.ToolbarAction
 	actToggleFullScreen *widget.ToolbarAction
-	// actCropPhoto        *widget.ToolbarAction
-	actAjustPhoto *widget.ToolbarAction
-	actNoAction   *widget.ToolbarAction
+	actEditPhoto        *widget.ToolbarAction
+	actNoAction         *widget.ToolbarAction
+	statusInfo          *StatusInfo
 
 	// Frame view
 	frameView *fyne.Container
@@ -71,8 +71,9 @@ func (a *App) newLayout() {
 	a.frameView = frame.newFrameView()
 	a.listView = a.newListView()
 	a.listView.Hide()
-	a.topRow = container.NewStack(a.toolBar, container.NewGridWithColumns(3, widget.NewLabel(""), frame.Status))
-	a.topWindow.SetContent(container.NewBorder(a.topRow, nil, nil, nil, container.NewStack(a.frameView, a.listView)))
+	a.topRow = container.NewStack(a.toolBar)
+	content := container.NewStack(newFixedSpacer(fyne.NewSize(640, 360)), a.frameView, a.listView)
+	a.topWindow.SetContent(container.NewBorder(a.topRow, nil, nil, nil, content))
 }
 
 func (a *App) newToolbar() {
@@ -84,16 +85,17 @@ func (a *App) newToolbar() {
 	a.actRemovePhoto = widget.NewToolbarAction(theme.ContentRemoveIcon(), func() { frame.RemoveItem() })
 	a.actToggleView = widget.NewToolbarAction(theme.ListIcon(), a.toggleView)
 	a.actToggleFullScreen = widget.NewToolbarAction(theme.ViewFullScreenIcon(), a.toggleFullScreen)
-	a.actAjustPhoto = widget.NewToolbarAction(theme.NewThemedResource(iconAdjust), func() { a.editDialog() })
+	a.actEditPhoto = widget.NewToolbarAction(theme.NewThemedResource(iconAdjust), func() { a.editDialog() })
 	a.actNoAction = widget.NewToolbarAction(theme.NewThemedResource(iconBlank), func() {})
+	a.statusInfo = newStatusInfo()
 
 	a.toolBar = widget.NewToolbar()
 }
 
 func (a *App) toggleView() {
 	if a.frameView.Hidden {
-		frame.ShowProgress()
-		defer frame.HideProgress()
+		a.statusInfo.ShowProgress()
+		defer a.statusInfo.HideProgress()
 		a.showFrameToolbar()
 		a.frameView.Show()
 		a.listView.Hide()
@@ -153,11 +155,11 @@ func (a *App) showFrameToolbar() {
 		a.toolBar.Prepend(a.actToggleView)
 		a.toolBar.Prepend(widget.NewToolbarSeparator())
 		a.toolBar.Prepend(widget.NewToolbarSpacer())
-		a.toolBar.Prepend(newFixedSpacer(widget.NewLabel("000/000").MinSize()))
+		a.toolBar.Prepend(a.statusInfo)
+		a.toolBar.Prepend(widget.NewToolbarSpacer())
 		if !a.state.Simple && !a.topWindow.FullScreen() {
 			a.toolBar.Prepend(widget.NewToolbarSeparator())
-			a.toolBar.Prepend(a.actAjustPhoto)
-			// a.toolBar.Prepend(a.actCropPhoto)
+			a.toolBar.Prepend(a.actEditPhoto)
 		}
 		a.toolBar.Prepend(widget.NewToolbarSeparator())
 		if a.state.FrameSize < MaxFrameSize && a.state.FrameSize < len(list) {
@@ -183,6 +185,8 @@ func (a *App) showListToolbar() {
 	a.toolBar.Append(a.actSaveList)
 	a.toolBar.Append(widget.NewToolbarSeparator())
 	a.toolBar.Append(widget.NewToolbarSpacer())
+	a.toolBar.Append(a.statusInfo)
+	a.toolBar.Append(widget.NewToolbarSpacer())
 	a.toolBar.Append(widget.NewToolbarSeparator())
 	a.toolBar.Append(a.actToggleView)
 	a.toolBar.Append(a.actToggleFullScreen)
@@ -192,8 +196,8 @@ func (a *App) showListToolbar() {
 }
 
 func (a *App) toggleMode() {
-	frame.ShowProgress()
-	defer frame.HideProgress()
+	a.statusInfo.ShowProgress()
+	defer a.statusInfo.HideProgress()
 	a.state.Simple = !a.state.Simple
 	frame.At(a.state.FramePos)
 }

@@ -161,8 +161,8 @@ func (a *App) headerUpdate(id widget.TableCellID, o fyne.CanvasObject) {
 		}
 		// header.Icon = theme.NavigateBackIcon()
 		header.OnTapped = func() {
-			frame.ShowProgress()
-			defer frame.HideProgress()
+			a.statusInfo.ShowProgress()
+			defer a.statusInfo.HideProgress()
 			a.state.FramePos = id.Row
 			a.state.ItemPos = 0
 			a.toggleView()
