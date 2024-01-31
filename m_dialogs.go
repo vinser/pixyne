@@ -166,13 +166,40 @@ func (a *App) settingsDialog() {
 	d.SetOnClosed(func() {
 		frame.ShowProgress()
 		defer frame.HideProgress()
-		if !a.frameView.Hidden {
-			a.showFrameToolbar()
+		if len(list) > 0 {
+			if !a.frameView.Hidden {
+				a.showFrameToolbar()
+			}
+			a.topWindow.Content().Refresh()
+			frame.At(a.state.FramePos)
+			frame.ItemEndingAt(a.state.ItemPos)
 		}
-		a.topWindow.Content().Refresh()
-		frame.At(a.state.FramePos)
-		frame.ItemEndingAt(a.state.ItemPos)
 		a.enableShortcuts()
 	})
+	settingsForm.Append("", container.NewBorder(nil, nil, nil, widget.NewButton("Reset all", func() { a.approveResetAllDialog(d) })))
+	d.Show()
+}
+
+func (a *App) approveResetAllDialog(parent *dialog.CustomDialog) {
+	d := dialog.NewCustomConfirm(
+		"Reset all",
+		"Proceed",
+		"Cancel",
+		container.NewVBox(
+			widget.NewLabel("WARNING!"),
+			widget.NewLabel("All settings will be reset to default values."),
+		),
+		func(b bool) {
+			if b {
+				frame.StatusText.Set("")
+				a.defaultState(true)
+				a.topWindowTitle.Set(a.state.Folder)
+				a.newPhotoList()
+				a.newLayout()
+				parent.Hide()
+				parent = nil
+			}
+		},
+		a.topWindow)
 	d.Show()
 }
