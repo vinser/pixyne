@@ -176,7 +176,9 @@ func (a *App) settingsDialog() {
 		}
 		a.enableShortcuts()
 	})
-	settingsForm.Append("", container.NewBorder(nil, nil, nil, widget.NewButton("Reset all", func() { a.approveResetAllDialog(d) })))
+	resettButton := widget.NewButton("Reset all", func() { a.approveResetAllDialog(d) })
+	resettButton.Importance = widget.DangerImportance
+	settingsForm.Append("", container.NewBorder(nil, nil, nil, resettButton))
 	d.Show()
 }
 
