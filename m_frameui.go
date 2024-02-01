@@ -391,8 +391,8 @@ func NewFrameItem(listPos int, simpleMode bool) *FrameItem {
 	topLabel := widget.NewLabelWithStyle(item.Label, fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	topLabel.Truncation = fyne.TextTruncateEllipsis
 	centerStack := container.NewStack()
-	centerStack.Add(item.Img)
 	centerStack.Add(item.Button)
+	centerStack.Add(item.Img)
 	centerStack.Add(item.Ending)
 	if simpleMode {
 		item.Content = container.NewBorder(topLabel, nil, nil, nil, centerStack)
