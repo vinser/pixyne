@@ -2,7 +2,7 @@
 Type=Application
 
 Name=Pixyne Photo Picker
-Comment=Quickly review photo folders, safely delete bad and similar shots, fix the shooting dates
+Comment=Quickly review photo folders, safely delete bad and similar shots, fix the shooting dates, crop and adjust photos
 Categories=Graphics;Photography;
 Keywords=image;viewer;JPEG;photos;browse;sort;pick;EXIF;
 
