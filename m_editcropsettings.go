@@ -14,19 +14,24 @@ import (
 )
 
 func (e *Editor) editCropSettingsDialog() {
+	e.clearCrop()
 	var d *dialog.CustomDialog
-	c := container.NewVBox()
-	for i, crop := range a.state.FavoriteCrops {
-		row := e.cropSettingsDeleteRow(crop, c, i)
-		c.Add(row)
+	cc := container.NewVBox()
+	for i := 0; i < len(a.state.FavoriteCrops); i++ {
+		crop := a.state.FavoriteCrops[i]
+		row := e.cropSettingsDeleteRow(crop, cc, i)
+		cc.Add(row)
 	}
+	c := container.NewVBox()
+	c.Add(cc)
 	// insert new crop aspect
-	newCropRow := e.cropSettingsAddRow(c)
+	newCropRow := e.cropSettingsAddRow(c, cc)
 	c.Add(newCropRow)
 	d = dialog.NewCustom("Set favorite crops", "Ok", c, a.topWindow)
 	d.SetOnClosed(func() {
 		e.fixedCrops.RemoveAll()
-		for _, crop := range a.state.FavoriteCrops {
+		for i := 0; i < len(a.state.FavoriteCrops); i++ {
+			crop := a.state.FavoriteCrops[i]
 			e.fixedCrops.Objects = append(e.fixedCrops.Objects, widget.NewButton(fmt.Sprintf("%.f:%.f", crop.X, crop.Y), func() { e.fixCrop(crop.X / crop.Y) }))
 		}
 		e.fixedCrops.Refresh()
@@ -34,21 +39,26 @@ func (e *Editor) editCropSettingsDialog() {
 	d.Show()
 }
 
-func (e *Editor) cropSettingsDeleteRow(crop fyne.Position, c *fyne.Container, i int) *fyne.Container {
+func (e *Editor) cropSettingsDeleteRow(crop fyne.Position, cc *fyne.Container, i int) *fyne.Container {
 	label := widget.NewLabel(fmt.Sprintf("%.f:%.f", crop.X, crop.Y))
 	label.Alignment = fyne.TextAlignCenter
 	button := widget.NewButtonWithIcon("",
 		theme.ContentRemoveIcon(),
 		func() {
 			a.state.FavoriteCrops = slices.Delete(a.state.FavoriteCrops, i, i+1)
-			c.Objects = slices.Delete(c.Objects, i, i+1)
-			c.Refresh()
+			cc.RemoveAll()
+			for i := 0; i < len(a.state.FavoriteCrops); i++ {
+				crop := a.state.FavoriteCrops[i]
+				row := e.cropSettingsDeleteRow(crop, cc, i)
+				cc.Add(row)
+			}
+			cc.Refresh()
 		},
 	)
 	return container.NewGridWithColumns(2, label, button)
 }
 
-func (e *Editor) cropSettingsAddRow(c *fyne.Container) *fyne.Container {
+func (e *Editor) cropSettingsAddRow(c, cc *fyne.Container) *fyne.Container {
 	newX := widget.NewEntry()
 	newX.SetPlaceHolder("10")
 	newX.Validator = validation.NewRegexp(`\d{1,2}`, "invalid width")
@@ -70,10 +80,12 @@ func (e *Editor) cropSettingsAddRow(c *fyne.Container) *fyne.Container {
 				x, _ := strconv.ParseFloat(newX.Text, 32)
 				y, _ := strconv.ParseFloat(newY.Text, 32)
 				a.state.FavoriteCrops = append(a.state.FavoriteCrops, fyne.NewPos(float32(x), float32(y)))
-				lastRow := c.Objects[len(c.Objects)-1].(*fyne.Container)
-				c.Remove(lastRow)
-				c.Add(e.cropSettingsDeleteRow(fyne.NewPos(float32(x), float32(y)), c, len(a.state.FavoriteCrops)-1))
-				c.Add(lastRow)
+				cc.RemoveAll()
+				for i := 0; i < len(a.state.FavoriteCrops); i++ {
+					crop := a.state.FavoriteCrops[i]
+					row := e.cropSettingsDeleteRow(crop, cc, i)
+					cc.Add(row)
+				}
 				newX.Text = ""
 				newY.Text = ""
 				c.Refresh()

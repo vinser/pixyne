@@ -130,7 +130,7 @@ func (e *Editor) newCropsMenu() {
 	}
 	c.Objects = append(c.Objects, e.fixedCrops)
 	c.Objects = append(c.Objects, widget.NewButtonWithIcon("Clear crop", theme.ContentClearIcon(), func() { e.clearCrop() }))
-	c.Objects = append(c.Objects, widget.NewButtonWithIcon("Set crops", theme.SettingsIcon(), func() { e.editCropSettingsDialog() }))
+	c.Objects = append(c.Objects, widget.NewButtonWithIcon("Crops sutup", theme.SettingsIcon(), func() { e.editCropSettingsDialog() }))
 	e.cropsMenu = c
 }
 
