@@ -23,6 +23,7 @@ type State struct {
 	ItemPos           int               `json:"item_pos"`
 	ListOrderColumn   int               `json:"list_order_column"`
 	ListOrder         order             `json:"list_order"`
+	FavoriteCrops     []fyne.Position   `json:"favorite_crop"`
 	List              map[string]*Photo `json:"list"`
 }
 
@@ -38,13 +39,34 @@ func (a *App) saveState() {
 	}
 	stateList := map[string]*Photo{}
 	for _, photo := range list {
-		if photo.Drop || photo.DateUsed != UseExifDate || !photo.CropRectangle.Empty() {
+		if photo.isDroped() || photo.isDated() || photo.isCropped() || photo.isAdjusted() {
 			stateList[photo.fileURI.Name()] = photo
 		}
 	}
 	a.state.List = stateList
 	bytes, _ := json.Marshal(a.state)
 	a.Preferences().SetString("state", string(bytes))
+}
+
+func (p *Photo) isDroped() bool {
+	return p.Drop
+}
+
+func (p *Photo) isDated() bool {
+	return p.DateUsed != UseExifDate
+}
+
+func (p *Photo) isAdjusted() bool {
+	for i, v := range p.Adjust {
+		if v != adjustFiltersDict[i].zero {
+			return true
+		}
+	}
+	return false
+}
+
+func (p *Photo) isCropped() bool {
+	return !p.CropRectangle.Empty()
 }
 
 func (a *App) loadState() {
@@ -67,6 +89,13 @@ func (a *App) defaultState(init bool) {
 		a.state.Color = theme.ColorOrange
 		a.state.Simple = true
 		a.state.DisplayDateFormat = DefaultDisplayDateFormat
+		a.state.FavoriteCrops = []fyne.Position{
+			{X: 1, Y: 1},
+			{X: 16, Y: 9},
+			{X: 9, Y: 16},
+			{X: 5, Y: 4},
+			{X: 4, Y: 5},
+		}
 	}
 	a.state.List = map[string]*Photo{}
 	a.state.FramePos = DefaultListPos

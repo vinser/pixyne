@@ -3,11 +3,12 @@ package main
 import (
 	"fmt"
 	"image/color"
+	"runtime/debug"
+	"sync"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/data/validation"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
@@ -82,15 +83,12 @@ type Frame struct {
 	Content *fyne.Container
 	Cols    int
 	// ItemPos    int
-	Items      []*FrameItem
-	Buttons    []*widget.Button
-	Status     *fyne.Container
-	StatusText binding.String
+	Items   []*FrameItem
+	Buttons []*widget.Button
 }
 
 func (a *App) newFrame() {
 	frame = &Frame{}
-	frame.NewStatusInfo()
 	if len(list) == 0 {
 		dialog.ShowInformation("No photos", "There are no JPEG photos in the current folder,\nplease choose another one", a.topWindow)
 		frame.Content = container.NewGridWithColumns(1, canvas.NewText("", color.Black))
@@ -106,42 +104,20 @@ func (a *App) newFrame() {
 	frame.ItemEndingAt(a.state.ItemPos)
 }
 
-func (f *Frame) NewStatusInfo() {
-	f.StatusText = binding.NewString()
-	if len(list) == 0 {
-		f.StatusText.Set("")
-	} else {
-		f.StatusText.Set(fmt.Sprintf("%d/%d", a.state.FramePos+a.state.ItemPos+1, len(list)))
-	}
-	label := widget.NewLabelWithData(f.StatusText)
-	label.Alignment = fyne.TextAlignCenter
-	progress := widget.NewProgressBarInfinite()
-	f.Status = container.NewStack(label, progress)
-	f.Status.Objects[1].(*widget.ProgressBarInfinite).Hide()
-}
-
-func (f *Frame) ShowProgress() {
-	f.DisableButtons()
-	f.Status.Objects[1].(*widget.ProgressBarInfinite).Show()
-}
-
-func (f *Frame) HideProgress() {
-	if len(list) == 0 {
-		f.StatusText.Set("")
-	} else {
-		f.StatusText.Set(fmt.Sprintf("%d/%d", a.state.FramePos+a.state.ItemPos+1, len(list)))
-	}
-	f.Status.Objects[1].(*widget.ProgressBarInfinite).Hide()
-	f.EnableButtons()
-}
 func (f *Frame) At(pos int) {
 	if pos < 0 || pos >= len(list) {
 		return
 	}
 	f.Content.RemoveAll()
+	var wg sync.WaitGroup
 	for i := 0; i < a.state.FrameSize; i++ {
-		f.Items[i] = NewFrameItem(pos+i, a.state.Simple)
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			f.Items[i] = NewFrameItem(pos+i, a.state.Simple)
+		}(i)
 	}
+	wg.Wait()
 	for i := 0; i < a.state.FrameSize; i++ {
 		f.Content.Add(f.Items[i].Content)
 	}
@@ -153,8 +129,8 @@ func (f *Frame) First() {
 	if a.state.FramePos == 0 {
 		return
 	}
-	f.ShowProgress()
-	defer f.HideProgress()
+	a.statusInfo.ShowProgress()
+	defer a.statusInfo.HideProgress()
 	f.At(0)
 	f.ItemEndingAt(0)
 	f.updateFrameScrollButtons()
@@ -165,8 +141,8 @@ func (f *Frame) Last() {
 		return
 	}
 	pos := len(list) - a.state.FrameSize
-	f.ShowProgress()
-	defer f.HideProgress()
+	a.statusInfo.ShowProgress()
+	defer a.statusInfo.HideProgress()
 	f.At(pos)
 	f.ItemEndingAt(a.state.FrameSize - 1)
 	f.updateFrameScrollButtons()
@@ -176,8 +152,8 @@ func (f *Frame) Prev() {
 	if a.state.FramePos == 0 {
 		return
 	}
-	f.ShowProgress()
-	defer f.HideProgress()
+	a.statusInfo.ShowProgress()
+	defer a.statusInfo.HideProgress()
 	pos := a.state.FramePos - a.state.FrameSize
 	if pos < 0 {
 		f.First()
@@ -192,8 +168,8 @@ func (f *Frame) Next() {
 	if a.state.FramePos == len(list)-a.state.FrameSize {
 		return
 	}
-	f.ShowProgress()
-	defer f.HideProgress()
+	a.statusInfo.ShowProgress()
+	defer a.statusInfo.HideProgress()
 	pos := a.state.FramePos + a.state.FrameSize
 	if pos > len(list)-a.state.FrameSize {
 		f.Last()
@@ -205,8 +181,8 @@ func (f *Frame) Next() {
 }
 
 func (f *Frame) PrevItem() {
-	f.ShowProgress()
-	defer f.HideProgress()
+	a.statusInfo.ShowProgress()
+	defer a.statusInfo.HideProgress()
 	if a.state.ItemPos > 0 {
 		f.ItemEndingAt(a.state.ItemPos - 1)
 		f.Content.Refresh()
@@ -227,8 +203,8 @@ func (f *Frame) PrevItem() {
 }
 
 func (f *Frame) NextItem() {
-	f.ShowProgress()
-	defer f.HideProgress()
+	a.statusInfo.ShowProgress()
+	defer a.statusInfo.HideProgress()
 	if a.state.ItemPos < a.state.FrameSize-1 {
 		f.ItemEndingAt(a.state.ItemPos + 1)
 		f.Content.Refresh()
@@ -250,8 +226,8 @@ func (f *Frame) NextItem() {
 
 func (f *Frame) RemoveItem() {
 	if a.state.FrameSize > MinFrameSize {
-		f.ShowProgress()
-		defer f.HideProgress()
+		a.statusInfo.ShowProgress()
+		defer a.statusInfo.HideProgress()
 		newCols, newSize := shapeFame(shapeSmaller)
 		f.Items = f.Items[:len(f.Items)-a.state.FrameSize+newSize]
 		a.state.FrameSize = newSize
@@ -270,8 +246,8 @@ func (f *Frame) RemoveItem() {
 
 func (f *Frame) AddItem() {
 	if a.state.FrameSize < MaxFrameSize {
-		f.ShowProgress()
-		defer f.HideProgress()
+		a.statusInfo.ShowProgress()
+		defer a.statusInfo.HideProgress()
 		newCols, newSize := shapeFame(shapeBigger)
 		if a.state.FramePos+a.state.FrameSize >= len(list) {
 			f.At(len(list) - newSize)
@@ -329,7 +305,7 @@ func (f *Frame) newFrameView() *fyne.Container {
 
 	btns := container.NewGridWithColumns(len(objs), objs...)
 	f.updateFrameScrollButtons()
-	frame.HideProgress()
+	a.statusInfo.HideProgress()
 	return container.NewBorder(nil, btns, nil, nil, f.Content)
 }
 
@@ -401,24 +377,29 @@ func NewFrameItem(listPos int, simpleMode bool) *FrameItem {
 		StrokeWidth:  0,
 		CornerRadius: 0,
 	}
-	if list[listPos].Drop {
+	if list[listPos].isDroped() {
 		item.Button.SetText("DROPPED")
 		item.Img.Translucency = DefaultTranslucency
 	}
-	if !list[listPos].CropRectangle.Empty() {
+	if list[listPos].isCropped() {
 		list[listPos].fadeByCrop(item.Img)
 	}
+	if list[listPos].isAdjusted() {
+		list[listPos].adjustByFilters(item.Img)
+	}
+
 	topLabel := widget.NewLabelWithStyle(item.Label, fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	topLabel.Truncation = fyne.TextTruncateEllipsis
 	centerStack := container.NewStack()
-	centerStack.Add(item.Img)
 	centerStack.Add(item.Button)
+	centerStack.Add(item.Img)
 	centerStack.Add(item.Ending)
 	if simpleMode {
 		item.Content = container.NewBorder(topLabel, nil, nil, nil, centerStack)
 	} else {
 		item.Content = container.NewBorder(topLabel, newDateInput(listPos), nil, nil, centerStack)
 	}
+	debug.FreeOSMemory() // keeps app slim
 	return item
 }
 func newDateInput(listPos int) *fyne.Container {

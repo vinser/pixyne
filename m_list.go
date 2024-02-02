@@ -44,11 +44,12 @@ type Photo struct {
 	Dates         [3]string       `json:"dates"`
 	DateUsed      int             `json:"date_used"`
 	CropRectangle image.Rectangle `json:"crop_rectangle"`
+	Adjust        []float64       `json:"adjust"`
 }
 
 // get canvas image from file
 func GetListImageAt(p *Photo) *canvas.Image {
-	frame.StatusText.Set(fmt.Sprintf("Loading...%s - %.2f MB", p.fileURI.Name(), float64(p.byteSize)/1024./1024.))
+	// frame.StatusText.Set(fmt.Sprintf("Loading...%s - %.2f MB", p.fileURI.Name(), float64(p.byteSize)/1024./1024.))
 	m, err := imaging.Open(p.fileURI.Path(), imaging.AutoOrientation(true))
 	if err != nil {
 		log.Fatal(err)
@@ -72,8 +73,12 @@ const downscaleFactor float32 = 0.75
 
 // screen normalization factor
 func normFactor(m image.Image) float32 {
-	scaleDx := ScreenWidth / float32(m.Bounds().Dx())
-	scaleDy := ScreenHeight / float32(m.Bounds().Dy())
+	rowNum := 1
+	if a.state.FrameSize > 3 {
+		rowNum = 2
+	}
+	scaleDx := ScreenWidth / float32(m.Bounds().Dx()) / float32(rowNum)
+	scaleDy := ScreenHeight / float32(m.Bounds().Dy()) / float32(rowNum)
 	if scaleDx <= scaleDy {
 		if scaleDx < 1 {
 			return scaleDx
@@ -134,6 +139,10 @@ func (a *App) newPhotoList() {
 		w.Resize(fyne.NewSize(600, 100))
 		w.Show()
 		for i, p := range photos {
+			p.Adjust = make([]float64, len(adjustFiltersDict))
+			for k := range p.Adjust {
+				p.Adjust[k] = adjustFiltersDict[k].zero
+			}
 			p.GetPhotoProperties(p.fileURI)
 			if len(p.Dates[UseExifDate]) != len(ListDateFormat) {
 				p.DateUsed = UseFileDate
@@ -143,6 +152,7 @@ func (a *App) newPhotoList() {
 				p.DateUsed = s.DateUsed
 				p.Dates = s.Dates
 				p.CropRectangle = s.CropRectangle
+				p.Adjust = s.Adjust
 			}
 			progress.SetValue(float64(i + 1))
 		}
@@ -184,18 +194,14 @@ func (a *App) SavePhotoList(rename bool) {
 	for _, p := range list {
 		src = p.fileURI
 		switch {
-		case p.Drop:
-		case p.DateUsed != UseExifDate || !p.CropRectangle.Empty():
+		case p.isDroped():
+		case p.isDated() || p.isCropped() || p.isAdjusted():
 			if rename && !isDateSimilarToFileName(p) {
 				dst, _ = storage.Child(rootURI, listDateToFileNameDate(p.Dates[p.DateUsed])+p.fileURI.Extension())
 			} else {
 				dst, _ = storage.Child(rootURI, p.fileURI.Name())
 			}
-			dateTime := ""
-			if p.DateUsed != UseExifDate {
-				dateTime = p.Dates[p.DateUsed]
-			}
-			err = SaveUpdatedImage(src, dst, dateTime, p.CropRectangle)
+			err = p.SaveUpdatedImage(src, dst)
 			if err != nil {
 				dialog.ShowError(err, a.topWindow)
 			}

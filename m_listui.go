@@ -36,10 +36,11 @@ func (a *App) newListView() *fyne.Container {
 		{Name: "Exif date", Sortable: true},
 		{Name: "File date", Sortable: true},
 		{Name: "Entered date", Sortable: true},
-		{Name: "Dropped"},
-		{Name: "Cropped"},
-		{Name: "Width x Height"},
-		{Name: "Size MB", Sortable: true},
+		{Name: "Drop"},
+		{Name: "Crop"},
+		{Name: "Ajust"},
+		{Name: "Pixels WxH"},
+		{Name: "Size MiB", Sortable: true},
 	}
 
 	a.listColumns[0].Width = columnWidth(a.listColumns[0].Name, a.state.DisplayDateFormat, FileNameDateFormat+".000")
@@ -48,8 +49,9 @@ func (a *App) newListView() *fyne.Container {
 	a.listColumns[3].Width = columnWidth(a.listColumns[3].Name, a.state.DisplayDateFormat)
 	a.listColumns[4].Width = columnWidth(a.listColumns[4].Name)
 	a.listColumns[5].Width = columnWidth(a.listColumns[5].Name)
-	a.listColumns[6].Width = columnWidth(a.listColumns[6].Name, "0000x0000")
-	a.listColumns[7].Width = columnWidth(a.listColumns[7].Name, "999.9")
+	a.listColumns[6].Width = columnWidth(a.listColumns[6].Name)
+	a.listColumns[7].Width = columnWidth(a.listColumns[7].Name, "0000x0000")
+	a.listColumns[8].Width = columnWidth(a.listColumns[8].Name, "999.9")
 	for i := 0; i < len(a.listColumns); i++ {
 		if a.listColumns[i].Sortable && a.state.ListOrderColumn == i {
 			a.listColumns[i].Order = a.state.ListOrder
@@ -112,7 +114,7 @@ func (a *App) dataUpdate(id widget.TableCellID, o fyne.CanvasObject) {
 		}
 		data.Alignment = fyne.TextAlignLeading
 	case 4:
-		if photo.Drop {
+		if photo.isDroped() {
 			text = "Yes"
 		} else {
 			text = ""
@@ -120,7 +122,7 @@ func (a *App) dataUpdate(id widget.TableCellID, o fyne.CanvasObject) {
 		data.TextStyle.Bold = true
 		data.Alignment = fyne.TextAlignCenter
 	case 5:
-		if !photo.CropRectangle.Empty() {
+		if photo.isCropped() {
 			text = "Yes"
 		} else {
 			text = ""
@@ -128,14 +130,22 @@ func (a *App) dataUpdate(id widget.TableCellID, o fyne.CanvasObject) {
 		data.TextStyle.Bold = true
 		data.Alignment = fyne.TextAlignCenter
 	case 6:
+		if photo.isAdjusted() {
+			text = "Yes"
+		} else {
+			text = ""
+		}
+		data.TextStyle.Bold = true
+		data.Alignment = fyne.TextAlignCenter
+	case 7:
 		text = fmt.Sprintf("%dx%d", photo.width, photo.height)
 		data.TextStyle.Bold = false
 		data.Alignment = fyne.TextAlignLeading
-	case 7:
+	case 8:
 		text = fmt.Sprintf("%.1f", float64(photo.byteSize)/1000000.0)
 		data.TextStyle.Bold = false
 		data.Alignment = fyne.TextAlignTrailing
-	case 8:
+	case 9:
 		text = " "
 		data.TextStyle.Bold = false
 		data.Alignment = fyne.TextAlignLeading
@@ -161,8 +171,8 @@ func (a *App) headerUpdate(id widget.TableCellID, o fyne.CanvasObject) {
 		}
 		// header.Icon = theme.NavigateBackIcon()
 		header.OnTapped = func() {
-			frame.ShowProgress()
-			defer frame.HideProgress()
+			a.statusInfo.ShowProgress()
+			defer a.statusInfo.HideProgress()
 			a.state.FramePos = id.Row
 			a.state.ItemPos = 0
 			a.toggleView()
@@ -243,7 +253,7 @@ func sortList(column int, order order) {
 				return a.Dates[UseEnteredDate] < b.Dates[UseEnteredDate]
 			}
 			return a.Dates[UseEnteredDate] > b.Dates[UseEnteredDate]
-		case 7:
+		case 8:
 			if order == ascOrder {
 				return a.byteSize < b.byteSize
 			}

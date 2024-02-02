@@ -33,7 +33,7 @@ func (c *cropMask) At(x, y int) color.Color {
 func (p *Photo) fadeByCrop(m *canvas.Image) {
 	src := m.Image
 	dst := image.NewNRGBA(src.Bounds())
-	if p.CropRectangle.Empty() {
+	if !p.isCropped() { // TODO maybe simply return src?
 		draw.Draw(dst, dst.Bounds(), src, image.Point{}, draw.Src)
 		m.Image = dst
 		return

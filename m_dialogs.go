@@ -14,6 +14,7 @@ import (
 
 // show info about app
 func (a *App) aboutDialog() {
+	a.disableShortcuts()
 	var logo *canvas.Image
 	if a.state.Theme == "dark" {
 		logo = canvas.NewImageFromResource(appIconDark)
@@ -21,7 +22,7 @@ func (a *App) aboutDialog() {
 		logo = canvas.NewImageFromResource(appIconLight)
 	}
 	logo.FillMode = canvas.ImageFillOriginal
-	logoRow := container.NewGridWithColumns(8, logo)
+	logoRow := container.NewBorder(nil, nil, logo, nil)
 	infoRow := widget.NewRichTextFromMarkdown(`
 ## Pixyne - photo picker
 ---
@@ -58,12 +59,15 @@ You may also set EXIF shooting date to the file date or to a manually entered da
 *App icon designed by* [Icon8](https://icon8.com).`)
 
 	aboutDialog := dialog.NewCustom("About", "Ok", container.NewVBox(logoRow, infoRow, tecRow, noteRow), a.topWindow)
+	aboutDialog.SetOnClosed(func() {
+		a.enableShortcuts()
+	})
 	aboutDialog.Show()
 }
 
 // show info about app hotkeys
 func (a *App) hotkeysDialog() {
-
+	a.disableShortcuts()
 	ctrlForm := widget.NewForm()
 	for i := range a.ControlShortCuts {
 		item := widget.FormItem{Text: a.ControlShortCuts[i].Name, Widget: widget.NewLabel("Ctrl + " + string(a.ControlShortCuts[i].KeyName))}
@@ -76,15 +80,19 @@ func (a *App) hotkeysDialog() {
 	}
 
 	keysDialog := dialog.NewCustom("Hotkeys", "Ok", container.NewGridWithColumns(2, ctrlForm, altForm), a.topWindow)
+	keysDialog.SetOnClosed(func() {
+		a.enableShortcuts()
+	})
 	keysDialog.Show()
 }
 
 // open photo folder dialog
 func (a *App) openFolderDialog() {
+	a.disableShortcuts()
 	d := dialog.NewFolderOpen(func(list fyne.ListableURI, err error) {
-		frame.ShowProgress()
-		defer frame.HideProgress()
-		frame.StatusText.Set("")
+		a.statusInfo.ShowProgress()
+		defer a.statusInfo.HideProgress()
+		a.statusInfo.text.Set("")
 		if err != nil {
 			dialog.ShowError(err, a.topWindow)
 			return
@@ -101,6 +109,7 @@ func (a *App) openFolderDialog() {
 		a.topWindowTitle.Set(rootURI.Path())
 		a.newPhotoList()
 		a.newLayout()
+		a.enableShortcuts()
 	}, a.topWindow)
 	d.SetLocation(rootURI)
 	d.Resize(fyne.NewSize(672, 378))
@@ -111,6 +120,7 @@ func (a *App) openFolderDialog() {
 // 1. move dropped photo to droppped folder
 // 2. update exif dates with file modify date or input date
 func (a *App) savePhotoListDialog() {
+	a.disableShortcuts()
 	renameFiles := false
 	datedFileFormat := time.Now().Format(FileNameDateFormat)
 	content := container.NewVBox(
@@ -124,21 +134,23 @@ func (a *App) savePhotoListDialog() {
 		content,
 		func(b bool) {
 			if b {
-				frame.ShowProgress()
-				defer frame.HideProgress()
-				frame.StatusText.Set("")
+				a.statusInfo.ShowProgress()
+				defer a.statusInfo.HideProgress()
+				a.statusInfo.text.Set("")
 				a.SavePhotoList(renameFiles)
 				a.defaultState(false)
 				a.topWindowTitle.Set(a.state.Folder)
 				a.newPhotoList()
 				a.newLayout()
 			}
+			a.enableShortcuts()
 		},
 		a.topWindow)
 	d.Show()
 }
 
 func (a *App) settingsDialog() {
+	a.disableShortcuts()
 	s := NewSettings()
 	settingsForm := widget.NewForm(
 		widget.NewFormItem("", s.scalePreviewsRow(a.topWindow.Canvas().Scale())),
@@ -152,14 +164,44 @@ func (a *App) settingsDialog() {
 
 	d := dialog.NewCustom("Settings", "Ok", settingsForm, a.topWindow)
 	d.SetOnClosed(func() {
-		frame.ShowProgress()
-		defer frame.HideProgress()
-		if !a.frameView.Hidden {
-			a.showFrameToolbar()
+		a.statusInfo.ShowProgress()
+		defer a.statusInfo.HideProgress()
+		if len(list) > 0 {
+			if !a.frameView.Hidden {
+				a.showFrameToolbar()
+			}
+			a.topWindow.Content().Refresh()
+			frame.At(a.state.FramePos)
+			frame.ItemEndingAt(a.state.ItemPos)
 		}
-		a.topWindow.Content().Refresh()
-		frame.At(a.state.FramePos)
-		frame.ItemEndingAt(a.state.ItemPos)
+		a.enableShortcuts()
 	})
+	resettButton := widget.NewButton("Reset all", func() { a.approveResetAllDialog(d) })
+	resettButton.Importance = widget.DangerImportance
+	settingsForm.Append("", container.NewBorder(nil, nil, nil, resettButton))
+	d.Show()
+}
+
+func (a *App) approveResetAllDialog(parent *dialog.CustomDialog) {
+	d := dialog.NewCustomConfirm(
+		"Reset all",
+		"Proceed",
+		"Cancel",
+		container.NewVBox(
+			widget.NewLabel("WARNING!"),
+			widget.NewLabel("All settings will be reset to default values."),
+		),
+		func(b bool) {
+			if b {
+				a.statusInfo.text.Set("")
+				a.defaultState(true)
+				a.topWindowTitle.Set(a.state.Folder)
+				a.newPhotoList()
+				a.newLayout()
+				parent.Hide()
+				parent = nil
+			}
+		},
+		a.topWindow)
 	d.Show()
 }

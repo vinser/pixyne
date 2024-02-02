@@ -51,7 +51,7 @@ fyne.io/systray/internal/generated/notifier
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
-# github.com/disintegration/imaging v1.6.2
+# github.com/disintegration/imaging v1.6.3-0.20201218193011-d40f48ce0f09
 ## explicit
 github.com/disintegration/imaging
 # github.com/fredbi/uri v1.0.0

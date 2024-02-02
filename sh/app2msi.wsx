@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
     <Product Id="*" UpgradeCode="FF255D9D-351D-4309-BD90-8E0E3E57D542" 
-        Version="1.5.0" Language="1033" 
+        Version="1.6.0" Language="1033" 
         Name="Pixyne" Manufacturer="vinser">
         
         <Package InstallerVersion="300" Compressed="yes"/>

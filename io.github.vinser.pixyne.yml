@@ -37,5 +37,5 @@ modules:
       #   path: ./
       - type: archive
         url: "https://github.com/vinser/pixyne/archive/refs/tags/v1.4.1.tar.gz"
-        sha256: d34a47014726cb4f4f159ba679702cefcc7f01fc42a7eb4a9868071a638b498b
+        sha256: bd18be8cd8bab31c4a7baae16686d2342a4a9ef3b354a6d86d25bce74fcdd5af
 
