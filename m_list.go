@@ -195,7 +195,7 @@ func (a *App) SavePhotoList(rename bool) {
 		src = p.fileURI
 		switch {
 		case p.isDroped():
-		case p.isDated() || p.isCropped() || p.isAjusted():
+		case p.isDated() || p.isCropped() || p.isAdjusted():
 			if rename && !isDateSimilarToFileName(p) {
 				dst, _ = storage.Child(rootURI, listDateToFileNameDate(p.Dates[p.DateUsed])+p.fileURI.Extension())
 			} else {

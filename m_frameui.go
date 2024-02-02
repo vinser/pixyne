@@ -384,7 +384,7 @@ func NewFrameItem(listPos int, simpleMode bool) *FrameItem {
 	if list[listPos].isCropped() {
 		list[listPos].fadeByCrop(item.Img)
 	}
-	if list[listPos].isAjusted() {
+	if list[listPos].isAdjusted() {
 		list[listPos].adjustByFilters(item.Img)
 	}
 

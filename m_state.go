@@ -39,7 +39,7 @@ func (a *App) saveState() {
 	}
 	stateList := map[string]*Photo{}
 	for _, photo := range list {
-		if photo.isDroped() || photo.isDated() || photo.isCropped() || photo.isAjusted() {
+		if photo.isDroped() || photo.isDated() || photo.isCropped() || photo.isAdjusted() {
 			stateList[photo.fileURI.Name()] = photo
 		}
 	}
@@ -56,7 +56,7 @@ func (p *Photo) isDated() bool {
 	return p.DateUsed != UseExifDate
 }
 
-func (p *Photo) isAjusted() bool {
+func (p *Photo) isAdjusted() bool {
 	for i, v := range p.Adjust {
 		if v != adjustFiltersDict[i].zero {
 			return true

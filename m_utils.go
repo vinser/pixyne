@@ -67,7 +67,7 @@ func (p *Photo) SaveUpdatedImage(srcURI, dstURU fyne.URI) error {
 		newDate, _ := time.Parse(ListDateFormat, p.Dates[p.DateUsed])
 		exifData.SetDateTime(newDate)
 	}
-	if !p.isCropped() || !p.isAjusted() {
+	if !p.isCropped() || !p.isAdjusted() {
 		return exif.Copy(dstFile, srcFile, exifData)
 	}
 

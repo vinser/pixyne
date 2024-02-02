@@ -364,7 +364,7 @@ func (e *Editor) saveEdits() {
 	for i, s := range e.adjustFilters.Slider {
 		p.Adjust[i] = s.Value
 	}
-	if p.isAjusted() {
+	if p.isAdjusted() {
 		p.adjustByFilters(mi)
 	}
 	mi.Refresh()
