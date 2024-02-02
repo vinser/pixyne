@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"time"
@@ -15,6 +16,29 @@ import (
 	"fyne.io/fyne/v2/widget"
 	"github.com/disintegration/imaging"
 )
+
+type Editor struct {
+	w fyne.Window
+	// Edit dialog
+	dialog *dialog.ConfirmDialog
+	photo  *Photo
+	imgSrc image.Image
+	img    *canvas.Image
+	// Adjust
+	adjustFilters *AdjustFilters
+	// Crop
+	cropsMenu        *fyne.Container
+	fixedCrops       *fyne.Container
+	sliderTopEdge    *widget.Slider
+	sliderBottomEdge *widget.Slider
+	sliderLeftEdge   *widget.Slider
+	sliderRightEdge  *widget.Slider
+	//
+	imgSize fyne.Size
+	border  *canvas.Rectangle
+	posTL   fyne.Position
+	posBR   fyne.Position
+}
 
 func (a *App) editDialog() {
 	a.disableShortcuts()
@@ -32,7 +56,8 @@ func (a *App) editDialog() {
 	bottom := container.NewStack(e.sliderLeftEdge)
 	right := container.NewStack(e.sliderTopEdge)
 	left := container.NewStack(e.sliderBottomEdge)
-	centerEditor := container.NewCenter(container.NewBorder(top, bottom, left, right, borderedImage))
+	// centerEditor := container.NewCenter(container.NewBorder(top, bottom, left, right, borderedImage))
+	centerEditor := container.NewBorder(top, bottom, left, right, borderedImage)
 
 	// Right panel
 	editBrightness := e.newAdjustControl(AdjustBrightness)
@@ -41,19 +66,13 @@ func (a *App) editDialog() {
 	editSaturation := e.newAdjustControl(AdjustSaturation)
 	editGamma := e.newAdjustControl(AdjustGamma)
 	widthSpacer := newFixedSpacer(widget.NewLabel("______________________").MinSize())
+	e.newCropsMenu()
 	groupEditCrop := widget.NewAccordionItem(
 		"Crop",
-		container.NewVBox(
-			widget.NewButton("Free", func() { e.freeCrop() }),
-			widget.NewButton("1:1", func() { e.fixCrop(1.) }),
-			widget.NewButton("16:9", func() { e.fixCrop(16. / 9.) }),
-			widget.NewButton("9:16", func() { e.fixCrop(9. / 16.) }),
-			widget.NewButton("5:4", func() { e.fixCrop(5. / 4.) }),
-			widget.NewButton("4:5", func() { e.fixCrop(4. / 5.) }),
-			widget.NewButton("Clear crop", func() { e.clearCrop() }),
-		),
+		e.cropsMenu,
 	)
 	groupEditCrop.Open = true
+
 	groupEditAdjust := widget.NewAccordionItem(
 		"Adjust",
 		container.NewVBox(
@@ -62,9 +81,10 @@ func (a *App) editDialog() {
 			editHue,
 			editSaturation,
 			editGamma,
-			widget.NewButton("Reset adjusts", func() { e.resetAdjusts() }),
+			widget.NewButtonWithIcon("Reset adjusts", theme.ContentClearIcon(), func() { e.resetAdjusts() }),
 		),
 	)
+
 	rightOptions := container.NewVScroll(
 		container.NewVBox(
 			widget.NewAccordion(
@@ -72,7 +92,7 @@ func (a *App) editDialog() {
 				groupEditAdjust,
 			),
 			layout.NewSpacer(),
-			widget.NewButton("Reset all edits", func() { e.ResetAllEdits() }),
+			widget.NewButtonWithIcon("Reset all edits", theme.ContentClearIcon(), func() { e.ResetAllEdits() }),
 			widthSpacer,
 		),
 	)
@@ -80,7 +100,7 @@ func (a *App) editDialog() {
 	content := container.NewBorder(nil, nil, nil, rightOptions, centerEditor)
 	e.freeCrop() // default active crop
 	e.photo.adjustByFilters(e.img)
-	dlg := dialog.NewCustomConfirm(
+	e.dialog = dialog.NewCustomConfirm(
 		"Edit image",
 		"Apply edits",
 		"Cancel",
@@ -94,9 +114,24 @@ func (a *App) editDialog() {
 		},
 		e.w,
 	)
-	dlg.Show()
+	e.dialog.Show()
 	jolt(e.w) // TODO: remove this workaround after fix dialog widgets malfunctioning
 	e.w.SetFixedSize(true)
+}
+
+func (e *Editor) newCropsMenu() {
+	c := container.NewVBox()
+	c.Objects = append(c.Objects, widget.NewButton("Free", func() { e.freeCrop() }))
+	e.fixedCrops = container.NewVBox()
+	for i := 0; i < len(a.state.FavoriteCrops); i++ {
+		crop := a.state.FavoriteCrops[i]
+		button := widget.NewButton(fmt.Sprintf("%.f:%.f", crop.X, crop.Y), func() { e.fixCrop(crop.X / crop.Y) })
+		e.fixedCrops.Objects = append(e.fixedCrops.Objects, button)
+	}
+	c.Objects = append(c.Objects, e.fixedCrops)
+	c.Objects = append(c.Objects, widget.NewButtonWithIcon("Clear crop", theme.ContentClearIcon(), func() { e.clearCrop() }))
+	c.Objects = append(c.Objects, widget.NewButtonWithIcon("Set crops", theme.SettingsIcon(), func() { e.editCropSettingsDialog() }))
+	e.cropsMenu = c
 }
 
 func (e *Editor) newAdjustControl(filter int) *fyne.Container {
@@ -134,26 +169,6 @@ func (e *Editor) resetAdjusts() {
 		s.Refresh()
 	}
 	// e.adjustFilters.doAdjust(e.img, e.imgSrc, -1, 0)
-}
-
-type Editor struct {
-	w fyne.Window
-	// Edit dialog
-	photo  *Photo
-	imgSrc image.Image
-	img    *canvas.Image
-	// Adjust
-	adjustFilters *AdjustFilters
-	// Crop
-	sliderTopEdge    *widget.Slider
-	sliderBottomEdge *widget.Slider
-	sliderLeftEdge   *widget.Slider
-	sliderRightEdge  *widget.Slider
-	//
-	imgSize fyne.Size
-	border  *canvas.Rectangle
-	posTL   fyne.Position
-	posBR   fyne.Position
 }
 
 func (e *Editor) refreshCropSliders() {
@@ -233,9 +248,6 @@ func (e *Editor) freeCrop() {
 		e.posTL = fyne.NewPos(0, 0)
 		e.posBR = fyne.NewPos(e.imgSize.Width, e.imgSize.Height)
 	}
-	e.refreshCropBorder()
-	e.refreshCropSliders()
-
 	e.sliderTopEdge.Value = float64(e.imgSize.Height)
 	e.sliderLeftEdge.Value = 0
 	e.sliderBottomEdge.Value = 0
@@ -283,9 +295,6 @@ func (e *Editor) fixCrop(dstAspect float32) {
 		e.posBR = fyne.NewPos(e.imgSize.Width, e.imgSize.Height)
 
 	}
-	e.refreshCropBorder()
-	e.refreshCropSliders()
-
 	e.sliderLeftEdge.OnChanged = func(v float64) {
 		x := float32(v)
 		dx := e.posBR.X - e.posTL.X

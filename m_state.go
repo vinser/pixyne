@@ -23,6 +23,7 @@ type State struct {
 	ItemPos           int               `json:"item_pos"`
 	ListOrderColumn   int               `json:"list_order_column"`
 	ListOrder         order             `json:"list_order"`
+	FavoriteCrops     []fyne.Position   `json:"favorite_crop"`
 	List              map[string]*Photo `json:"list"`
 }
 
@@ -88,6 +89,13 @@ func (a *App) defaultState(init bool) {
 		a.state.Color = theme.ColorOrange
 		a.state.Simple = true
 		a.state.DisplayDateFormat = DefaultDisplayDateFormat
+		a.state.FavoriteCrops = []fyne.Position{
+			{X: 1, Y: 1},
+			{X: 16, Y: 9},
+			{X: 9, Y: 16},
+			{X: 5, Y: 4},
+			{X: 4, Y: 5},
+		}
 	}
 	a.state.List = map[string]*Photo{}
 	a.state.FramePos = DefaultListPos
