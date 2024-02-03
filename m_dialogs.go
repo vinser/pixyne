@@ -26,9 +26,9 @@ func (a *App) aboutDialog() {
 	infoRow := widget.NewRichTextFromMarkdown(`
 ## Pixyne - photo picker
 ---
-Use [Pixyne](http://vinser.github.io/pixyne) to quickly review your photo folder and safely delete bad and similar shots.
+Use [Pixyne](http://vinser.github.io/pixyne) to quickly review your photo folder and safely delete bad and similar shots.  
 
-You may also set EXIF shooting date to the file date or to a manually entered date.
+You may also fix EXIF the shooting dates, crop and ajust photos.  
 
 ---`)
 	var buildVersion, buildFor, buildTime, goVersion, versionLine, buildLine string
