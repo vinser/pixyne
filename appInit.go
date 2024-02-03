@@ -10,6 +10,6 @@ func init() {
 	app.SetMetadata(fyne.AppMetadata{
 		ID:      "io.github.vinser.pixyne",
 		Name:    "Pixyne",
-		Version: "selfcrafted",
+		Version: "1.6.0",
 	})
 }
