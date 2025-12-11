@@ -29,7 +29,7 @@ Enjoy!
 
 ## Ready to use
 
-For Linux users, Burnfix is avaliable as a Flatpak on [Flathub](https://flathub.org/apps/io.github.vinser.burnfix):
+For Linux users, Pixyne is avaliable as a Flatpak on [Flathub](https://flathub.org/apps/io.github.vinser.pixine):
 
 <a href='https://flathub.org/apps/details/io.github.vinser.pixyne'><img width='150' alt='Download on Flathub' src='https://dl.flathub.org/assets/badges/flathub-badge-en.svg'/></a>
 
